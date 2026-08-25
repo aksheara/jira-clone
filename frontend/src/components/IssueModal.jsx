@@ -1,0 +1,604 @@
+import { useEffect, useState } from "react";
+import api from "../api/client";
+
+export default function IssueModal({ issueId, projectKey, members = [], onClose, onUpdate }) {
+  const [issue, setIssue] = useState(null);
+  const [newComment, setNewComment] = useState("");
+  const [tab, setTab] = useState("comments");
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleVal, setTitleVal] = useState("");
+  const [isEditingDesc, setIsEditingDesc] = useState(false);
+  const [descVal, setDescVal] = useState("");
+  const [subtaskTitle, setSubtaskTitle] = useState("");
+  const [showSubtaskAdd, setShowSubtaskAdd] = useState(false);
+
+  // Figma & GitHub state
+  const [figmaUrl, setFigmaUrl] = useState("");
+  const [isEditingFigma, setIsEditingFigma] = useState(false);
+  const [githubPr, setGithubPr] = useState("");
+  const [isEditingGithub, setIsEditingGithub] = useState(false);
+  const [copiedBranch, setCopiedBranch] = useState(false);
+
+  function load() {
+    api.get(`/issues/${issueId}/`).then((res) => {
+      setIssue(res.data);
+      setTitleVal(res.data.title);
+      setDescVal(res.data.description || "");
+      setFigmaUrl(res.data.figma_url || "");
+      setGithubPr(res.data.github_pr || "");
+    }).catch(() => {});
+  }
+
+  useEffect(() => {
+    load();
+  }, [issueId]);
+
+  async function updateField(field, value) {
+    try {
+      await api.patch(`/issues/${issueId}/`, { [field]: value });
+      setIssue((prev) => (prev ? { ...prev, [field]: value } : null));
+      onUpdate && onUpdate();
+    } catch (err) {
+      console.error(`Failed to update ${field}`, err);
+    }
+  }
+
+  async function handleSaveTitle(e) {
+    e?.preventDefault();
+    if (!titleVal.trim()) return;
+    try {
+      await api.patch(`/issues/${issueId}/`, { title: titleVal.trim() });
+      setIssue((prev) => (prev ? { ...prev, title: titleVal.trim() } : null));
+      setIsEditingTitle(false);
+      onUpdate && onUpdate();
+    } catch (err) {
+      alert("Failed to save title.");
+    }
+  }
+
+  async function handleSaveDesc(e) {
+    e?.preventDefault();
+    try {
+      await api.patch(`/issues/${issueId}/`, { description: descVal });
+      setIssue((prev) => (prev ? { ...prev, description: descVal } : null));
+      setIsEditingDesc(false);
+      onUpdate && onUpdate();
+    } catch (err) {
+      alert("Failed to save description.");
+    }
+  }
+
+  async function handleSaveFigma() {
+    await updateField("figma_url", figmaUrl.trim());
+    setIsEditingFigma(false);
+  }
+
+  async function handleSaveGithub() {
+    await updateField("github_pr", githubPr.trim());
+    setIsEditingGithub(false);
+  }
+
+  function handleLoadSampleFigma() {
+    const sample = "https://www.figma.com/design/LKQ4FJ4bTnCSjedbRpk931/Sample-App-UI";
+    setFigmaUrl(sample);
+    updateField("figma_url", sample);
+    setIsEditingFigma(false);
+  }
+
+  async function handleAddSubtask(e) {
+    e.preventDefault();
+    if (!subtaskTitle.trim() || !issue) return;
+    try {
+      await api.post("/issues/", {
+        project: issue.project,
+        parent: issue.id,
+        title: subtaskTitle.trim(),
+        issue_type: "TASK",
+        priority: "MEDIUM",
+        status: "TODO",
+      });
+      setSubtaskTitle("");
+      setShowSubtaskAdd(false);
+      load();
+      onUpdate && onUpdate();
+    } catch (err) {
+      alert("Failed to add subtask.");
+    }
+  }
+
+  async function submitComment(e) {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+    setSubmittingComment(true);
+    try {
+      await api.post("/comments/", { issue: issueId, body: newComment.trim() });
+      setNewComment("");
+      load();
+    } catch (err) {
+      alert("Error adding comment.");
+    } finally {
+      setSubmittingComment(false);
+    }
+  }
+
+  async function handleDeleteIssue() {
+    if (window.confirm("Are you sure you want to delete this issue?")) {
+      await api.delete(`/issues/${issueId}/`);
+      onClose();
+      onUpdate && onUpdate();
+    }
+  }
+
+  if (!issue) return null;
+
+  const keyDisplay = `${projectKey || "KAN"}-${issue.id}`;
+  const reporterName = issue.reporter?.username || "Project Member";
+  const reporterInitials = reporterName.substring(0, 2).toUpperCase();
+
+  // Slugified branch name
+  const branchName = `feature/${keyDisplay.toLowerCase()}-${issue.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+  const gitCommand = `git checkout -b ${branchName}`;
+
+  function copyGitBranch() {
+    navigator.clipboard?.writeText(gitCommand);
+    setCopiedBranch(true);
+    setTimeout(() => setCopiedBranch(false), 2000);
+  }
+
+  return (
+    <div className="jira-modal-backdrop" onClick={onClose}>
+      <div className="jira-issue-drawer" onClick={(e) => e.stopPropagation()}>
+        {/* Drawer Top Navigation */}
+        <div className="jira-drawer-top">
+          <div className="jira-drawer-key-group">
+            <span className="jira-drawer-type-badge">
+              {issue.parent ? "↳ Subtask" : issue.issue_type}
+            </span>
+            <span className="jira-drawer-key">{keyDisplay}</span>
+          </div>
+
+          <div className="jira-drawer-actions">
+            <button className="jira-btn-icon-plain" onClick={handleDeleteIssue} title="Delete issue">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#de350b" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+            </button>
+            <button className="jira-btn-icon-close" onClick={onClose} aria-label="Close">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Main Content Layout: Two Columns */}
+        <div className="jira-drawer-content">
+          {/* Left Main Column */}
+          <div className="jira-drawer-left">
+            {/* Title */}
+            {isEditingTitle ? (
+              <div style={{ marginBottom: 16 }}>
+                <input
+                  type="text"
+                  className="jira-input"
+                  value={titleVal}
+                  onChange={(e) => setTitleVal(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSaveTitle(e);
+                    if (e.key === "Escape") setIsEditingTitle(false);
+                  }}
+                  autoFocus
+                />
+                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                  <button type="button" className="jira-btn-primary-sm" onClick={handleSaveTitle}>Save</button>
+                  <button type="button" className="jira-btn-secondary-sm" onClick={() => setIsEditingTitle(false)}>Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <h1
+                className="jira-drawer-title"
+                onClick={() => {
+                  setTitleVal(issue.title || "");
+                  setIsEditingTitle(true);
+                }}
+                title="Click to edit summary"
+              >
+                {issue.title}
+              </h1>
+            )}
+
+            {/* Description */}
+            <div className="jira-drawer-section">
+              <label className="jira-drawer-label">Description</label>
+              {isEditingDesc ? (
+                <div>
+                  <textarea
+                    className="jira-textarea"
+                    rows={4}
+                    value={descVal}
+                    onChange={(e) => setDescVal(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                        handleSaveDesc(e);
+                      }
+                      if (e.key === "Escape") {
+                        setIsEditingDesc(false);
+                      }
+                    }}
+                    placeholder="Add a description..."
+                    autoFocus
+                  />
+                  <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                    <button type="button" className="jira-btn-primary-sm" onClick={handleSaveDesc}>Save</button>
+                    <button type="button" className="jira-btn-secondary-sm" onClick={() => setIsEditingDesc(false)}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="jira-desc-preview"
+                  onClick={() => {
+                    setDescVal(issue.description || "");
+                    setIsEditingDesc(true);
+                  }}
+                  title="Click to edit description"
+                >
+                  {issue.description ? (
+                    <div style={{ whiteSpace: "pre-wrap" }}>{issue.description}</div>
+                  ) : (
+                    <span className="jira-placeholder-text">Add a description...</span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* 🎨 FIGMA DESIGN EMBED INTEGRATION */}
+            <div className="jira-drawer-section">
+              <div className="jira-section-header-flex">
+                <label className="jira-drawer-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span>🎨 Figma Design Preview</span>
+                  {issue.figma_url && <span className="jira-connected-pill">Connected</span>}
+                </label>
+                {!isEditingFigma && (
+                  <button
+                    className="jira-btn-link-sm"
+                    onClick={() => setIsEditingFigma(true)}
+                  >
+                    {issue.figma_url ? "Edit Link" : "+ Attach Figma Design"}
+                  </button>
+                )}
+              </div>
+
+              {isEditingFigma ? (
+                <div className="jira-figma-attach-box">
+                  <input
+                    type="text"
+                    className="jira-input"
+                    placeholder="Paste Figma file or frame URL (https://www.figma.com/design/...)"
+                    value={figmaUrl}
+                    onChange={(e) => setFigmaUrl(e.target.value)}
+                    autoFocus
+                  />
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+                    <button
+                      type="button"
+                      className="jira-btn-link-xs"
+                      onClick={handleLoadSampleFigma}
+                    >
+                      ✨ Load sample design mockup
+                    </button>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button className="jira-btn-primary-sm" onClick={handleSaveFigma}>Save Design</button>
+                      <button className="jira-btn-secondary-sm" onClick={() => setIsEditingFigma(false)}>Cancel</button>
+                    </div>
+                  </div>
+                </div>
+              ) : issue.figma_url ? (
+                <div className="jira-figma-embed-wrapper">
+                  <iframe
+                    title="Figma Embed"
+                    className="jira-figma-iframe"
+                    src={`https://www.figma.com/embed?embed_host=jira&url=${encodeURIComponent(issue.figma_url)}`}
+                    allowFullScreen
+                  />
+                  <div className="jira-figma-embed-footer">
+                    <a
+                      href={issue.figma_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="jira-btn-link-xs"
+                    >
+                      ↗ Open in Figma
+                    </a>
+                    <button
+                      className="jira-btn-link-xs danger"
+                      onClick={() => updateField("figma_url", "")}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            {/* 🐙 GITHUB DEVELOPMENT PANEL */}
+            <div className="jira-drawer-section">
+              <div className="jira-section-header-flex">
+                <label className="jira-drawer-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span>🐙 Development (GitHub)</span>
+                </label>
+                {!isEditingGithub && (
+                  <button
+                    className="jira-btn-link-sm"
+                    onClick={() => setIsEditingGithub(true)}
+                  >
+                    {issue.github_pr ? "Edit PR" : "+ Link Pull Request"}
+                  </button>
+                )}
+              </div>
+
+              {/* Git Branch Copy Bar */}
+              <div className="jira-git-branch-card">
+                <div className="jira-git-branch-left">
+                  <span className="jira-git-icon">🌿</span>
+                  <div>
+                    <span className="jira-git-label">Suggested Git Branch:</span>
+                    <code className="jira-git-code">{branchName}</code>
+                  </div>
+                </div>
+                <button
+                  className="jira-btn-primary-sm"
+                  onClick={copyGitBranch}
+                  title="Copy git checkout command"
+                >
+                  {copiedBranch ? "✓ Copied!" : "Copy Branch"}
+                </button>
+              </div>
+
+              {isEditingGithub ? (
+                <div className="jira-github-attach-box" style={{ marginTop: 8 }}>
+                  <input
+                    type="text"
+                    className="jira-input-sm"
+                    placeholder="Pull request title (e.g. PR #12: Data pipeline optimizer - Merged)"
+                    value={githubPr}
+                    onChange={(e) => setGithubPr(e.target.value)}
+                    autoFocus
+                  />
+                  <div style={{ display: "flex", gap: 6, marginTop: 6, justifyContent: "flex-end" }}>
+                    <button className="jira-btn-primary-sm" onClick={handleSaveGithub}>Save PR</button>
+                    <button className="jira-btn-secondary-sm" onClick={() => setIsEditingGithub(false)}>Cancel</button>
+                  </div>
+                </div>
+              ) : issue.github_pr ? (
+                <div className="jira-linked-pr-badge">
+                  <span className="jira-pr-icon">🔀</span>
+                  <span className="jira-pr-text">{issue.github_pr}</span>
+                  <span className="jira-pr-status-merged">MERGED</span>
+                </div>
+              ) : null}
+            </div>
+
+            {/* Subtasks Section */}
+            {!issue.parent && (
+              <div className="jira-drawer-section">
+                <div className="jira-section-header-flex">
+                  <label className="jira-drawer-label">Subtasks ({issue.subtasks?.length || 0})</label>
+                  <button
+                    className="jira-btn-link-sm"
+                    onClick={() => setShowSubtaskAdd(true)}
+                  >
+                    + Add subtask
+                  </button>
+                </div>
+
+                {showSubtaskAdd && (
+                  <form onSubmit={handleAddSubtask} className="jira-subtask-form">
+                    <input
+                      type="text"
+                      className="jira-input-sm"
+                      placeholder="What needs to be done in this subtask?"
+                      value={subtaskTitle}
+                      onChange={(e) => setSubtaskTitle(e.target.value)}
+                      autoFocus
+                    />
+                    <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                      <button type="submit" className="jira-btn-primary-sm">Add</button>
+                      <button type="button" className="jira-btn-secondary-sm" onClick={() => setShowSubtaskAdd(false)}>Cancel</button>
+                    </div>
+                  </form>
+                )}
+
+                <div className="jira-subtasks-list">
+                  {issue.subtasks?.map((st) => (
+                    <div key={st.id} className="jira-subtask-row">
+                      <div className="jira-subtask-row-left">
+                        <span className="jira-type-icon icon-subtask">↳</span>
+                        <span className={`jira-subtask-key ${st.status === "DONE" ? "strikethrough" : ""}`}>
+                          {projectKey}-{st.id}
+                        </span>
+                        <span className="jira-subtask-title">{st.title}</span>
+                      </div>
+                      <span className={`jira-status-pill-mini ${st.status.toLowerCase()}`}>
+                        {st.status === "IN_PROGRESS" ? "In Progress" : st.status === "DONE" ? "Done" : "To Do"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Activity & Comments Tabs */}
+            <div className="jira-drawer-section">
+              <div className="jira-tabs-bar-sm">
+                <button
+                  className={`jira-tab-btn-sm ${tab === "comments" ? "active" : ""}`}
+                  onClick={() => setTab("comments")}
+                >
+                  Comments ({issue.comments?.length || 0})
+                </button>
+                <button
+                  className={`jira-tab-btn-sm ${tab === "activity" ? "active" : ""}`}
+                  onClick={() => setTab("activity")}
+                >
+                  Activity ({issue.activity_log?.length || 0})
+                </button>
+              </div>
+
+              {tab === "comments" ? (
+                <div className="jira-comments-wrap">
+                  {issue.comments?.map((c) => (
+                    <div key={c.id} className="jira-comment-item">
+                      <div className="jira-avatar-circle small">
+                        {c.author?.username?.substring(0, 2).toUpperCase()}
+                      </div>
+                      <div className="jira-comment-body">
+                        <div className="jira-comment-meta">
+                          <strong>{c.author?.username}</strong>
+                          <span>{new Date(c.created_at).toLocaleString()}</span>
+                        </div>
+                        <p className="jira-comment-text">{c.body}</p>
+                      </div>
+                    </div>
+                  ))}
+
+                  <form onSubmit={submitComment} className="jira-add-comment-form">
+                    <textarea
+                      className="jira-textarea"
+                      rows={2}
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Add a comment..."
+                    />
+                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+                      <button type="submit" className="jira-btn-primary-sm" disabled={submittingComment}>
+                        {submittingComment ? "Saving..." : "Save"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              ) : (
+                <div className="jira-activity-log-list">
+                  {issue.activity_log?.map((a) => (
+                    <div key={a.id} className="jira-activity-item">
+                      <strong>{a.actor?.username || "User"}</strong> changed <em>{a.field_changed}</em> from{" "}
+                      <code>{a.old_value || "none"}</code> to <code>{a.new_value || "none"}</code>
+                      <span className="jira-activity-time">{new Date(a.created_at).toLocaleTimeString()}</span>
+                    </div>
+                  ))}
+                  {(!issue.activity_log || issue.activity_log.length === 0) && (
+                    <p className="jira-empty-muted">No activity logged yet.</p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Sidebar Column */}
+          <div className="jira-drawer-right">
+            {/* Status Field */}
+            <div className="jira-drawer-field">
+              <label className="jira-drawer-field-label">Status</label>
+              <select
+                className="jira-select"
+                value={issue.status}
+                onChange={(e) => updateField("status", e.target.value)}
+              >
+                <option value="TODO">To Do</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="DONE">Done</option>
+              </select>
+            </div>
+
+            {/* Resolution Field */}
+            <div className="jira-drawer-field">
+              <label className="jira-drawer-field-label">Resolution</label>
+              <select
+                className="jira-select"
+                value={issue.resolution || (issue.status === "DONE" ? "Resolved" : "Unresolved")}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "Resolved" || val === "Solved") {
+                    updateField("resolution", val);
+                    updateField("status", "DONE");
+                  } else {
+                    updateField("resolution", val);
+                  }
+                }}
+              >
+                <option value="Unresolved">Unresolved</option>
+                <option value="Resolved">Resolved</option>
+                <option value="Solved">Solved</option>
+                <option value="Won't Fix">Won't Fix</option>
+              </select>
+            </div>
+
+            {/* Priority Field */}
+            <div className="jira-drawer-field">
+              <label className="jira-drawer-field-label">Priority</label>
+              <select
+                className="jira-select"
+                value={issue.priority}
+                onChange={(e) => updateField("priority", e.target.value)}
+              >
+                <option value="LOW">🟢 Low</option>
+                <option value="MEDIUM">🟡 Medium</option>
+                <option value="HIGH">🟠 High</option>
+                <option value="CRITICAL">🔴 Critical</option>
+              </select>
+            </div>
+
+            {/* Assignee Field */}
+            <div className="jira-drawer-field">
+              <label className="jira-drawer-field-label">Assignee</label>
+              <select
+                className="jira-select"
+                value={issue.assignee?.id || ""}
+                onChange={(e) => updateField("assignee_id", e.target.value ? Number(e.target.value) : null)}
+              >
+                <option value="">Unassigned</option>
+                {members.map((m) => (
+                  <option key={m.user?.id || m.id} value={m.user?.id || m.id}>
+                    {m.user?.username || m.username}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Due Date Field */}
+            <div className="jira-drawer-field">
+              <label className="jira-drawer-field-label">Due Date</label>
+              <input
+                type="date"
+                className="jira-input"
+                value={issue.due_date || ""}
+                onChange={(e) => updateField("due_date", e.target.value || null)}
+              />
+            </div>
+
+            {/* Reporter Field */}
+            <div className="jira-drawer-field">
+              <label className="jira-drawer-field-label">Reporter</label>
+              <div className="jira-reporter-cell" style={{ marginTop: 4 }}>
+                <div className="jira-reporter-avatar-badge">{reporterInitials}</div>
+                <span className="jira-reporter-name">{reporterName}</span>
+              </div>
+            </div>
+
+            {/* Created & Updated dates */}
+            <div className="jira-drawer-field meta">
+              <span className="jira-meta-text">
+                <strong>Created:</strong> {new Date(issue.created_at).toLocaleString()}
+              </span>
+              <span className="jira-meta-text">
+                <strong>Updated:</strong> {new Date(issue.updated_at).toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
