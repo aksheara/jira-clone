@@ -5,7 +5,6 @@ import api from "../api/client";
 
 export default function Register() {
   const [step, setStep] = useState(1); // 1: form, 2: verify OTP code
-  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -14,7 +13,6 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendSuccess, setResendSuccess] = useState("");
-  const [devCode, setDevCode] = useState("");
 
   const { register, verifyCode } = useAuth();
   const navigate = useNavigate();
@@ -35,10 +33,10 @@ export default function Register() {
   const hasSpecial = /[!@#$%^&*(),.?":{}|<>\-_=+[\]\\;/`~]/.test(password);
   const isPasswordValid = hasMinLength && hasUpper && hasLower && hasNumber && hasSpecial;
 
-  // Step 1: Submit Registration
+  // Step 1: Submit Registration (Email + Password only)
   async function handleRegisterSubmit(e) {
     e.preventDefault();
-    if (!username.trim() || !email.trim() || !password) {
+    if (!email.trim() || !password) {
       setError("Please fill out all required fields.");
       return;
     }
@@ -50,9 +48,8 @@ export default function Register() {
     setResendSuccess("");
     setLoading(true);
     try {
-      const res = await register(username.trim(), password, email.trim().toLowerCase());
+      const res = await register(email.trim().toLowerCase(), password);
       if (res?.require_verification) {
-        if (res?.code) setDevCode(res.code);
         setStep(2);
         setResendCooldown(30);
       } else {
@@ -60,14 +57,12 @@ export default function Register() {
       }
     } catch (err) {
       const emailErr = err?.response?.data?.email?.[0];
-      const userErr = err?.response?.data?.username?.[0];
       const pwdErr = err?.response?.data?.password?.[0];
       const detailErr = err?.response?.data?.detail;
 
       const msg =
         pwdErr ||
         emailErr ||
-        userErr ||
         detailErr ||
         "Could not create account. Please check the entered information.";
       setError(msg);
@@ -81,7 +76,7 @@ export default function Register() {
     e.preventDefault();
     const cleanCode = otpCode.trim();
     if (cleanCode.length !== 6) {
-      setError("Please enter the complete 6-digit verification code.");
+      setError("Please enter the complete 6-digit verification code sent to your email.");
       return;
     }
     setError("");
@@ -91,7 +86,7 @@ export default function Register() {
       await verifyCode(email.trim().toLowerCase(), cleanCode, "REGISTRATION");
       navigate("/projects");
     } catch (err) {
-      const msg = err?.response?.data?.detail || "Invalid or expired verification code. Please try again.";
+      const msg = err?.response?.data?.detail || "Invalid or expired verification code. Please check your email.";
       setError(msg);
     } finally {
       setLoading(false);
@@ -109,8 +104,7 @@ export default function Register() {
         email: email.trim().toLowerCase(),
         purpose: "REGISTRATION",
       });
-      if (res.data?.code) setDevCode(res.data.code);
-      setResendSuccess(res.data?.detail || "A fresh verification code has been sent!");
+      setResendSuccess(res.data?.detail || "A fresh verification code has been dispatched to your email!");
       setResendCooldown(30);
     } catch (err) {
       const msg = err?.response?.data?.detail || "Could not resend code. Please try again.";
@@ -197,34 +191,9 @@ export default function Register() {
               </div>
             )}
 
-            {/* STEP 1: Registration Form */}
+            {/* STEP 1: Registration Form (Email + Password only) */}
             {step === 1 && (
               <form onSubmit={handleRegisterSubmit} className="jira-auth-form">
-                <div className="jira-form-group">
-                  <label className="jira-form-label" htmlFor="register-username">
-                    Username <span style={{ color: "#DE350B" }}>*</span>
-                  </label>
-                  <div className="jira-input-wrapper">
-                    <span className="jira-input-icon">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                      </svg>
-                    </span>
-                    <input
-                      id="register-username"
-                      type="text"
-                      className="jira-form-input"
-                      placeholder="Choose a username (e.g. alex_dev)"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      autoComplete="username"
-                      autoFocus
-                      required
-                    />
-                  </div>
-                </div>
-
                 <div className="jira-form-group">
                   <label className="jira-form-label" htmlFor="register-email">
                     Email Address <span style={{ color: "#DE350B" }}>*</span>
@@ -244,11 +213,12 @@ export default function Register() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       autoComplete="email"
+                      autoFocus
                       required
                     />
                   </div>
                   <span style={{ fontSize: 11.5, color: "#6B778C", marginTop: 2 }}>
-                    Must be a permanent, reachable email address (no disposable domains).
+                    We will send a 6-digit verification code to this email.
                   </span>
                 </div>
 
@@ -369,21 +339,8 @@ export default function Register() {
                     required
                   />
                   <span style={{ fontSize: 12, color: "#6B778C", textAlign: "center", display: "block", marginTop: 4 }}>
-                    Code expires in 15 minutes.
+                    Please check your email inbox for the 6-digit code (valid for 15 minutes).
                   </span>
-
-                  {devCode && (
-                    <div className="jira-dev-code-banner">
-                      <span>💡 <strong>Your OTP Code:</strong> <code className="jira-dev-code-highlight">{devCode}</code></span>
-                      <button
-                        type="button"
-                        className="jira-dev-autofill-btn"
-                        onClick={() => setOtpCode(devCode)}
-                      >
-                        Auto-fill
-                      </button>
-                    </div>
-                  )}
                 </div>
 
                 <button

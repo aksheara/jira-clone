@@ -22,7 +22,6 @@ export default function Login() {
   const [forgotError, setForgotError] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
-  const [devResetCode, setDevResetCode] = useState("");
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -64,7 +63,6 @@ export default function Login() {
       const res = await api.post("/auth/verify-email/", { email: query });
       if (res.data?.exists) {
         setVerifiedUser(res.data);
-        if (res.data?.code) setDevResetCode(res.data.code);
         setForgotStep(2);
         setResendCooldown(30);
       } else {
@@ -219,23 +217,23 @@ export default function Login() {
             <form onSubmit={handleSubmit} className="jira-auth-form">
               <div className="jira-form-group">
                 <label className="jira-form-label" htmlFor="login-username">
-                  Username
+                  Email Address
                 </label>
                 <div className="jira-input-wrapper">
                   <span className="jira-input-icon">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                      <polyline points="22,6 12,13 2,6"></polyline>
                     </svg>
                   </span>
                   <input
                     id="login-username"
-                    type="text"
+                    type="email"
                     className="jira-form-input"
-                    placeholder="Enter your username"
+                    placeholder="alex@company.com"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    autoComplete="username"
+                    autoComplete="email"
                     autoFocus
                     required
                   />
@@ -457,18 +455,6 @@ export default function Login() {
                     required
                     autoFocus
                   />
-                  {devResetCode && (
-                    <div className="jira-dev-code-banner" style={{ marginTop: 8 }}>
-                      <span>💡 <strong>Your Reset Code:</strong> <code className="jira-dev-code-highlight">{devResetCode}</code></span>
-                      <button
-                        type="button"
-                        className="jira-dev-autofill-btn"
-                        onClick={() => setResetOtp(devResetCode)}
-                      >
-                        Auto-fill
-                      </button>
-                    </div>
-                  )}
                 </div>
 
                 <div className="jira-form-group">

@@ -26,10 +26,11 @@ export function AuthProvider({ children }) {
     setUser(res.data.user);
   }
 
-  async function register(username, password, email) {
-    const res = await api.post("/auth/register/", { username, password, email });
+  async function register(email, password) {
+    const res = await api.post("/auth/register/", { email, password });
     return res.data;
   }
+
 
   async function verifyCode(email, code, purpose = "REGISTRATION") {
     const res = await api.post("/auth/verify-code/", { email, code, purpose });

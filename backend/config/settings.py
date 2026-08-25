@@ -142,20 +142,32 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 
-# Email Configuration (Supports Gmail SMTP & Console Fallback)
+# Email Configuration (Loads .env and uses Gmail SMTP)
 import os
 
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+env_file = BASE_DIR / '.env'
+if env_file.exists():
+    with open(env_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, val = line.split('=', 1)
+                os.environ.setdefault(key.strip(), val.strip().strip('"').strip("'"))
+
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'akshukikiat1225@gmail.com')
+raw_password = os.getenv('EMAIL_HOST_PASSWORD', 'nwpc nnfv ofem uaya')
+# Remove spaces for Gmail App Password authentication
+EMAIL_HOST_PASSWORD = "".join(raw_password.split())
 
 if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-    EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+    EMAIL_HOST = 'smtp.gmail.com'
+    EMAIL_PORT = 587
     EMAIL_USE_TLS = True
-    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', f'Jira Software <{EMAIL_HOST_USER}>')
+    DEFAULT_FROM_EMAIL = f'Jira Software <{EMAIL_HOST_USER}>'
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     DEFAULT_FROM_EMAIL = 'Jira Software <noreply@jira-software.local>'
+
 
 

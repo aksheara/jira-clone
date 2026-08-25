@@ -38,6 +38,7 @@ class UserWithProjectsSerializer(serializers.ModelSerializer):
 
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True, allow_blank=False)
+    username = serializers.CharField(required=False, allow_blank=True)
     password = serializers.CharField(write_only=True, min_length=8)
 
     class Meta:
@@ -62,10 +63,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         return email
 
     def validate_username(self, value):
-        username = value.strip()
-        if not username:
-            raise serializers.ValidationError("Username is required.")
-        if User.objects.filter(username__iexact=username).exists():
+        username = (value or "").strip()
+        if username and User.objects.filter(username__iexact=username).exists():
             raise serializers.ValidationError(
                 "This username is already taken. Please choose another username."
             )
@@ -77,17 +76,29 @@ class RegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(err_msg)
         return value
 
-
     def create(self, validated_data):
+        email = validated_data["email"].strip().lower()
+        username = (validated_data.get("username") or "").strip()
+
+        # If username not provided, auto-generate from email prefix
+        if not username:
+            base_user = email.split("@")[0].replace(".", "_")
+            username = base_user
+            count = 1
+            while User.objects.filter(username__iexact=username).exists():
+                username = f"{base_user}_{count}"
+                count += 1
+
         # Create user in pending/inactive state until email is verified
         user = User.objects.create_user(
-            username=validated_data["username"],
-            email=validated_data["email"],
+            username=username,
+            email=email,
             password=validated_data["password"],
             first_name=validated_data.get("first_name", ""),
             last_name=validated_data.get("last_name", ""),
             is_active=False,
         )
+
 
         # Generate 6-digit OTP code & dispatch email
         code = generate_otp_code(6)
