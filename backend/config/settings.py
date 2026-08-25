@@ -144,6 +144,10 @@ STATIC_URL = 'static/'
 
 # Email Configuration (Supports Gmail SMTP & Console Fallback)
 import os
+from dotenv import load_dotenv
+
+# Load .env file from the backend directory
+load_dotenv(BASE_DIR / '.env')
 
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')

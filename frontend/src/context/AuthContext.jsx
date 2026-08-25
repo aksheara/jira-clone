@@ -20,14 +20,14 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, []);
 
-  async function login(username, password) {
-    const res = await api.post("/auth/login/", { username, password });
+  async function login(email, password) {
+    const res = await api.post("/auth/login/", { username: email, password });
     localStorage.setItem("token", res.data.token);
     setUser(res.data.user);
   }
 
-  async function register(username, password, email) {
-    const res = await api.post("/auth/register/", { username, password, email });
+  async function register(password, email) {
+    const res = await api.post("/auth/register/", { password, email });
     return res.data;
   }
 

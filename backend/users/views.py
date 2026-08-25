@@ -29,18 +29,10 @@ class RegisterView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
-        last_code = (
-            EmailVerificationCode.objects.filter(email=user.email, purpose="REGISTRATION", is_used=False)
-            .order_by("-created_at")
-            .first()
-        )
-
         return Response(
             {
                 "require_verification": True,
                 "email": user.email,
-                "username": user.username,
-                "code": last_code.code if last_code else "",
                 "detail": f"A 6-digit verification code has been sent to {user.email}.",
             },
             status=status.HTTP_201_CREATED,
@@ -156,7 +148,6 @@ class ResendCodeView(APIView):
         return Response(
             {
                 "success": True,
-                "code": code,
                 "detail": f"A new verification code has been dispatched to {email}.",
             },
             status=status.HTTP_200_OK,
@@ -164,41 +155,45 @@ class ResendCodeView(APIView):
 
 
 class LoginView(ObtainAuthToken):
-    """POST username/password -> checks active status & returns auth token + basic user info."""
+    """POST email/password -> checks active status & returns auth token + basic user info."""
     def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data, context={"request": request})
-        
-        # Check credentials
-        try:
-            serializer.is_valid(raise_exception=True)
-            user = serializer.validated_data["user"]
-        except Exception:
-            # Check if user exists but is inactive (unverified email)
-            username = request.data.get("username", "").strip()
-            user_inactive = User.objects.filter(username__iexact=username, is_active=False).first() or \
-                            User.objects.filter(email__iexact=username, is_active=False).first()
-            if user_inactive:
-                return Response(
-                    {
-                        "detail": "Your email address has not been verified yet. Please enter the verification code sent to your email.",
-                        "email": user_inactive.email,
-                        "unverified": True,
-                    },
-                    status=status.HTTP_403_FORBIDDEN,
-                )
+        email_input = request.data.get("username", "").strip().lower()  # field is named 'username' for DRF compat
+        password = request.data.get("password", "").strip()
+
+        if not email_input or not password:
             return Response(
-                {"detail": "Invalid username or password. Please check your credentials."},
+                {"detail": "Email and password are required."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # Look up user by email
+        user = (
+            User.objects.filter(email__iexact=email_input).first()
+            or User.objects.filter(username__iexact=email_input).first()
+        )
+
+        if not user:
+            return Response(
+                {"detail": "No account found with this email. Please check your credentials."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check if user is inactive (unverified email)
         if not user.is_active:
             return Response(
                 {
-                    "detail": "Your account is not active. Please verify your email.",
+                    "detail": "Your email address has not been verified yet. Please enter the verification code sent to your email.",
                     "email": user.email,
                     "unverified": True,
                 },
                 status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Verify password
+        if not user.check_password(password):
+            return Response(
+                {"detail": "Incorrect password. Please try again."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         token, _ = Token.objects.get_or_create(user=user)
@@ -255,7 +250,6 @@ class VerifyEmailView(APIView):
                 "exists": True,
                 "username": user.username,
                 "email": user.email,
-                "code": code,
                 "detail": f"A 6-digit password reset code has been sent to {user.email}.",
             },
             status=status.HTTP_200_OK,

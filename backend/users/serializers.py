@@ -42,7 +42,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "username", "email", "password", "first_name", "last_name"]
+        fields = ["id", "email", "password", "first_name", "last_name"]
 
     def validate_email(self, value):
         email = value.strip().lower()
@@ -61,28 +61,31 @@ class RegisterSerializer(serializers.ModelSerializer):
             )
         return email
 
-    def validate_username(self, value):
-        username = value.strip()
-        if not username:
-            raise serializers.ValidationError("Username is required.")
-        if User.objects.filter(username__iexact=username).exists():
-            raise serializers.ValidationError(
-                "This username is already taken. Please choose another username."
-            )
-        return username
-
     def validate_password(self, value):
         is_valid, err_msg = validate_password_strength(value)
         if not is_valid:
             raise serializers.ValidationError(err_msg)
         return value
 
+    def _generate_unique_username(self, email: str) -> str:
+        """Derives a unique username from the email local part."""
+        import re
+        base = re.sub(r"[^a-z0-9_]", "_", email.split("@")[0].lower())
+        username = base
+        counter = 1
+        while User.objects.filter(username__iexact=username).exists():
+            username = f"{base}_{counter}"
+            counter += 1
+        return username
 
     def create(self, validated_data):
+        email = validated_data["email"]
+        username = self._generate_unique_username(email)
+
         # Create user in pending/inactive state until email is verified
         user = User.objects.create_user(
-            username=validated_data["username"],
-            email=validated_data["email"],
+            username=username,
+            email=email,
             password=validated_data["password"],
             first_name=validated_data.get("first_name", ""),
             last_name=validated_data.get("last_name", ""),

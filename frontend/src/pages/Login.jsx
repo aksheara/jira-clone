@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import api from "../api/client";
 
 export default function Login() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -22,27 +22,26 @@ export default function Login() {
   const [forgotError, setForgotError] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
-  const [devResetCode, setDevResetCode] = useState("");
 
   const { login } = useAuth();
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!username.trim() || !password) {
-      setError("Please enter both username and password");
+    if (!email.trim() || !password) {
+      setError("Please enter both email and password");
       return;
     }
     setError("");
     setLoading(true);
     try {
-      await login(username.trim(), password);
+      await login(email.trim().toLowerCase(), password);
       navigate("/projects");
     } catch (err) {
       const msg =
         err?.response?.data?.non_field_errors?.[0] ||
         err?.response?.data?.detail ||
-        "Invalid username or password. Please check your credentials.";
+        "Invalid email or password. Please check your credentials.";
       setError(msg);
     } finally {
       setLoading(false);
@@ -64,7 +63,6 @@ export default function Login() {
       const res = await api.post("/auth/verify-email/", { email: query });
       if (res.data?.exists) {
         setVerifiedUser(res.data);
-        if (res.data?.code) setDevResetCode(res.data.code);
         setForgotStep(2);
         setResendCooldown(30);
       } else {
@@ -113,10 +111,6 @@ export default function Login() {
         code: cleanCode,
         new_password: newPassword,
       });
-      // Pre-fill login username
-      if (verifiedUser?.username) {
-        setUsername(verifiedUser.username);
-      }
       setForgotStep(3);
     } catch (err) {
       const msg = err?.response?.data?.detail || "Could not update password. Please check your OTP code.";
@@ -218,24 +212,24 @@ export default function Login() {
 
             <form onSubmit={handleSubmit} className="jira-auth-form">
               <div className="jira-form-group">
-                <label className="jira-form-label" htmlFor="login-username">
-                  Username
+                <label className="jira-form-label" htmlFor="login-email">
+                  Email Address
                 </label>
                 <div className="jira-input-wrapper">
                   <span className="jira-input-icon">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                      <polyline points="22,6 12,13 2,6"></polyline>
                     </svg>
                   </span>
                   <input
-                    id="login-username"
-                    type="text"
+                    id="login-email"
+                    type="email"
                     className="jira-form-input"
-                    placeholder="Enter your username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    autoComplete="username"
+                    placeholder="Enter your email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
                     autoFocus
                     required
                   />
@@ -457,18 +451,6 @@ export default function Login() {
                     required
                     autoFocus
                   />
-                  {devResetCode && (
-                    <div className="jira-dev-code-banner" style={{ marginTop: 8 }}>
-                      <span>💡 <strong>Your Reset Code:</strong> <code className="jira-dev-code-highlight">{devResetCode}</code></span>
-                      <button
-                        type="button"
-                        className="jira-dev-autofill-btn"
-                        onClick={() => setResetOtp(devResetCode)}
-                      >
-                        Auto-fill
-                      </button>
-                    </div>
-                  )}
                 </div>
 
                 <div className="jira-form-group">
