@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 
-from projects.models import Project
+from projects.models import Project, Sprint
 
 
 class Issue(models.Model):
@@ -47,6 +47,9 @@ class Issue(models.Model):
     )
 
     labels = models.ManyToManyField("Label", blank=True, related_name="issues")
+    sprint = models.ForeignKey(
+        Sprint, on_delete=models.SET_NULL, null=True, blank=True, related_name="issues"
+    )
     figma_url = models.URLField(max_length=500, blank=True, null=True)
     github_pr = models.CharField(max_length=300, blank=True, null=True)
     due_date = models.DateField(null=True, blank=True)
@@ -82,6 +85,28 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"Comment by {self.author} on {self.issue}"
+
+
+class IssueAttachment(models.Model):
+    """
+    File attached to an issue — images, PDFs, docs, etc.
+    Files are stored under MEDIA_ROOT/attachments/issue_<id>/
+    """
+    issue = models.ForeignKey(Issue, on_delete=models.CASCADE, related_name="attachments")
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="attachments"
+    )
+    file = models.FileField(upload_to="attachments/issue_%Y%m%d/")
+    filename = models.CharField(max_length=255)
+    file_size = models.PositiveIntegerField(default=0, help_text="Size in bytes")
+    content_type = models.CharField(max_length=100, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-uploaded_at"]
+
+    def __str__(self):
+        return f"{self.filename} → {self.issue}"
 
 
 class ActivityLog(models.Model):

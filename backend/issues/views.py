@@ -1,12 +1,14 @@
 from rest_framework import permissions, viewsets
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.parsers import FormParser, MultiPartParser
 
 from projects.models import ProjectMembership
 from projects.permissions import IsProjectMemberOrAbove
 
-from .models import ActivityLog, Comment, Issue, Label
+from .models import ActivityLog, Comment, Issue, IssueAttachment, Label
 from .serializers import (
     ActivityLogSerializer,
+    AttachmentSerializer,
     CommentSerializer,
     IssueListSerializer,
     IssueSerializer,
@@ -88,3 +90,32 @@ class LabelViewSet(viewsets.ModelViewSet):
     queryset = Label.objects.all()
     serializer_class = LabelSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+
+class AttachmentViewSet(viewsets.ModelViewSet):
+    serializer_class = AttachmentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    http_method_names = ["get", "post", "delete", "head", "options"]
+
+    def get_queryset(self):
+        qs = IssueAttachment.objects.filter(
+            issue__project__memberships__user=self.request.user
+        ).distinct()
+        issue_id = self.request.query_params.get("issue")
+        if issue_id:
+            qs = qs.filter(issue_id=issue_id)
+        return qs
+
+    def perform_create(self, serializer):
+        issue = serializer.validated_data["issue"]
+        if not issue.project.memberships.filter(user=self.request.user).exists():
+            raise PermissionDenied("You are not a member of this project.")
+        serializer.save(uploaded_by=self.request.user)
+
+    def perform_destroy(self, instance):
+        # Only uploader or reporter can delete
+        if instance.uploaded_by != self.request.user and instance.issue.reporter != self.request.user:
+            raise PermissionDenied("You can only delete your own attachments.")
+        instance.file.delete(save=False)  # remove file from disk
+        instance.delete()

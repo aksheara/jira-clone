@@ -8,6 +8,7 @@ import ListView from "../components/ListView";
 import SummaryView from "../components/SummaryView";
 import CalendarView from "../components/CalendarView";
 import DocsView from "../components/DocsView";
+import BacklogView from "../components/BacklogView";
 import IssueModal from "../components/IssueModal";
 import ProjectMembersModal from "../components/ProjectMembersModal";
 import CreateIssueModal from "../components/CreateIssueModal";
@@ -288,6 +289,22 @@ export default function Board() {
               <span>Docs</span>
             </button>
 
+            {/* Backlog tab */}
+            <button
+              className={`jira-tab-btn ${activeTab === "backlog" ? "active" : ""}`}
+              onClick={() => setActiveTab("backlog")}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="8" y1="6" x2="21" y2="6"/>
+                <line x1="8" y1="12" x2="21" y2="12"/>
+                <line x1="8" y1="18" x2="21" y2="18"/>
+                <line x1="3" y1="6" x2="3.01" y2="6"/>
+                <line x1="3" y1="12" x2="3.01" y2="12"/>
+                <line x1="3" y1="18" x2="3.01" y2="18"/>
+              </svg>
+              <span>Backlog</span>
+            </button>
+
             {/* + Add view */}
             <button className="jira-tab-btn-add" title="Add view">
               <span>+</span>
@@ -442,6 +459,16 @@ export default function Board() {
           {/* 5. DOCS VIEW */}
           {activeTab === "docs" && (
             <DocsView project={projectDetails} currentUser={user} />
+          )}
+
+          {activeTab === "backlog" && (
+            <BacklogView
+              project={projectDetails}
+              issues={issues}
+              members={members}
+              currentUser={user}
+              onRefresh={loadIssues}
+            />
           )}
         </div>
       </main>

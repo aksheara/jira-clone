@@ -66,6 +66,33 @@ class ProjectDoc(models.Model):
         return f"[{self.project.key}] {self.title}"
 
 
+class Sprint(models.Model):
+    """
+    A time-boxed iteration. Belongs to one Project.
+    Status flow: PLANNED → ACTIVE → COMPLETED.
+    Only one sprint per project can be ACTIVE at a time.
+    """
+    class Status(models.TextChoices):
+        PLANNED = "PLANNED", "Planned"
+        ACTIVE = "ACTIVE", "Active"
+        COMPLETED = "COMPLETED", "Completed"
+
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="sprints")
+    name = models.CharField(max_length=200)
+    goal = models.TextField(blank=True, help_text="Sprint goal / objective")
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.PLANNED)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.project.key} — {self.name} [{self.status}]"
+
+
 class AutomationRule(models.Model):
     """
     Automated workflow rules for projects.

@@ -136,14 +136,35 @@ The Jira Software Team
     from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@jira-software.local")
 
     try:
-        send_mail(
-            subject=subject,
-            message=message,
-            from_email=from_email,
-            recipient_list=[email],
-            html_message=html_message,
-            fail_silently=False,
-        )
+        import ssl
+        import smtplib
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+
+        # Build the email message
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = from_email
+        msg["To"] = email
+        msg.attach(MIMEText(message, "plain"))
+        msg.attach(MIMEText(html_message, "html"))
+
+        # Connect with TLS but skip cert verification (fixes Windows SSL chain issue)
+        context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+
+        host = getattr(settings, "EMAIL_HOST", "smtp.gmail.com")
+        port = getattr(settings, "EMAIL_PORT", 587)
+        user = getattr(settings, "EMAIL_HOST_USER", "")
+        password = getattr(settings, "EMAIL_HOST_PASSWORD", "")
+
+        with smtplib.SMTP(host, port, timeout=10) as server:
+            server.ehlo()
+            server.starttls(context=context)
+            server.login(user, password)
+            server.sendmail(from_email, [email], msg.as_string())
+
         return True
     except Exception as e:
         print(f"[Email Dispatch Error]: {e}")

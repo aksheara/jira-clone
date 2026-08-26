@@ -5060,3 +5060,394 @@ input:checked + .jira-switch-slider:before {
     padding: 36px 28px;
   }
 }
+
+/* ========== FILE ATTACHMENTS ========== */
+.jira-attachment-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 2px dashed #C1C7D0;
+  border-radius: 8px;
+  padding: 24px 16px;
+  cursor: pointer;
+  color: #6B778C;
+  font-size: 13px;
+  transition: border-color 0.15s, background 0.15s;
+  margin-top: 8px;
+}
+.jira-attachment-dropzone:hover {
+  border-color: #0052CC;
+  background: #F4F5F7;
+  color: #0052CC;
+}
+
+.jira-attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.jira-attachment-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: #F4F5F7;
+  border: 1px solid #DFE1E6;
+  border-radius: 6px;
+  transition: background 0.12s;
+}
+.jira-attachment-row:hover {
+  background: #EBECF0;
+}
+
+.jira-attachment-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.jira-attachment-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.jira-attachment-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #0052CC;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.jira-attachment-name:hover {
+  text-decoration: underline;
+}
+
+.jira-attachment-meta {
+  font-size: 11px;
+  color: #6B778C;
+}
+
+/* ========== SPRINTS & BACKLOG ========== */
+.jira-backlog-container {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 1100px;
+}
+
+.jira-backlog-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.jira-backlog-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Sprint section card */
+.jira-sprint-section {
+  border: 1px solid #DFE1E6;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.jira-sprint-section.active-sprint {
+  border-color: #0052CC;
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.12);
+}
+
+.jira-sprint-section.drag-over {
+  border-color: #0052CC;
+  background: #F0F4FF;
+  box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.18);
+}
+
+.jira-sprint-section.backlog-section {
+  border-color: #DFE1E6;
+}
+
+.jira-sprint-section.completed-sprint {
+  opacity: 0.7;
+}
+
+/* Sprint header */
+.jira-sprint-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #F4F5F7;
+  border-bottom: 1px solid #DFE1E6;
+  min-height: 46px;
+}
+
+.jira-sprint-collapse-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  color: #6B778C;
+  display: flex;
+  align-items: center;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.jira-sprint-collapse-btn:hover { background: #EBECF0; }
+
+.jira-sprint-header-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.jira-sprint-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #172B4D;
+}
+
+.jira-sprint-active-badge {
+  font-size: 10px;
+  font-weight: 700;
+  background: #0052CC;
+  color: #fff;
+  padding: 2px 7px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+}
+
+.jira-sprint-completed-badge {
+  font-size: 10px;
+  font-weight: 700;
+  background: #00875A;
+  color: #fff;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.jira-sprint-dates {
+  font-size: 12px;
+  color: #6B778C;
+}
+
+.jira-sprint-goal {
+  font-size: 12px;
+  color: #42526E;
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.jira-sprint-count {
+  font-size: 12px;
+  color: #6B778C;
+  background: #EBECF0;
+  padding: 1px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.jira-sprint-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.jira-btn-complete-sprint {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 4px;
+  border: 1px solid #00875A;
+  background: #E3FCEF;
+  color: #00875A;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.jira-btn-complete-sprint:hover { background: #C3F0D8; }
+
+/* Issue rows */
+.jira-backlog-issue-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.jira-backlog-issue-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-bottom: 1px solid #F4F5F7;
+  cursor: pointer;
+  transition: background 0.1s;
+  user-select: none;
+}
+.jira-backlog-issue-row:hover { background: #F8F9FA; }
+.jira-backlog-issue-row:last-child { border-bottom: none; }
+.jira-backlog-issue-row.done { opacity: 0.6; }
+
+.jira-backlog-drag-handle {
+  cursor: grab;
+  color: #C1C7D0;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+.jira-backlog-drag-handle:active { cursor: grabbing; }
+
+.jira-backlog-type-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.jira-backlog-key {
+  font-size: 12px;
+  color: #6B778C;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 70px;
+}
+
+.jira-backlog-title {
+  font-size: 13.5px;
+  color: #172B4D;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.jira-backlog-row-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.jira-backlog-empty-drop {
+  padding: 18px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: #97A0AF;
+  font-style: italic;
+}
+
+/* Inline create */
+.jira-backlog-create-btn {
+  background: none;
+  border: none;
+  color: #0052CC;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 14px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background 0.1s;
+}
+.jira-backlog-create-btn:hover { background: #F4F5F7; }
+
+.jira-backlog-inline-create {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-top: 1px solid #F4F5F7;
+  background: #FAFBFC;
+}
+
+/* Sprint create card */
+.jira-sprint-create-card {
+  border: 1px solid #0052CC;
+  border-radius: 8px;
+  padding: 16px;
+  background: #F8FAFF;
+}
+
+.jira-sprint-create-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #172B4D;
+  margin: 0 0 12px 0;
+}
+
+.jira-sprint-create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.jira-sprint-form-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.jira-sprint-form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Sprint edit inline form */
+.jira-sprint-edit-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+/* Completed sprints toggle */
+.jira-completed-sprints-wrap {
+  margin-top: 4px;
+}
+
+.jira-completed-sprints-toggle {
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6B778C;
+  cursor: pointer;
+  padding: 6px 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.1s;
+}
+.jira-completed-sprints-toggle:hover { color: #172B4D; }
+
+/* Avatar unassigned */
+.jira-avatar-circle.unassigned {
+  background: #EBECF0;
+  color: #6B778C;
+}
+
+/* Status pill adjustments for backlog */
+.jira-status-pill-mini.in-progress {
+  background: #DEEBFF;
+  color: #0052CC;
+}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import api from "../api/client";
 
 export default function IssueModal({ issueId, projectKey, members = [], onClose, onUpdate }) {
@@ -19,6 +19,11 @@ export default function IssueModal({ issueId, projectKey, members = [], onClose,
   const [githubPr, setGithubPr] = useState("");
   const [isEditingGithub, setIsEditingGithub] = useState(false);
   const [copiedBranch, setCopiedBranch] = useState(false);
+
+  // Attachments state
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const fileInputRef = useRef(null);
 
   function load() {
     api.get(`/issues/${issueId}/`).then((res) => {
@@ -128,6 +133,58 @@ export default function IssueModal({ issueId, projectKey, members = [], onClose,
       onClose();
       onUpdate && onUpdate();
     }
+  }
+
+  async function handleFileUpload(e) {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    setUploadError("");
+    setUploadingFile(true);
+    try {
+      for (const file of files) {
+        if (file.size > 10 * 1024 * 1024) {
+          setUploadError(`"${file.name}" exceeds the 10 MB limit.`);
+          continue;
+        }
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("issue", issueId);
+        await api.post("/attachments/", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      }
+      load();
+    } catch (err) {
+      setUploadError("Upload failed. Please try again.");
+    } finally {
+      setUploadingFile(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  async function handleDeleteAttachment(attachmentId) {
+    if (!window.confirm("Delete this attachment?")) return;
+    try {
+      await api.delete(`/attachments/${attachmentId}/`);
+      load();
+    } catch {
+      alert("Could not delete attachment.");
+    }
+  }
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  function getFileIcon(contentType = "") {
+    if (contentType.startsWith("image/")) return "🖼️";
+    if (contentType === "application/pdf") return "📄";
+    if (contentType.includes("zip") || contentType.includes("rar")) return "🗜️";
+    if (contentType.includes("word") || contentType.includes("document")) return "📝";
+    if (contentType.includes("sheet") || contentType.includes("excel")) return "📊";
+    return "📎";
   }
 
   if (!issue) return null;
@@ -429,6 +486,105 @@ export default function IssueModal({ issueId, projectKey, members = [], onClose,
                 </div>
               </div>
             )}
+
+            {/* Attachments Section */}
+            <div className="jira-drawer-section">
+              <div className="jira-section-header-flex">
+                <label className="jira-drawer-label">
+                  📎 Attachments ({issue.attachments?.length || 0})
+                </label>
+                <button
+                  className="jira-btn-link-sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingFile}
+                >
+                  {uploadingFile ? "Uploading..." : "+ Attach File"}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  style={{ display: "none" }}
+                  onChange={handleFileUpload}
+                />
+              </div>
+
+              {uploadError && (
+                <div className="jira-auth-alert-error" style={{ marginBottom: 8 }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  <div className="jira-auth-alert-msg">{uploadError}</div>
+                </div>
+              )}
+
+              {/* Drop zone when no attachments */}
+              {!issue.attachments?.length && !uploadingFile && (
+                <div
+                  className="jira-attachment-dropzone"
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const dt = e.dataTransfer;
+                    if (dt.files.length) {
+                      const syntheticEvent = { target: { files: dt.files } };
+                      handleFileUpload(syntheticEvent);
+                    }
+                  }}
+                >
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6B778C" strokeWidth="1.5">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                  </svg>
+                  <span>Drop files here or click to upload</span>
+                  <span style={{ fontSize: 11, color: "#97A0AF" }}>Max 10 MB per file</span>
+                </div>
+              )}
+
+              {/* Attachment list */}
+              {issue.attachments?.length > 0 && (
+                <div className="jira-attachment-list">
+                  {issue.attachments.map((att) => (
+                    <div key={att.id} className="jira-attachment-row">
+                      <span className="jira-attachment-icon">{getFileIcon(att.content_type)}</span>
+                      <div className="jira-attachment-info">
+                        <a
+                          href={att.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="jira-attachment-name"
+                          title={att.filename}
+                        >
+                          {att.filename}
+                        </a>
+                        <span className="jira-attachment-meta">
+                          {formatBytes(att.file_size)} · {att.uploaded_by?.username} · {new Date(att.uploaded_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <button
+                        className="jira-btn-icon-plain"
+                        title="Delete attachment"
+                        onClick={() => handleDeleteAttachment(att.id)}
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#de350b" strokeWidth="2.5">
+                          <polyline points="3 6 5 6 21 6"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                  {/* Re-upload button when files already exist */}
+                  <button
+                    className="jira-btn-link-xs"
+                    style={{ marginTop: 6 }}
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingFile}
+                  >
+                    + Add more files
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Activity & Comments Tabs */}
             <div className="jira-drawer-section">

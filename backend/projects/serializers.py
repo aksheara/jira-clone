@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from users.serializers import UserSerializer
 
-from .models import AutomationRule, Project, ProjectDoc, ProjectMembership
+from .models import AutomationRule, Project, ProjectDoc, ProjectMembership, Sprint
 
 
 class ProjectMembershipSerializer(serializers.ModelSerializer):
@@ -33,6 +33,26 @@ class AutomationRuleSerializer(serializers.ModelSerializer):
             "id", "project", "name", "trigger", "action",
             "enabled", "execution_count", "created_at"
         ]
+
+
+class SprintSerializer(serializers.ModelSerializer):
+    issues_count = serializers.SerializerMethodField()
+    completed_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Sprint
+        fields = [
+            "id", "project", "name", "goal", "status",
+            "start_date", "end_date", "created_at", "completed_at",
+            "issues_count", "completed_count",
+        ]
+        read_only_fields = ["status", "created_at", "completed_at"]
+
+    def get_issues_count(self, obj):
+        return obj.issues.count()
+
+    def get_completed_count(self, obj):
+        return obj.issues.filter(status="DONE").count()
 
 
 class ProjectSerializer(serializers.ModelSerializer):
