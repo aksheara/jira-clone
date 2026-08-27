@@ -344,7 +344,7 @@ export default function IssueModal({ issueId, projectKey, members = [], onClose,
               )}
             </div>
 
-            {/* 🎨 FIGMA DESIGN EMBED INTEGRATION */}
+            {/* FIGMA DESIGN EMBED INTEGRATION */}
             <div className="jira-drawer-section">
               <div className="jira-section-header-flex">
                 <label className="jira-drawer-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -378,7 +378,7 @@ export default function IssueModal({ issueId, projectKey, members = [], onClose,
                       className="jira-btn-link-xs"
                       onClick={handleLoadSampleFigma}
                     >
-                      ✨ Load sample design mockup
+                      Load sample design mockup
                     </button>
                     <div style={{ display: "flex", gap: 6 }}>
                       <button className="jira-btn-primary-sm" onClick={handleSaveFigma}>Save Design</button>
@@ -414,7 +414,7 @@ export default function IssueModal({ issueId, projectKey, members = [], onClose,
               ) : null}
             </div>
 
-            {/* 🐙 GITHUB DEVELOPMENT PANEL */}
+            {/* GITHUB DEVELOPMENT PANEL */}
             <div className="jira-drawer-section">
               <div className="jira-section-header-flex">
                 <label className="jira-drawer-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>

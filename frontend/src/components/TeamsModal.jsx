@@ -35,11 +35,11 @@ export default function TeamsModal({ isOpen, onClose }) {
       <div className="jira-modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 720 }}>
         <div className="jira-modal-header">
           <div className="jira-modal-title-group">
-            <h2 className="jira-modal-title">👥 Organization & Teams Directory</h2>
+            <h2 className="jira-modal-title">Organization & Teams Directory</h2>
             <span className="jira-sub-key">Real-time team members and active workspace projects</span>
           </div>
           <button className="jira-btn-icon-close" onClick={onClose}>
-            ✕
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
 
@@ -51,14 +51,14 @@ export default function TeamsModal({ isOpen, onClose }) {
               onClick={() => setActiveTab("members")}
               style={{ padding: "10px 4px" }}
             >
-              <span>👤 All Members ({users.length})</span>
+              <span>All Members ({users.length})</span>
             </button>
             <button
               className={`jira-tab-btn ${activeTab === "projects" ? "active" : ""}`}
               onClick={() => setActiveTab("projects")}
               style={{ padding: "10px 4px" }}
             >
-              <span>📁 Active Workspaces ({projects.length})</span>
+              <span>Active Workspaces ({projects.length})</span>
             </button>
           </div>
 

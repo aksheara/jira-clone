@@ -246,7 +246,7 @@ export default function SummaryView({
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ fontSize: 12 }}>
-                        {issue.issue_type === "BUG" ? "🐞" : issue.issue_type === "STORY" ? "📖" : "📋"}
+                        <IssueTypeIcon type={issue.issue_type} size={12} />
                       </span>
                       <span className="jira-task-key">{project?.key}-{issue.id}</span>
                       <span className="jira-task-title-trunc">{issue.title}</span>

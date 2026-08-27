@@ -104,7 +104,9 @@ export default function AutomationModal({ isOpen, onClose, projectId, projectNam
               <span className="jira-sub-key">Persisted in Django Database — Live Event Triggers</span>
             </div>
           </div>
-          <button className="jira-btn-icon-close" onClick={onClose}>✕</button>
+          <button className="jira-btn-icon-close" onClick={onClose}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
 
         <div className="jira-modal-body">
@@ -190,7 +192,7 @@ export default function AutomationModal({ isOpen, onClose, projectId, projectNam
 
                     <div className="jira-rule-logic-flow">
                       <span className="jira-logic-step"><strong>WHEN</strong> {r.trigger}</span>
-                      <span className="jira-logic-arrow">➔</span>
+                      <span className="jira-logic-arrow">→</span>
                       <span className="jira-logic-step"><strong>THEN</strong> {r.action}</span>
                     </div>
 

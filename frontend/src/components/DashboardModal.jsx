@@ -13,11 +13,11 @@ export default function DashboardModal({ isOpen, onClose, issues = [] }) {
       <div className="jira-modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 840 }}>
         <div className="jira-modal-header">
           <div className="jira-modal-title-group">
-            <h2 className="jira-modal-title">📊 Team Engineering & Sprint Dashboard</h2>
+            <h2 className="jira-modal-title">Team Engineering & Sprint Dashboard</h2>
             <span className="jira-sub-key">Real-time metrics, burndown, and sprint analytics</span>
           </div>
           <button className="jira-btn-icon-close" onClick={onClose}>
-            ✕
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
 
