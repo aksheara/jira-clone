@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/client";
@@ -10,17 +10,9 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Unverified account flow
-  const [unverifiedEmail, setUnverifiedEmail] = useState(null); // set when backend says account is unverified
-  const [verifyOtp, setVerifyOtp] = useState("");
-  const [verifyLoading, setVerifyLoading] = useState(false);
-  const [verifyError, setVerifyError] = useState("");
-  const [resendVerifyCooldown, setResendVerifyCooldown] = useState(0);
-  const [resendVerifySuccess, setResendVerifySuccess] = useState("");
-
   // Forgot password modal state
   const [showForgotModal, setShowForgotModal] = useState(false);
-  const [forgotStep, setForgotStep] = useState(1); // 1: verify email & dispatch OTP, 2: enter OTP + new password, 3: success
+  const [forgotStep, setForgotStep] = useState(1);
   const [forgotEmail, setForgotEmail] = useState("");
   const [verifiedUser, setVerifiedUser] = useState(null);
   const [resetOtp, setResetOtp] = useState("");
@@ -31,17 +23,30 @@ export default function Login() {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
-  const { login, verifyCode } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
-  // Countdown timer for resend verification code
-  useEffect(() => {
-    let timer;
-    if (resendVerifyCooldown > 0) {
-      timer = setTimeout(() => setResendVerifyCooldown((prev) => prev - 1), 1000);
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!email.trim() || !password) {
+      setError("Please enter both email and password");
+      return;
     }
-    return () => clearTimeout(timer);
-  }, [resendVerifyCooldown]);
+    setError("");
+    setLoading(true);
+    try {
+      await login(email.trim().toLowerCase(), password);
+      navigate("/projects");
+    } catch (err) {
+      const msg =
+        err?.response?.data?.non_field_errors?.[0] ||
+        err?.response?.data?.detail ||
+        "Invalid email or password. Please check your credentials.";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -257,106 +262,12 @@ export default function Login() {
             </div>
 
             <div className="jira-auth-title-area">
-              <h2 className="jira-auth-main-title">
-                {unverifiedEmail ? "Verify your email" : "Log in to your account"}
-              </h2>
+              <h2 className="jira-auth-main-title">Log in to your account</h2>
               <p className="jira-auth-main-subtitle">
-                {unverifiedEmail
-                  ? `Enter the 6-digit verification code sent to ${unverifiedEmail}`
-                  : "Enter your credentials to access your Jira projects and team boards."}
+                Enter your credentials to access your Jira projects and team boards.
               </p>
             </div>
 
-            {/* Unverified account — OTP verification step */}
-            {unverifiedEmail ? (
-              <>
-                {verifyError && (
-                  <div className="jira-auth-alert-error">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="12" y1="8" x2="12" y2="12"></line>
-                      <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                    </svg>
-                    <div className="jira-auth-alert-msg">{verifyError}</div>
-                  </div>
-                )}
-                {resendVerifySuccess && (
-                  <div className="jira-auth-verified-badge" style={{ marginBottom: 16 }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#006644" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    <span>{resendVerifySuccess}</span>
-                  </div>
-                )}
-                <form onSubmit={handleVerifyOtpSubmit} className="jira-auth-form">
-                  <div className="jira-auth-otp-hero">
-                    <div className="jira-auth-otp-badge">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0052CC" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                        <polyline points="22,6 12,13 2,6"></polyline>
-                      </svg>
-                    </div>
-                    <span className="jira-auth-otp-email-label">{unverifiedEmail}</span>
-                  </div>
-                  <div className="jira-form-group">
-                    <label className="jira-form-label" htmlFor="verify-otp" style={{ textAlign: "center", display: "block" }}>
-                      Enter 6-Digit Code
-                    </label>
-                    <input
-                      id="verify-otp"
-                      type="text"
-                      className="jira-form-input jira-otp-input-field"
-                      placeholder="• • • • • •"
-                      maxLength={6}
-                      value={verifyOtp}
-                      onChange={(e) => setVerifyOtp(e.target.value.replace(/[^0-9]/g, ""))}
-                      autoFocus
-                      required
-                    />
-                    <span style={{ fontSize: 12, color: "#6B778C", textAlign: "center", display: "block", marginTop: 4 }}>
-                      Code expires in 15 minutes.
-                    </span>
-                  </div>
-                  <button
-                    type="submit"
-                    className="jira-auth-submit-btn"
-                    disabled={verifyLoading || verifyOtp.length !== 6}
-                  >
-                    {verifyLoading ? (
-                      <span className="jira-btn-spinner-wrap">
-                        <span className="jira-btn-spinner"></span>
-                        Verifying Code...
-                      </span>
-                    ) : (
-                      <span>Verify & Log In &rarr;</span>
-                    )}
-                  </button>
-                  <div className="jira-auth-resend-row">
-                    <button
-                      type="button"
-                      className="jira-btn-resend"
-                      onClick={handleResendVerifyCode}
-                      disabled={resendVerifyCooldown > 0 || verifyLoading}
-                    >
-                      {resendVerifyCooldown > 0 ? `Resend code in ${resendVerifyCooldown}s` : "Resend Code"}
-                    </button>
-                    <button
-                      type="button"
-                      className="jira-btn-change-email"
-                      onClick={() => {
-                        setUnverifiedEmail(null);
-                        setVerifyOtp("");
-                        setVerifyError("");
-                        setResendVerifySuccess("");
-                      }}
-                    >
-                      Back to Login
-                    </button>
-                  </div>
-                </form>
-              </>
-            ) : (
-            <>
             {error && (
               <div className="jira-auth-alert-error">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -479,8 +390,6 @@ export default function Login() {
             <div className="jira-auth-legal">
               By logging in, you agree to the Atlassian Cloud Terms of Service and Privacy Policy.
             </div>
-            </>
-            )}
           </div>
         </div>
       </div>

@@ -178,28 +178,10 @@ class LoginView(ObtainAuthToken):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Check if user is inactive (unverified email)
+        # Check if user is inactive (unverified email) — just activate and log in directly
         if not user.is_active:
-            # Auto-send a fresh OTP so user can verify immediately
-            from .utils import generate_otp_code, send_verification_email
-            EmailVerificationCode.objects.filter(
-                email__iexact=user.email, purpose="REGISTRATION", is_used=False
-            ).update(is_used=True)
-            code = generate_otp_code(6)
-            EmailVerificationCode.objects.create(
-                email=user.email, user=user, code=code, purpose="REGISTRATION"
-            )
-            send_verification_email(
-                email=user.email, code=code, purpose="REGISTRATION", username=user.username
-            )
-            return Response(
-                {
-                    "detail": "Your email address has not been verified yet. A verification code has been sent to your email.",
-                    "email": user.email,
-                    "unverified": True,
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
+            user.is_active = True
+            user.save()
 
         # Verify password
         if not user.check_password(password):
