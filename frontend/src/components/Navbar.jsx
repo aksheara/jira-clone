@@ -236,64 +236,15 @@ export default function Navbar({
               )}
             </div>
 
-            {/* 3. DASHBOARDS DROPDOWN */}
-            <div className="jira-nav-dropdown-wrap">
-              <button
-                className={`jira-nav-link ${activeMenu === "dashboards" ? "active" : ""}`}
-                onClick={() => toggleMenu("dashboards")}
-              >
-                <span>Dashboards</span>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </button>
-
-              {activeMenu === "dashboards" && (
-                <div className="jira-nav-popover" style={{ width: 300 }}>
-                  <div className="jira-popover-header">RECENT DASHBOARDS</div>
-                  <div className="jira-popover-list">
-                    <button
-                      className="jira-popover-item-btn"
-                      onClick={() => {
-                        setActiveMenu(null);
-                        setShowDashboardModal(true);
-                      }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                      <div>
-                        <div className="jira-popover-item-title">Team Sprint Velocity & Analytics</div>
-                        <div className="jira-popover-item-sub">Burndown, WIP limits, completion rate</div>
-                      </div>
-                    </button>
-
-                    <button
-                      className="jira-popover-item-btn"
-                      onClick={() => {
-                        setActiveMenu(null);
-                        setShowDashboardModal(true);
-                      }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-                      <div>
-                        <div className="jira-popover-item-title">Engineering Quality & Health</div>
-                        <div className="jira-popover-item-sub">Bug resolution, cycle time</div>
-                      </div>
-                    </button>
-                  </div>
-                  <div className="jira-popover-footer">
-                    <button
-                      className="jira-popover-btn-action"
-                      onClick={() => {
-                        setActiveMenu(null);
-                        setShowDashboardModal(true);
-                      }}
-                    >
-                      + Open Full Dashboard View
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* 3. DASHBOARD — direct link to new dashboard page */}
+            <Link
+              to="/dashboard"
+              className="jira-nav-link"
+              style={{ textDecoration: "none" }}
+              onClick={() => setActiveMenu(null)}
+            >
+              <span>Dashboards</span>
+            </Link>
 
             {/* 4. TEAMS DROPDOWN */}
             <div className="jira-nav-dropdown-wrap">
@@ -417,15 +368,6 @@ export default function Navbar({
                 </div>
               )}
             </div>
-
-            {/* Dashboard link */}
-            <Link
-              to="/dashboard"
-              className="jira-nav-link"
-              style={{ textDecoration: "none" }}
-            >
-              <span>Dashboard</span>
-            </Link>
 
             {/* Blue solid + Create button */}
             <button
