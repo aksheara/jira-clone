@@ -236,15 +236,52 @@ export default function Navbar({
               )}
             </div>
 
-            {/* 3. DASHBOARD — direct link to new dashboard page */}
-            <Link
-              to="/dashboard"
-              className="jira-nav-link"
-              style={{ textDecoration: "none" }}
-              onClick={() => setActiveMenu(null)}
-            >
-              <span>Dashboards</span>
-            </Link>
+            {/* 3. DASHBOARD — dropdown listing all projects */}
+            <div className="jira-nav-dropdown-wrap">
+              <button
+                className={`jira-nav-link ${activeMenu === "dashboards" ? "active" : ""}`}
+                onClick={() => toggleMenu("dashboards")}
+              >
+                <span>Dashboards</span>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+
+              {activeMenu === "dashboards" && (
+                <div className="jira-nav-popover" style={{ width: 280 }}>
+                  <div className="jira-popover-header">PROJECT DASHBOARDS</div>
+                  <div className="jira-popover-list">
+                    {filteredProjects.map((p) => (
+                      <Link
+                        key={p.id}
+                        to={`/dashboard?project=${p.id}`}
+                        className="jira-popover-item"
+                        onClick={() => setActiveMenu(null)}
+                      >
+                        <div className="jira-project-dot" style={{ background: "#0052CC" }}></div>
+                        <div>
+                          <div className="jira-popover-item-title">{p.name}</div>
+                          <div className="jira-popover-item-sub">{p.key} · Dashboard</div>
+                        </div>
+                      </Link>
+                    ))}
+                    {filteredProjects.length === 0 && (
+                      <div className="jira-empty-muted">No projects found.</div>
+                    )}
+                  </div>
+                  <div className="jira-popover-footer">
+                    <Link
+                      to="/dashboard"
+                      className="jira-popover-btn-link"
+                      onClick={() => setActiveMenu(null)}
+                    >
+                      View all dashboards
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* 4. TEAMS DROPDOWN */}
             <div className="jira-nav-dropdown-wrap">
