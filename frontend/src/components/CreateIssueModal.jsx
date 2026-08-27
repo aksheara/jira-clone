@@ -18,6 +18,7 @@ export default function CreateIssueModal({
   const [dueDate, setDueDate] = useState("");
   const [parentId, setParentId] = useState("");
   const [existingIssues, setExistingIssues] = useState([]);
+  const [projectMembers, setProjectMembers] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -33,6 +34,10 @@ export default function CreateIssueModal({
     if (projectId) {
       api.get(`/issues/?project=${projectId}`)
         .then((res) => setExistingIssues(res.data))
+        .catch(() => {});
+      // Load members for the selected project
+      api.get(`/projects/${projectId}/`)
+        .then((res) => setProjectMembers(res.data.members || []))
         .catch(() => {});
     }
   }, [projectId]);
@@ -194,7 +199,7 @@ export default function CreateIssueModal({
                 onChange={(e) => setAssigneeId(e.target.value)}
               >
                 <option value="">Unassigned</option>
-                {members.map((m) => (
+                {projectMembers.map((m) => (
                   <option key={m.user?.id || m.id} value={m.user?.id || m.id}>
                     {m.user?.username || m.username}
                   </option>
