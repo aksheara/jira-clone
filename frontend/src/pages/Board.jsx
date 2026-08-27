@@ -21,7 +21,6 @@ const FALLBACK_COLUMNS = [
   { key: "IN_PROGRESS", label: "IN PROGRESS",  color: "#0052CC" },
   { key: "DONE",        label: "DONE",         color: "#00875A" },
 ];
-
 export default function Board() {
   const { projectId } = useParams();
   const { user } = useAuth();
@@ -95,6 +94,16 @@ export default function Board() {
 
   const projectName = projectDetails?.name || "My Data Science Team";
   const projectKey = projectDetails?.key || "KAN";
+
+  // Build kanban columns from project's workflow states if available, else use fallback
+  const kanbanColumns = projectDetails?.workflow_states?.length
+    ? projectDetails.workflow_states.map((s) => ({
+        key: s.name,
+        label: s.name.toUpperCase(),
+        color: s.color,
+        category: s.category,
+      }))
+    : FALLBACK_COLUMNS;
 
   return (
     <div className="jira-app-shell">
@@ -342,8 +351,11 @@ export default function Board() {
             <div className="jira-board-view-container">
               <DragDropContext onDragEnd={onDragEnd}>
                 <div className="jira-kanban-board">
-                  {FALLBACK_COLUMNS.map((col) => {
-                    const colIssues = issues.filter((i) => i.status === col.key);
+                  {kanbanColumns.map((col) => {
+                    // Match issues by state name OR legacy category key (TODO/IN_PROGRESS/DONE)
+                    const colIssues = issues.filter((i) =>
+                      i.status === col.key || i.status === col.category
+                    );
                     return (
                       <Droppable droppableId={col.key} key={col.key}>
                         {(provided, snapshot) => (
@@ -352,9 +364,9 @@ export default function Board() {
                             {...provided.droppableProps}
                             className={`jira-kanban-column ${snapshot.isDraggingOver ? "dragging-over" : ""}`}
                           >
-                            <div className="jira-column-header">
+                            <div className="jira-column-header" style={{ borderTop: `3px solid ${col.color}` }}>
                               <div className="jira-column-title-group">
-                                <span className="jira-column-title">{col.label}</span>
+                                <span className="jira-column-title" style={{ color: col.color }}>{col.label}</span>
                                 <span className="jira-column-count">{colIssues.length}</span>
                               </div>
                             </div>
