@@ -4,6 +4,8 @@ from rest_framework.parsers import FormParser, MultiPartParser
 
 from projects.models import ProjectMembership
 from projects.permissions import IsProjectMemberOrAbove
+from users.models import Notification
+from users.utils import send_assignment_email
 
 from .models import ActivityLog, Comment, Issue, IssueAttachment, Label
 from .serializers import (
@@ -16,6 +18,41 @@ from .serializers import (
 )
 
 TRACKED_FIELDS = ["status", "priority", "assignee_id"]
+
+
+def _notify_assignee(issue, assigned_by_user):
+    """
+    Creates an in-app Notification row and sends an assignment email
+    to the issue's current assignee. Safe to call — silently skips
+    if assignee has no email or is the same person doing the assigning.
+    """
+    assignee = issue.assignee
+    if not assignee:
+        return
+    # Don't notify if someone assigned themselves
+    if assignee == assigned_by_user:
+        return
+
+    issue_key = f"{issue.project.key}-{issue.pk}"
+
+    # 1. In-app notification
+    Notification.objects.create(
+        recipient=assignee,
+        actor=assigned_by_user,
+        action=f"assigned you to issue {issue_key}",
+        target=issue.title,
+    )
+
+    # 2. Email notification (non-blocking — errors are logged, not raised)
+    if assignee.email:
+        send_assignment_email(
+            assignee_email=assignee.email,
+            assignee_username=assignee.username,
+            issue_title=issue.title,
+            issue_key=issue_key,
+            project_name=issue.project.name,
+            assigned_by=assigned_by_user.username,
+        )
 
 
 class IssueViewSet(viewsets.ModelViewSet):
@@ -47,14 +84,20 @@ class IssueViewSet(viewsets.ModelViewSet):
         project = serializer.validated_data["project"]
         if not project.memberships.filter(user=self.request.user).exists():
             raise PermissionDenied("You are not a member of this project.")
-        serializer.save(reporter=self.request.user)
+        instance = serializer.save(reporter=self.request.user)
+        # Notify assignee if one was set at creation time
+        if instance.assignee:
+            _notify_assignee(instance, self.request.user)
 
     def perform_update(self, serializer):
         old_instance = self.get_object()
-        old_status, old_priority, old_assignee = old_instance.status, old_instance.priority, old_instance.assignee_id
+        old_status = old_instance.status
+        old_priority = old_instance.priority
+        old_assignee_id = old_instance.assignee_id
+
         instance = serializer.save()
 
-        # Write activity log entries for the fields that actually changed.
+        # Write activity log entries for fields that actually changed
         if old_status != instance.status:
             ActivityLog.objects.create(
                 issue=instance, actor=self.request.user, field_changed="status",
@@ -65,11 +108,15 @@ class IssueViewSet(viewsets.ModelViewSet):
                 issue=instance, actor=self.request.user, field_changed="priority",
                 old_value=old_priority, new_value=instance.priority,
             )
-        if old_assignee != instance.assignee_id:
+        if old_assignee_id != instance.assignee_id:
             ActivityLog.objects.create(
                 issue=instance, actor=self.request.user, field_changed="assignee",
-                old_value=str(old_assignee or ""), new_value=str(instance.assignee_id or ""),
+                old_value=str(old_assignee_id or ""),
+                new_value=str(instance.assignee_id or ""),
             )
+            # Notify the new assignee (in-app + email)
+            if instance.assignee:
+                _notify_assignee(instance, self.request.user)
 
 
 class CommentViewSet(viewsets.ModelViewSet):

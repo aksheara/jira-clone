@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import WorkflowEditor from "./WorkflowEditor";
 
 export default function SettingsModal({ isOpen, onClose }) {
   const { user } = useAuth();
@@ -13,6 +14,17 @@ export default function SettingsModal({ isOpen, onClose }) {
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  // Workflow section state
+  const [projects, setProjects] = useState([]);
+  const [selectedWorkflowProject, setSelectedWorkflowProject] = useState(null);
+
+  useEffect(() => {
+    api.get("/projects/").then((res) => {
+      setProjects(res.data);
+      if (res.data.length > 0) setSelectedWorkflowProject(res.data[0]);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -154,14 +166,33 @@ export default function SettingsModal({ isOpen, onClose }) {
             {activeSection === "workflows" && (
               <div className="jira-settings-group">
                 <h3 className="jira-section-title">Project Workflow Columns</h3>
-                <p className="jira-setting-desc">Status transitions available for tickets in this workspace.</p>
-                <div className="jira-workflow-pill-list">
-                  <span className="jira-status-pill jira-status-todo">TO DO</span>
-                  <span className="jira-status-arrow">➔</span>
-                  <span className="jira-status-pill jira-status-inprogress">IN PROGRESS</span>
-                  <span className="jira-status-arrow">➔</span>
-                  <span className="jira-status-pill jira-status-done">DONE</span>
-                </div>
+                <p className="jira-setting-desc" style={{ marginBottom: 12 }}>
+                  Customize statuses and allowed transitions per project. Changes take effect immediately on the Kanban board.
+                </p>
+                {projects.length === 0 ? (
+                  <div className="jira-wf-empty">No projects yet. Create a project first.</div>
+                ) : (
+                  <>
+                    <div className="jira-form-field" style={{ marginBottom: 14 }}>
+                      <label className="jira-field-label">Select Project</label>
+                      <select
+                        className="jira-select"
+                        value={selectedWorkflowProject?.id || ""}
+                        onChange={(e) => {
+                          const p = projects.find((p) => p.id === parseInt(e.target.value));
+                          setSelectedWorkflowProject(p || null);
+                        }}
+                      >
+                        {projects.map((p) => (
+                          <option key={p.id} value={p.id}>{p.name} ({p.key})</option>
+                        ))}
+                      </select>
+                    </div>
+                    {selectedWorkflowProject && (
+                      <WorkflowEditor project={selectedWorkflowProject} />
+                    )}
+                  </>
+                )}
               </div>
             )}
 

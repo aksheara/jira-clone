@@ -3,7 +3,7 @@ import api from "../api/client";
 import IssueModal from "./IssueModal";
 import AskAIModal from "./AskAIModal";
 
-export default function ListView({ project, issues = [], onRefresh, currentUser }) {
+export default function ListView({ project, issues = [], members = [], onRefresh, currentUser }) {
   const [selectedIssueId, setSelectedIssueId] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [activeDropdownId, setActiveDropdownId] = useState(null);
@@ -1076,12 +1076,12 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
         </div>
       )}
 
-      {/* Selected Issue Drawer */}
+      {/* Selected Issue Drawer / Modal */}
       {selectedIssueId && (
         <IssueModal
           issueId={selectedIssueId}
           projectKey={project?.key}
-          members={project?.members || []}
+          members={project?.members || members || []}
           onClose={() => setSelectedIssueId(null)}
           onUpdate={onRefresh}
         />

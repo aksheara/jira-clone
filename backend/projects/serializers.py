@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from users.serializers import UserSerializer
 
-from .models import AutomationRule, Project, ProjectDoc, ProjectMembership, Sprint
+from .models import AutomationRule, Project, ProjectDoc, ProjectMembership, Sprint, WorkflowState, WorkflowTransition
 
 
 class ProjectMembershipSerializer(serializers.ModelSerializer):
@@ -35,6 +35,21 @@ class AutomationRuleSerializer(serializers.ModelSerializer):
         ]
 
 
+class WorkflowStateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkflowState
+        fields = ["id", "project", "name", "color", "category", "position", "is_default"]
+
+
+class WorkflowTransitionSerializer(serializers.ModelSerializer):
+    from_state_name = serializers.ReadOnlyField(source="from_state.name")
+    to_state_name = serializers.ReadOnlyField(source="to_state.name")
+
+    class Meta:
+        model = WorkflowTransition
+        fields = ["id", "project", "from_state", "from_state_name", "to_state", "to_state_name"]
+
+
 class SprintSerializer(serializers.ModelSerializer):
     issues_count = serializers.SerializerMethodField()
     completed_count = serializers.SerializerMethodField()
@@ -60,10 +75,14 @@ class ProjectSerializer(serializers.ModelSerializer):
     members = ProjectMembershipSerializer(source="memberships", many=True, read_only=True)
     docs_count = serializers.SerializerMethodField()
     my_role = serializers.SerializerMethodField()
+    workflow_states = WorkflowStateSerializer(many=True, read_only=True)
 
     class Meta:
         model = Project
-        fields = ["id", "name", "key", "description", "created_by", "created_at", "members", "docs_count", "my_role"]
+        fields = [
+            "id", "name", "key", "description", "created_by", "created_at",
+            "members", "docs_count", "my_role", "workflow_states",
+        ]
 
     def get_docs_count(self, obj):
         return obj.docs.count()

@@ -63,7 +63,7 @@ def validate_password_strength(password: str) -> tuple[bool, str]:
     - At least one uppercase letter [A-Z]
     - At least one lowercase letter [a-z]
     - At least one numeric digit [0-9]
-    - At least one special symbol [!@#$%^&*(),.?":{}|<>\-_=+[\]\\;/`~]
+    - At least one special symbol (e.g. @, #, $, %, !, *)
     """
     if not password or len(password) < 8:
         return False, "Password must be at least 8 characters long."
@@ -73,7 +73,7 @@ def validate_password_strength(password: str) -> tuple[bool, str]:
         return False, "Password must contain at least one lowercase letter (a-z)."
     if not re.search(r"[0-9]", password):
         return False, "Password must contain at least one number (0-9)."
-    if not re.search(r'[!@#$%^&*(),.?":{}|<>\-_=+[\]\\;/`~]', password):
+    if not re.search(r'[!@#$%^&*(),.?":{}|<>\-_=+\[\]\\;/`~]', password):
         return False, "Password must contain at least one special symbol (e.g. @, #, $, %, !, *)."
     return True, ""
 
@@ -168,4 +168,85 @@ The Jira Software Team
         return True
     except Exception as e:
         print(f"[Email Dispatch Error]: {e}")
+        return False
+
+
+def send_assignment_email(assignee_email: str, assignee_username: str, issue_title: str,
+                          issue_key: str, project_name: str, assigned_by: str) -> bool:
+    """
+    Sends an email to the user who has been assigned to an issue.
+    """
+    subject = f"[Jira] You've been assigned to {issue_key}"
+
+    message = f"""Hello {assignee_username},
+
+{assigned_by} has assigned you to the following issue:
+
+    Issue : {issue_key} — {issue_title}
+    Project: {project_name}
+
+Log in to Jira Software to view the full details and get started.
+
+Best regards,
+The Jira Software Team
+"""
+
+    html_message = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px;
+                border: 1px solid #DFE1E6; border-radius: 8px; background: #FFFFFF;">
+        <h2 style="color: #0052CC; margin: 0 0 16px 0;">Jira Software</h2>
+        <h3 style="color: #172B4D; margin-top: 0;">You've been assigned to an issue</h3>
+        <p style="color: #42526E; font-size: 14px; line-height: 1.6;">
+            <strong>{assigned_by}</strong> assigned you to:
+        </p>
+        <div style="background: #F4F5F7; border-left: 4px solid #0052CC; border-radius: 4px;
+                    padding: 14px 18px; margin: 16px 0;">
+            <div style="font-size: 13px; color: #6B778C; margin-bottom: 4px;">{project_name}</div>
+            <div style="font-size: 16px; font-weight: 700; color: #172B4D;">
+                {issue_key} — {issue_title}
+            </div>
+        </div>
+        <p style="color: #42526E; font-size: 14px;">
+            Log in to Jira Software to view the full details and start working on it.
+        </p>
+        <hr style="border: none; border-top: 1px solid #EBECF0; margin: 24px 0;" />
+        <p style="color: #8993A4; font-size: 12px; margin: 0;">
+            You received this email because you are a member of <strong>{project_name}</strong>.
+        </p>
+    </div>
+    """
+
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@jira-software.local")
+
+    try:
+        import ssl
+        import smtplib
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = from_email
+        msg["To"] = assignee_email
+        msg.attach(MIMEText(message, "plain"))
+        msg.attach(MIMEText(html_message, "html"))
+
+        context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+
+        host = getattr(settings, "EMAIL_HOST", "smtp.gmail.com")
+        port = getattr(settings, "EMAIL_PORT", 587)
+        user = getattr(settings, "EMAIL_HOST_USER", "")
+        password = getattr(settings, "EMAIL_HOST_PASSWORD", "")
+
+        with smtplib.SMTP(host, port, timeout=10) as server:
+            server.ehlo()
+            server.starttls(context=context)
+            server.login(user, password)
+            server.sendmail(from_email, [assignee_email], msg.as_string())
+
+        return True
+    except Exception as e:
+        print(f"[Assignment Email Error]: {e}")
         return False

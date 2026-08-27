@@ -5,7 +5,8 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from .models import AutomationRule, Project, ProjectDoc, ProjectMembership, Sprint
+from .models import AutomationRule, Project, ProjectDoc, ProjectMembership, Sprint, WorkflowState, WorkflowTransition
+from .models import create_default_workflow
 from .permissions import IsProjectMember, IsProjectMemberOrAbove
 from .serializers import (
     AutomationRuleSerializer,
@@ -13,6 +14,8 @@ from .serializers import (
     ProjectMembershipSerializer,
     ProjectSerializer,
     SprintSerializer,
+    WorkflowStateSerializer,
+    WorkflowTransitionSerializer,
 )
 
 User = get_user_model()
@@ -31,6 +34,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
         ProjectMembership.objects.create(
             project=project, user=self.request.user, role=ProjectMembership.Role.ADMIN
         )
+        # Seed the default 3-column workflow for this project
+        create_default_workflow(project)
 
     @action(detail=True, methods=["post"])
     def add_member(self, request, pk=None):
@@ -201,3 +206,87 @@ class SprintViewSet(viewsets.ModelViewSet):
             **SprintSerializer(sprint).data,
             "moved_to_backlog": unfinished.count() if not move_to_sprint_id else 0,
         })
+
+
+class WorkflowStateViewSet(viewsets.ModelViewSet):
+    """
+    CRUD for per-project workflow states (custom Kanban columns).
+    GET  /api/workflow-states/?project=<id>  — list states for a project
+    POST /api/workflow-states/               — create a new state
+    PATCH/PUT /api/workflow-states/<id>/     — rename, recolor, reorder
+    DELETE /api/workflow-states/<id>/        — delete (blocked if issues use it)
+    POST /api/workflow-states/seed/?project=<id> — reset to default 3-column workflow
+    """
+    serializer_class = WorkflowStateSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        qs = WorkflowState.objects.filter(
+            project__memberships__user=self.request.user
+        ).distinct()
+        project_id = self.request.query_params.get("project")
+        if project_id:
+            qs = qs.filter(project_id=project_id)
+        return qs
+
+    def perform_create(self, serializer):
+        project = serializer.validated_data["project"]
+        if not project.memberships.filter(user=self.request.user).exists():
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("You are not a member of this project.")
+        # Auto-assign next position
+        max_pos = WorkflowState.objects.filter(project=project).count()
+        serializer.save(position=max_pos)
+
+    def perform_destroy(self, instance):
+        # Block deletion if any issues still reference this status name
+        from issues.models import Issue
+        count = Issue.objects.filter(project=instance.project, status=instance.name).count()
+        if count > 0:
+            raise ValidationError(
+                f"Cannot delete '{instance.name}' — {count} issue(s) are currently in this status. "
+                "Move them to another status first."
+            )
+        instance.delete()
+
+    @action(detail=False, methods=["post"])
+    def seed(self, request):
+        """Reset a project's workflow to the default 3-column layout."""
+        project_id = request.query_params.get("project") or request.data.get("project")
+        if not project_id:
+            return Response({"detail": "project is required."}, status=status.HTTP_400_BAD_REQUEST)
+        project = Project.objects.filter(
+            id=project_id, memberships__user=request.user
+        ).first()
+        if not project:
+            return Response({"detail": "Project not found."}, status=status.HTTP_404_NOT_FOUND)
+        states = create_default_workflow(project)
+        return Response(WorkflowStateSerializer(states, many=True).data)
+
+
+class WorkflowTransitionViewSet(viewsets.ModelViewSet):
+    """
+    Allowed moves between workflow states for a project.
+    GET  /api/workflow-transitions/?project=<id>
+    POST /api/workflow-transitions/  {project, from_state, to_state}
+    DELETE /api/workflow-transitions/<id>/
+    """
+    serializer_class = WorkflowTransitionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ["get", "post", "delete", "head", "options"]
+
+    def get_queryset(self):
+        qs = WorkflowTransition.objects.filter(
+            project__memberships__user=self.request.user
+        ).distinct()
+        project_id = self.request.query_params.get("project")
+        if project_id:
+            qs = qs.filter(project_id=project_id)
+        return qs
+
+    def perform_create(self, serializer):
+        project = serializer.validated_data["project"]
+        if not project.memberships.filter(user=self.request.user).exists():
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("You are not a member of this project.")
+        serializer.save()

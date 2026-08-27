@@ -117,48 +117,50 @@ export default function ProjectMembersModal({
           {/* Add Member Section */}
           <div className="jira-member-add-box">
             <h3 className="jira-section-title">Add team member</h3>
-            <form onSubmit={handleAddMember} className="jira-member-add-form">
-              <div className="jira-form-row-flexible">
-                {availableUsersToAdd.length > 0 ? (
+            <form onSubmit={handleAddMember}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 8 }}>
+                <div style={{ flex: "2 1 200px", minWidth: 180 }}>
+                  {availableUsersToAdd.length > 0 ? (
+                    <select
+                      className="jira-select"
+                      value={selectedUserId}
+                      onChange={(e) => {
+                        setSelectedUserId(e.target.value);
+                        setCustomUsername("");
+                      }}
+                      style={{ width: "100%" }}
+                    >
+                      <option value="">Select registered user...</option>
+                      {availableUsersToAdd.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.username} ({u.email || "no email"})
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      className="jira-input"
+                      placeholder="Enter username..."
+                      value={customUsername}
+                      onChange={(e) => setCustomUsername(e.target.value)}
+                      style={{ width: "100%" }}
+                    />
+                  )}
+                </div>
+                <div style={{ flex: "1 1 110px", minWidth: 110 }}>
                   <select
                     className="jira-select"
-                    value={selectedUserId}
-                    onChange={(e) => {
-                      setSelectedUserId(e.target.value);
-                      setCustomUsername("");
-                    }}
-                    style={{ flex: 2 }}
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value)}
+                    style={{ width: "100%" }}
                   >
-                    <option value="">Select registered user...</option>
-                    {availableUsersToAdd.map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.username} ({u.email || "no email"})
-                      </option>
-                    ))}
+                    <option value="MEMBER">Member</option>
+                    <option value="ADMIN">Admin</option>
+                    <option value="VIEWER">Viewer</option>
                   </select>
-                ) : (
-                  <input
-                    type="text"
-                    className="jira-input"
-                    placeholder="Enter username..."
-                    value={customUsername}
-                    onChange={(e) => setCustomUsername(e.target.value)}
-                    style={{ flex: 2 }}
-                  />
-                )}
-
-                <select
-                  className="jira-select"
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value)}
-                  style={{ flex: 1 }}
-                >
-                  <option value="MEMBER">Member</option>
-                  <option value="ADMIN">Admin</option>
-                  <option value="VIEWER">Viewer</option>
-                </select>
-
-                <button type="submit" className="jira-btn-primary" disabled={loading}>
+                </div>
+                <button type="submit" className="jira-btn-primary" disabled={loading} style={{ flexShrink: 0 }}>
                   {loading ? "Adding..." : "+ Add"}
                 </button>
               </div>

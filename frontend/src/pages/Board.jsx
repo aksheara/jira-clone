@@ -16,10 +16,10 @@ import ShareProjectModal from "../components/ShareProjectModal";
 import AutomationModal from "../components/AutomationModal";
 import ExportViewModal from "../components/ExportViewModal";
 
-const KANBAN_COLUMNS = [
-  { key: "TODO", label: "TO DO", color: "#42526E" },
-  { key: "IN_PROGRESS", label: "IN PROGRESS", color: "#0052CC" },
-  { key: "DONE", label: "DONE", color: "#00875A" },
+const FALLBACK_COLUMNS = [
+  { key: "TODO",        label: "TO DO",       color: "#42526E" },
+  { key: "IN_PROGRESS", label: "IN PROGRESS",  color: "#0052CC" },
+  { key: "DONE",        label: "DONE",         color: "#00875A" },
 ];
 
 export default function Board() {
@@ -342,7 +342,7 @@ export default function Board() {
             <div className="jira-board-view-container">
               <DragDropContext onDragEnd={onDragEnd}>
                 <div className="jira-kanban-board">
-                  {KANBAN_COLUMNS.map((col) => {
+                  {FALLBACK_COLUMNS.map((col) => {
                     const colIssues = issues.filter((i) => i.status === col.key);
                     return (
                       <Droppable droppableId={col.key} key={col.key}>
