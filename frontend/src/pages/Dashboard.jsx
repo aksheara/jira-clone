@@ -193,33 +193,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* ── Project Selector Bar ── */}
-        {data && (
-          <div className="db-project-selector-bar">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0052CC" strokeWidth="2">
-              <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
-            </svg>
-            <span className="db-selector-label">Viewing:</span>
-            <select
-              className="db-project-select"
-              value={selectedProjectId}
-              onChange={(e) => setSelectedProjectId(e.target.value)}
-            >
-              <option value="ALL">All Projects (overview)</option>
-              {data.my_projects.map((p) => (
-                <option key={p.id} value={String(p.id)}>
-                  {p.name} ({p.key})
-                </option>
-              ))}
-            </select>
-            {selectedProject && (
-              <span className="db-selector-meta">
-                {selectedProject.open} open · {selectedProject.done} done · {selectedProject.total} total
-              </span>
-            )}
-          </div>
-        )}
-
         {loading && (
           <div className="db-loading">
             <div className="db-spinner" />
