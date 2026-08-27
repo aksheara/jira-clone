@@ -130,7 +130,58 @@ class CommentViewSet(viewsets.ModelViewSet):
         issue = serializer.validated_data["issue"]
         if not issue.project.memberships.filter(user=self.request.user).exists():
             raise PermissionDenied("You are not a member of this project.")
-        serializer.save(author=self.request.user)
+        comment = serializer.save(author=self.request.user)
+        # Parse @mentions and notify each mentioned user
+        _notify_mentions(comment, self.request.user)
+
+
+def _notify_mentions(comment, actor):
+    """
+    Parses @username tokens from comment body.
+    For each valid project member found, creates an in-app Notification
+    and sends a mention email. Skips the commenter themselves.
+    """
+    import re as _re
+    from django.contrib.auth import get_user_model
+    from users.models import Notification
+    from users.utils import send_mention_email
+
+    User = get_user_model()
+    issue = comment.issue
+    issue_key = f"{issue.project.key}-{issue.pk}"
+
+    # Extract all @username tokens (alphanumeric + underscore)
+    mentioned_usernames = set(_re.findall(r"@([\w]+)", comment.body))
+    if not mentioned_usernames:
+        return
+
+    for username in mentioned_usernames:
+        user = User.objects.filter(username__iexact=username).first()
+        if not user or user == actor:
+            continue
+        # Only notify if they're a member of the project
+        if not issue.project.memberships.filter(user=user).exists():
+            continue
+
+        # In-app notification
+        Notification.objects.create(
+            recipient=user,
+            actor=actor,
+            action=f"mentioned you in a comment on {issue_key}",
+            target=issue.title,
+        )
+
+        # Email notification
+        if user.email:
+            send_mention_email(
+                mentioned_email=user.email,
+                mentioned_username=user.username,
+                mentioned_by=actor.username,
+                issue_title=issue.title,
+                issue_key=issue_key,
+                project_name=issue.project.name,
+                comment_body=comment.body,
+            )
 
 
 class LabelViewSet(viewsets.ModelViewSet):

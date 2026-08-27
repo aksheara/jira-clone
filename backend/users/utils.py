@@ -250,3 +250,78 @@ The Jira Software Team
     except Exception as e:
         print(f"[Assignment Email Error]: {e}")
         return False
+
+
+def send_mention_email(mentioned_email: str, mentioned_username: str, mentioned_by: str,
+                       issue_title: str, issue_key: str, project_name: str, comment_body: str) -> bool:
+    """Sends an email when a user is @mentioned in a comment."""
+    subject = f"[Jira] {mentioned_by} mentioned you in {issue_key}"
+
+    # Trim comment body for preview
+    preview = comment_body[:200] + ("..." if len(comment_body) > 200 else "")
+
+    message = f"""Hello {mentioned_username},
+
+{mentioned_by} mentioned you in a comment on issue {issue_key} — {issue_title} ({project_name}):
+
+"{preview}"
+
+Log in to Jira Software to view and reply.
+
+Best regards,
+The Jira Software Team
+"""
+
+    html_message = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px;
+                border: 1px solid #DFE1E6; border-radius: 8px; background: #FFFFFF;">
+        <h2 style="color: #0052CC; margin: 0 0 16px 0;">Jira Software</h2>
+        <h3 style="color: #172B4D; margin-top: 0;">You were mentioned in a comment</h3>
+        <p style="color: #42526E; font-size: 14px;">
+            <strong>{mentioned_by}</strong> mentioned you on
+            <strong>{issue_key} — {issue_title}</strong> in <strong>{project_name}</strong>:
+        </p>
+        <div style="background: #F4F5F7; border-left: 4px solid #0052CC; border-radius: 4px;
+                    padding: 12px 16px; margin: 16px 0; font-size: 14px; color: #172B4D; font-style: italic;">
+            "{preview}"
+        </div>
+        <hr style="border: none; border-top: 1px solid #EBECF0; margin: 20px 0;" />
+        <p style="color: #8993A4; font-size: 12px; margin: 0;">
+            You received this because you are a member of <strong>{project_name}</strong>.
+        </p>
+    </div>
+    """
+
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@jira-software.local")
+
+    try:
+        import ssl, smtplib
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = from_email
+        msg["To"] = mentioned_email
+        msg.attach(MIMEText(message, "plain"))
+        msg.attach(MIMEText(html_message, "html"))
+
+        context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+
+        host = getattr(settings, "EMAIL_HOST", "smtp.gmail.com")
+        port = getattr(settings, "EMAIL_PORT", 587)
+        user = getattr(settings, "EMAIL_HOST_USER", "")
+        password = getattr(settings, "EMAIL_HOST_PASSWORD", "")
+
+        with smtplib.SMTP(host, port, timeout=10) as server:
+            server.ehlo()
+            server.starttls(context=context)
+            server.login(user, password)
+            server.sendmail(from_email, [mentioned_email], msg.as_string())
+
+        return True
+    except Exception as e:
+        print(f"[Mention Email Error]: {e}")
+        return False

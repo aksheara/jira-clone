@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import api from "../api/client";
+import MentionTextarea from "./MentionTextarea";
+import MarkdownRenderer from "./MarkdownRenderer";
 
 export default function IssueModal({ issueId, projectKey, members = [], onClose, onUpdate }) {
   const [issue, setIssue] = useState(null);
@@ -24,6 +26,10 @@ export default function IssueModal({ issueId, projectKey, members = [], onClose,
   const [uploadingFile, setUploadingFile] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const fileInputRef = useRef(null);
+
+  // Comment edit state
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editCommentBody, setEditCommentBody] = useState("");
 
   function load() {
     api.get(`/issues/${issueId}/`).then((res) => {
@@ -169,6 +175,29 @@ export default function IssueModal({ issueId, projectKey, members = [], onClose,
       load();
     } catch {
       alert("Could not delete attachment.");
+    }
+  }
+
+  async function handleEditComment(e) {
+    e.preventDefault();
+    if (!editCommentBody.trim()) return;
+    try {
+      await api.patch(`/comments/${editingCommentId}/`, { body: editCommentBody.trim() });
+      setEditingCommentId(null);
+      setEditCommentBody("");
+      load();
+    } catch {
+      alert("Could not update comment.");
+    }
+  }
+
+  async function handleDeleteComment(commentId) {
+    if (!window.confirm("Delete this comment?")) return;
+    try {
+      await api.delete(`/comments/${commentId}/`);
+      load();
+    } catch {
+      alert("Could not delete comment.");
     }
   }
 
@@ -605,6 +634,9 @@ export default function IssueModal({ issueId, projectKey, members = [], onClose,
 
               {tab === "comments" ? (
                 <div className="jira-comments-wrap">
+                  {issue.comments?.length === 0 && (
+                    <p className="jira-empty-muted" style={{ padding: "12px 0" }}>No comments yet. Be the first to comment.</p>
+                  )}
                   {issue.comments?.map((c) => (
                     <div key={c.id} className="jira-comment-item">
                       <div className="jira-avatar-circle small">
@@ -613,23 +645,60 @@ export default function IssueModal({ issueId, projectKey, members = [], onClose,
                       <div className="jira-comment-body">
                         <div className="jira-comment-meta">
                           <strong>{c.author?.username}</strong>
-                          <span>{new Date(c.created_at).toLocaleString()}</span>
+                          <span className="jira-comment-time">{new Date(c.created_at).toLocaleString()}</span>
+                          {c.updated_at !== c.created_at && (
+                            <span className="jira-comment-edited">(edited)</span>
+                          )}
                         </div>
-                        <p className="jira-comment-text">{c.body}</p>
+
+                        {editingCommentId === c.id ? (
+                          <form onSubmit={handleEditComment} className="jira-comment-edit-form">
+                            <MentionTextarea
+                              value={editCommentBody}
+                              onChange={setEditCommentBody}
+                              members={members}
+                              rows={3}
+                            />
+                            <div className="jira-comment-edit-actions">
+                              <button type="submit" className="jira-btn-primary-sm">Save</button>
+                              <button
+                                type="button"
+                                className="jira-btn-secondary-sm"
+                                onClick={() => { setEditingCommentId(null); setEditCommentBody(""); }}
+                              >Cancel</button>
+                            </div>
+                          </form>
+                        ) : (
+                          <>
+                            <div className="jira-comment-text">
+                              <MarkdownRenderer>{c.body}</MarkdownRenderer>
+                            </div>
+                            <div className="jira-comment-actions">
+                              <button
+                                className="jira-comment-action-btn"
+                                onClick={() => { setEditingCommentId(c.id); setEditCommentBody(c.body); }}
+                              >Edit</button>
+                              <button
+                                className="jira-comment-action-btn danger"
+                                onClick={() => handleDeleteComment(c.id)}
+                              >Delete</button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}
 
                   <form onSubmit={submitComment} className="jira-add-comment-form">
-                    <textarea
-                      className="jira-textarea"
-                      rows={2}
+                    <MentionTextarea
                       value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      placeholder="Add a comment..."
+                      onChange={setNewComment}
+                      members={members}
+                      rows={3}
+                      disabled={submittingComment}
                     />
                     <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
-                      <button type="submit" className="jira-btn-primary-sm" disabled={submittingComment}>
+                      <button type="submit" className="jira-btn-primary-sm" disabled={submittingComment || !newComment.trim()}>
                         {submittingComment ? "Saving..." : "Save"}
                       </button>
                     </div>

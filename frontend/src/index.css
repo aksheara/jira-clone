@@ -5524,3 +5524,188 @@ input:checked + .jira-switch-slider:before {
   border-radius: 8px;
   padding: 14px;
 }
+
+/* ========== RICH TEXT COMMENTS + @MENTIONS ========== */
+
+/* Mention textarea wrapper */
+.jira-mention-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.jira-comment-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #DFE1E6;
+  border-radius: 6px;
+  font-size: 13.5px;
+  color: #172B4D;
+  background: #FAFBFC;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.jira-comment-textarea:focus {
+  outline: none;
+  border-color: #0052CC;
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.14);
+  background: #fff;
+}
+
+/* Markdown hints */
+.jira-comment-hint-bar {
+  display: flex;
+  gap: 10px;
+  padding: 4px 2px;
+  font-size: 11px;
+  color: #97A0AF;
+  flex-wrap: wrap;
+}
+.jira-comment-hint-bar span {
+  font-family: monospace;
+  cursor: default;
+}
+
+/* @mention dropdown */
+.jira-mention-dropdown {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 2px);
+  z-index: 9999;
+  background: #fff;
+  border: 1px solid #DFE1E6;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  min-width: 200px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.jira-mention-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #172B4D;
+  text-align: left;
+  transition: background 0.1s;
+}
+.jira-mention-item:hover,
+.jira-mention-item.active {
+  background: #DEEBFF;
+  color: #0052CC;
+}
+
+.jira-mention-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #0052CC;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* @mention chip in rendered comments */
+.jira-mention-chip {
+  display: inline-block;
+  background: #DEEBFF;
+  color: #0052CC;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: default;
+}
+
+/* Markdown rendered body */
+.jira-md-body {
+  font-size: 13.5px;
+  color: #172B4D;
+  line-height: 1.6;
+}
+.jira-md-p    { margin: 0 0 4px 0; }
+.jira-md-h3   { font-size: 15px; font-weight: 700; margin: 6px 0 4px; color: #172B4D; }
+.jira-md-h4   { font-size: 13.5px; font-weight: 700; margin: 4px 0 3px; color: #172B4D; }
+.jira-md-li   { display: flex; gap: 6px; margin: 2px 0; }
+.jira-md-bullet { color: #0052CC; font-weight: 700; flex-shrink: 0; }
+.jira-md-code {
+  background: #F4F5F7;
+  border: 1px solid #DFE1E6;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: monospace;
+  font-size: 12.5px;
+  color: #DE350B;
+}
+.jira-md-link { color: #0052CC; text-decoration: underline; }
+.jira-md-blockquote {
+  border-left: 3px solid #0052CC;
+  margin: 4px 0;
+  padding: 4px 10px;
+  color: #42526E;
+  background: #F4F5F7;
+  border-radius: 0 4px 4px 0;
+}
+.jira-md-hr      { border: none; border-top: 1px solid #EBECF0; margin: 8px 0; }
+.jira-md-spacer  { height: 6px; }
+
+/* Comment item */
+.jira-comment-item {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #F4F5F7;
+}
+.jira-comment-item:last-of-type { border-bottom: none; }
+
+.jira-comment-body { flex: 1; min-width: 0; }
+
+.jira-comment-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+.jira-comment-meta strong { font-size: 13px; color: #172B4D; }
+.jira-comment-time  { font-size: 11.5px; color: #97A0AF; }
+.jira-comment-edited { font-size: 11px; color: #97A0AF; font-style: italic; }
+
+.jira-comment-text { margin: 0; }
+
+.jira-comment-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+.jira-comment-action-btn {
+  background: none;
+  border: none;
+  font-size: 11.5px;
+  color: #6B778C;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  transition: color 0.1s;
+}
+.jira-comment-action-btn:hover { color: #0052CC; }
+.jira-comment-action-btn.danger:hover { color: #DE350B; }
+
+.jira-comment-edit-form { margin-top: 6px; }
+.jira-comment-edit-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
