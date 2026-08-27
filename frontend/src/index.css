@@ -5451,3 +5451,76 @@ input:checked + .jira-switch-slider:before {
   background: #DEEBFF;
   color: #0052CC;
 }
+
+/* ── Workflow Editor form layout fixes ── */
+.jira-wf-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.jira-wf-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.jira-wf-form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #42526E;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.jira-wf-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.jira-wf-color-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.jira-wf-color-custom {
+  width: 30px;
+  height: 24px;
+  border: 1px solid #DFE1E6;
+  border-radius: 4px;
+  padding: 1px 2px;
+  cursor: pointer;
+  background: none;
+}
+
+.jira-wf-color-preview {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  margin-left: 4px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.jira-wf-add-form {
+  background: #F8FAFF;
+  border: 1px solid #DEEBFF;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.jira-wf-edit-form {
+  width: 100%;
+  background: #FFFBE6;
+  border: 1px solid #FFE58F;
+  border-radius: 8px;
+  padding: 14px;
+}

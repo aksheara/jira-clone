@@ -199,43 +199,65 @@ export default function WorkflowEditor({ project }) {
         {/* Add state form */}
         {showAddForm && (
           <form onSubmit={handleAddState} className="jira-wf-add-form">
-            <input
-              type="text"
-              className="jira-input-sm"
-              placeholder="State name (e.g. Code Review)"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              autoFocus
-              required
-              style={{ flex: 2 }}
-            />
-            <select
-              className="jira-select-sm"
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-            >
-              {CATEGORY_OPTIONS.map((c) => (
-                <option key={c.value} value={c.value}>{c.label}</option>
-              ))}
-            </select>
-            <div className="jira-wf-color-row">
-              {PRESET_COLORS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className={`jira-wf-color-dot ${newColor === c ? "selected" : ""}`}
-                  style={{ background: c }}
-                  onClick={() => setNewColor(c)}
-                  title={c}
+            <div className="jira-wf-form-grid">
+              <div className="jira-wf-form-field">
+                <label className="jira-wf-form-label">State Name *</label>
+                <input
+                  type="text"
+                  className="jira-input-sm"
+                  placeholder="e.g. Code Review"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  autoFocus
+                  required
                 />
-              ))}
+              </div>
+              <div className="jira-wf-form-field">
+                <label className="jira-wf-form-label">Category</label>
+                <select
+                  className="jira-select-sm"
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                >
+                  {CATEGORY_OPTIONS.map((c) => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="jira-wf-form-field">
+                <label className="jira-wf-form-label">Color</label>
+                <div className="jira-wf-color-picker-row">
+                  {PRESET_COLORS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className={`jira-wf-color-dot ${newColor === c ? "selected" : ""}`}
+                      style={{ background: c }}
+                      onClick={() => setNewColor(c)}
+                      title={c}
+                    />
+                  ))}
+                  <input
+                    type="color"
+                    className="jira-wf-color-custom"
+                    value={newColor}
+                    onChange={(e) => setNewColor(e.target.value)}
+                    title="Custom color"
+                  />
+                </div>
+              </div>
             </div>
-            <button type="submit" className="jira-btn-primary-sm" disabled={adding}>
-              {adding ? "Adding…" : "Add"}
-            </button>
-            <button type="button" className="jira-btn-secondary-sm" onClick={() => setShowAddForm(false)}>
-              Cancel
-            </button>
+            <div className="jira-wf-form-actions">
+              <button type="submit" className="jira-btn-primary-sm" disabled={adding}>
+                {adding ? "Adding…" : "Add State"}
+              </button>
+              <button type="button" className="jira-btn-secondary-sm" onClick={() => setShowAddForm(false)}>
+                Cancel
+              </button>
+              <span className="jira-wf-color-preview" style={{ background: newColor }}>
+                {newName || "Preview"}
+              </span>
+            </div>
           </form>
         )}
 
@@ -245,46 +267,71 @@ export default function WorkflowEditor({ project }) {
             <div key={state.id} className="jira-wf-state-row">
               {editingId === state.id ? (
                 <form onSubmit={handleSaveEdit} className="jira-wf-edit-form">
-                  <input
-                    type="text"
-                    className="jira-input-sm"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    required
-                    autoFocus
-                    style={{ flex: 2 }}
-                  />
-                  <select
-                    className="jira-select-sm"
-                    value={editCategory}
-                    onChange={(e) => setEditCategory(e.target.value)}
-                  >
-                    {CATEGORY_OPTIONS.map((c) => (
-                      <option key={c.value} value={c.value}>{c.label}</option>
-                    ))}
-                  </select>
-                  <div className="jira-wf-color-row">
-                    {PRESET_COLORS.map((c) => (
-                      <button
-                        key={c}
-                        type="button"
-                        className={`jira-wf-color-dot ${editColor === c ? "selected" : ""}`}
-                        style={{ background: c }}
-                        onClick={() => setEditColor(c)}
-                        title={c}
+                  <div className="jira-wf-form-grid">
+                    <div className="jira-wf-form-field">
+                      <label className="jira-wf-form-label">State Name *</label>
+                      <input
+                        type="text"
+                        className="jira-input-sm"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        required
+                        autoFocus
                       />
-                    ))}
+                    </div>
+                    <div className="jira-wf-form-field">
+                      <label className="jira-wf-form-label">Category</label>
+                      <select
+                        className="jira-select-sm"
+                        value={editCategory}
+                        onChange={(e) => setEditCategory(e.target.value)}
+                      >
+                        {CATEGORY_OPTIONS.map((c) => (
+                          <option key={c.value} value={c.value}>{c.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="jira-wf-form-field">
+                      <label className="jira-wf-form-label">Color</label>
+                      <div className="jira-wf-color-picker-row">
+                        {PRESET_COLORS.map((c) => (
+                          <button
+                            key={c}
+                            type="button"
+                            className={`jira-wf-color-dot ${editColor === c ? "selected" : ""}`}
+                            style={{ background: c }}
+                            onClick={() => setEditColor(c)}
+                            title={c}
+                          />
+                        ))}
+                        <input
+                          type="color"
+                          className="jira-wf-color-custom"
+                          value={editColor}
+                          onChange={(e) => setEditColor(e.target.value)}
+                          title="Custom color"
+                        />
+                      </div>
+                    </div>
+                    <div className="jira-wf-form-field">
+                      <label className="jira-wf-form-label">Default status</label>
+                      <label className="jira-wf-default-label">
+                        <input
+                          type="checkbox"
+                          checked={editIsDefault}
+                          onChange={(e) => setEditIsDefault(e.target.checked)}
+                        />
+                        Use as default on new issues
+                      </label>
+                    </div>
                   </div>
-                  <label className="jira-wf-default-label">
-                    <input
-                      type="checkbox"
-                      checked={editIsDefault}
-                      onChange={(e) => setEditIsDefault(e.target.checked)}
-                    />
-                    Default
-                  </label>
-                  <button type="submit" className="jira-btn-primary-sm">Save</button>
-                  <button type="button" className="jira-btn-secondary-sm" onClick={() => setEditingId(null)}>Cancel</button>
+                  <div className="jira-wf-form-actions">
+                    <button type="submit" className="jira-btn-primary-sm">Save</button>
+                    <button type="button" className="jira-btn-secondary-sm" onClick={() => setEditingId(null)}>Cancel</button>
+                    <span className="jira-wf-color-preview" style={{ background: editColor }}>
+                      {editName || "Preview"}
+                    </span>
+                  </div>
                 </form>
               ) : (
                 <>
