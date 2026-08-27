@@ -52,6 +52,8 @@ def _notify_assignee(issue, assigned_by_user):
             issue_key=issue_key,
             project_name=issue.project.name,
             assigned_by=assigned_by_user.username,
+            project_id=issue.project.id,
+            issue_id=issue.pk,
         )
 
 

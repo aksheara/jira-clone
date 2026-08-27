@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
@@ -23,6 +23,7 @@ const FALLBACK_COLUMNS = [
 ];
 export default function Board() {
   const { projectId } = useParams();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
 
   const [projectDetails, setProjectDetails] = useState(null);
@@ -62,6 +63,9 @@ export default function Board() {
   useEffect(() => {
     loadProjectData();
     loadIssues();
+    // Auto-open issue from email deep link (?issue=<id>)
+    const issueParam = searchParams.get("issue");
+    if (issueParam) setSelectedIssueId(Number(issueParam));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 

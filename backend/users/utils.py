@@ -172,20 +172,28 @@ The Jira Software Team
 
 
 def send_assignment_email(assignee_email: str, assignee_username: str, issue_title: str,
-                          issue_key: str, project_name: str, assigned_by: str) -> bool:
+                          issue_key: str, project_name: str, assigned_by: str,
+                          project_id: int = None, issue_id: int = None) -> bool:
     """
     Sends an email to the user who has been assigned to an issue.
     """
     subject = f"[Jira] You've been assigned to {issue_key}"
 
+    # Build deep link if project_id and issue_id are available
+    frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
+    if project_id and issue_id:
+        issue_url = f"{frontend_url}/projects/{project_id}/board?issue={issue_id}"
+    else:
+        issue_url = f"{frontend_url}/projects"
+
     message = f"""Hello {assignee_username},
 
 {assigned_by} has assigned you to the following issue:
 
-    Issue : {issue_key} — {issue_title}
+    Issue  : {issue_key} — {issue_title}
     Project: {project_name}
 
-Log in to Jira Software to view the full details and get started.
+Open the issue directly: {issue_url}
 
 Best regards,
 The Jira Software Team
@@ -206,10 +214,15 @@ The Jira Software Team
                 {issue_key} — {issue_title}
             </div>
         </div>
-        <p style="color: #42526E; font-size: 14px;">
-            Log in to Jira Software to view the full details and start working on it.
-        </p>
-        <hr style="border: none; border-top: 1px solid #EBECF0; margin: 24px 0;" />
+        <a href="{issue_url}"
+           style="display: inline-block; margin: 8px 0 16px; padding: 10px 22px;
+                  background: linear-gradient(135deg, #0065FF, #0052CC);
+                  color: #FFFFFF; font-weight: 700; font-size: 14px;
+                  border-radius: 7px; text-decoration: none;
+                  box-shadow: 0 2px 8px rgba(0,82,204,0.35);">
+            Open Issue →
+        </a>
+        <hr style="border: none; border-top: 1px solid #EBECF0; margin: 20px 0;" />
         <p style="color: #8993A4; font-size: 12px; margin: 0;">
             You received this email because you are a member of <strong>{project_name}</strong>.
         </p>
