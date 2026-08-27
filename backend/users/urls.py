@@ -2,6 +2,7 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .views import (
+    DashboardView,
     LoginView,
     MeView,
     NotificationViewSet,
@@ -25,6 +26,7 @@ urlpatterns = [
     path("reset-password/", ResetPasswordView.as_view(), name="reset-password"),
     path("me/", MeView.as_view(), name="me"),
     path("users/", UserListView.as_view(), name="user-list"),
+    path("dashboard/", DashboardView.as_view(), name="dashboard"),
     path("", include(router.urls)),
 ]
 

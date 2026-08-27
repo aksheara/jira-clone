@@ -418,6 +418,15 @@ export default function Navbar({
               )}
             </div>
 
+            {/* Dashboard link */}
+            <Link
+              to="/dashboard"
+              className="jira-nav-link"
+              style={{ textDecoration: "none" }}
+            >
+              <span>Dashboard</span>
+            </Link>
+
             {/* Blue solid + Create button */}
             <button
               className="jira-btn-topbar-create"

@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProjectList from "./pages/ProjectList";
 import Board from "./pages/Board";
+import Dashboard from "./pages/Dashboard";
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/projects" element={<ProtectedRoute><ProjectList /></ProtectedRoute>} />
           <Route path="/projects/:projectId/board" element={<ProtectedRoute><Board /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/projects" />} />
         </Routes>
       </AuthProvider>
