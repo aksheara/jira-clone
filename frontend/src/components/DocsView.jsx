@@ -4,31 +4,31 @@ import api from "../api/client";
 const TEMPLATES = [
   {
     id: "PRD",
-    name: "📋 Product Requirements (PRD)",
+    name: "Product Requirements (PRD)",
     tag: "Product Specs",
-    icon: "📋",
-    content: `## 🎯 Objective & Goal\nDefine the business problem, user pain points, and success metrics for this feature.\n\n### 👥 Target Personas\n- **Primary Persona**: Data Scientist / Engineer\n- **Use Case**: Real-time batch predictions and automated pipeline execution\n\n### 🚀 Functional Requirements\n1. **REST API**: Endpoint to trigger data ingestion pipeline with status callbacks\n2. **Validation**: Auto-check CSV schema before loading into model\n3. **Performance**: Process 10k rows in < 1.5 seconds\n\n### 📊 Key Performance Indicators (KPIs)\n- 99.9% uptime on prediction microservice\n- < 200ms latency for single-record inference`,
+    icon: "PRD",
+    content: `## Objective & Goal\nDefine the business problem, user pain points, and success metrics for this feature.\n\n### Target Personas\n- **Primary Persona**: Data Scientist / Engineer\n- **Use Case**: Real-time batch predictions and automated pipeline execution\n\n### Functional Requirements\n1. **REST API**: Endpoint to trigger data ingestion pipeline with status callbacks\n2. **Validation**: Auto-check CSV schema before loading into model\n3. **Performance**: Process 10k rows in < 1.5 seconds\n\n### Key Performance Indicators (KPIs)\n- 99.9% uptime on prediction microservice\n- < 200ms latency for single-record inference`,
   },
   {
     id: "ARCHITECTURE",
-    name: "📐 Architecture & System Design",
+    name: "Architecture & System Design",
     tag: "Architecture",
-    icon: "📐",
-    content: `## 🏗️ System Architecture Overview\nHigh-level architectural design and service boundaries.\n\n### 🛠️ Technology Stack\n- **Backend**: Django REST Framework (Python 3.12)\n- **Frontend**: React 19 + Vite + Atlassian Design System\n- **Database**: PostgreSQL / SQLite with indexed key lookups\n- **Cache & Async**: Redis + Celery worker queue\n\n### 🔌 API Endpoints\n- \`GET /api/projects/\`: List workspaces for authenticated user\n- \`POST /api/issues/\`: Create new task or subtask\n- \`PATCH /api/issues/{id}/\`: Update status, priority, or assignee`,
+    icon: "ARC",
+    content: `## System Architecture Overview\nHigh-level architectural design and service boundaries.\n\n### Technology Stack\n- **Backend**: Django REST Framework (Python 3.12)\n- **Frontend**: React 19 + Vite + Atlassian Design System\n- **Database**: PostgreSQL / SQLite with indexed key lookups\n- **Cache & Async**: Redis + Celery worker queue\n\n### API Endpoints\n- \`GET /api/projects/\`: List workspaces for authenticated user\n- \`POST /api/issues/\`: Create new task or subtask\n- \`PATCH /api/issues/{id}/\`: Update status, priority, or assignee`,
   },
   {
     id: "RETRO",
-    name: "🔄 Sprint Retrospective",
+    name: "Sprint Retrospective",
     tag: "Sprint Notes",
-    icon: "🔄",
-    content: `## 🏁 Sprint Retrospective Summary\nReviewing sprint velocity, team feedback, and next sprint commitments.\n\n### 🌟 What Went Well\n- Completed all priority backlog tasks on schedule\n- Zero blocker bugs introduced during sprint\n- Clean separation between frontend components\n\n### 💡 What Could Be Improved\n- Add automated end-to-end tests for issue status transitions\n- Improve ticket estimation precision for subtasks\n\n### ✅ Action Items\n- [ ] Set up GitHub Actions CI pipeline\n- [ ] Update API documentation and model schemas`,
+    icon: "RET",
+    content: `## Sprint Retrospective Summary\nReviewing sprint velocity, team feedback, and next sprint commitments.\n\n### What Went Well\n- Completed all priority backlog tasks on schedule\n- Zero blocker bugs introduced during sprint\n- Clean separation between frontend components\n\n### What Could Be Improved\n- Add automated end-to-end tests for issue status transitions\n- Improve ticket estimation precision for subtasks\n\n### Action Items\n- [ ] Set up GitHub Actions CI pipeline\n- [ ] Update API documentation and model schemas`,
   },
   {
     id: "MEETING",
-    name: "📝 Team Meeting Notes & Decisions",
+    name: "Team Meeting Notes & Decisions",
     tag: "Meeting Notes",
-    icon: "📝",
-    content: `## 🗣️ Weekly Standup & Planning\n**Agenda**: Review sprint burndown and align on API specifications.\n\n### 📌 Agenda Items\n1. Review sprint burndown trajectory\n2. Align on Figma UI design specifications\n3. Coordinate model deployment timeline\n\n### ⚖️ Key Decisions Made\n- Standardize on Atlassian design tokens for the entire project board\n- Use direct status transitions for seamless Kanban board updates`,
+    icon: "MTG",
+    content: `## Weekly Standup & Planning\n**Agenda**: Review sprint burndown and align on API specifications.\n\n### Agenda Items\n1. Review sprint burndown trajectory\n2. Align on Figma UI design specifications\n3. Coordinate model deployment timeline\n\n### Key Decisions Made\n- Standardize on Atlassian design tokens for the entire project board\n- Use direct status transitions for seamless Kanban board updates`,
   },
 ];
 
@@ -62,7 +62,7 @@ export default function DocsView({ project, currentUser }) {
               project: project.id,
               title: `${project?.name || "Project"} Overview & Architecture`,
               template_type: "ARCHITECTURE",
-              content: `## 🚀 ${project?.name || "Project"} Documentation Hub\n\nWelcome to the official documentation workspace for **${project?.name}**.\n\n### 🎯 Objectives\n- Coordinate team sprint deliverables\n- Centralize technical documentation, API schemas, and release notes\n- Track design specs and live Figma embeds\n\n### 👥 Key Contributors\n- **Project Lead**: ${currentUserName}\n- **Workspace**: ${project?.name}`,
+              content: `## ${project?.name || "Project"} Documentation Hub\n\nWelcome to the official documentation workspace for **${project?.name}**.\n\n### Objectives\n- Coordinate team sprint deliverables\n- Centralize technical documentation, API schemas, and release notes\n- Track design specs and live Figma embeds\n\n### Key Contributors\n- **Project Lead**: ${currentUserName}\n- **Workspace**: ${project?.name}`,
             });
             loadedDocs = [initialDoc.data];
           } catch (e) {}
@@ -159,10 +159,10 @@ export default function DocsView({ project, currentUser }) {
         <div className="jira-docs-sidebar-header">
           <div className="jira-docs-header-title-row">
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 18 }}>📄</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0052CC" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               <div>
                 <h3 className="jira-docs-sidebar-title">Project Docs</h3>
-                <span className="jira-docs-cloud-sync-badge">☁️ Synced to DB</span>
+                <span className="jira-docs-cloud-sync-badge">Synced to DB</span>
               </div>
             </div>
             <button
@@ -207,7 +207,7 @@ export default function DocsView({ project, currentUser }) {
                   setShowNewModal(true);
                 }}
               >
-                <span>{tmpl.icon}</span>
+                <span style={{ fontSize: 10, fontWeight: 700, color: "#0052CC", background: "#DEEBFF", borderRadius: 3, padding: "1px 5px" }}>{tmpl.icon}</span>
                 <span>{tmpl.tag}</span>
               </button>
             ))}
@@ -228,7 +228,9 @@ export default function DocsView({ project, currentUser }) {
               }}
             >
               <div className="jira-doc-tree-icon">
-                {doc.template_type === "PRD" ? "📋" : doc.template_type === "ARCHITECTURE" ? "📐" : doc.template_type === "RETRO" ? "🔄" : doc.template_type === "MEETING" ? "📝" : "📄"}
+                <span style={{ fontSize: 10, fontWeight: 700, color: "#0052CC" }}>
+                  {doc.template_type === "PRD" ? "PRD" : doc.template_type === "ARCHITECTURE" ? "ARC" : doc.template_type === "RETRO" ? "RET" : doc.template_type === "MEETING" ? "MTG" : "DOC"}
+                </span>
               </div>
               <div className="jira-doc-tree-info">
                 <div className="jira-doc-tree-title">{doc.title}</div>
@@ -263,7 +265,7 @@ export default function DocsView({ project, currentUser }) {
                   <span>Created by <strong>{selectedDoc.created_by?.username || currentUserName}</strong></span>
                   <span>•</span>
                   <span>Last updated: {new Date(selectedDoc.updated_at || Date.now()).toLocaleString()}</span>
-                  <span className="jira-status-pill jira-status-done" style={{ fontSize: 10 }}>SAVED IN DB</span>
+                  <span className="jira-status-pill jira-status-done" style={{ fontSize: 10 }}>SAVED</span>
                 </div>
               </div>
 
@@ -271,7 +273,7 @@ export default function DocsView({ project, currentUser }) {
                 {!isEditing ? (
                   <>
                     <button className="jira-btn-primary-sm" onClick={handleStartEdit}>
-                      ✏️ Edit Document
+                      Edit Document
                     </button>
                     <button
                       className="jira-btn-icon-danger"
@@ -371,7 +373,7 @@ export default function DocsView({ project, currentUser }) {
                         setEditContent(tmpl.content);
                       }}
                     >
-                      <span className="jira-tmpl-icon">{tmpl.icon}</span>
+                      <span className="jira-tmpl-icon" style={{ fontSize: 10, fontWeight: 700, color: "#0052CC", background: "#DEEBFF", borderRadius: 3, padding: "1px 5px" }}>{tmpl.icon}</span>
                       <span className="jira-tmpl-name">{tmpl.name}</span>
                       <span className="jira-tmpl-tag">{tmpl.tag}</span>
                     </div>

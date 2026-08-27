@@ -189,7 +189,10 @@ export default function WorkflowEditor({ project }) {
         <div className="jira-wf-section-header">
           <h4 className="jira-wf-section-title">Workflow States</h4>
           <div style={{ display: "flex", gap: 8 }}>
-            <button className="jira-btn-link-sm" onClick={handleResetToDefault}>↺ Reset to default</button>
+            <button className="jira-btn-link-sm" onClick={handleResetToDefault}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
+              Reset to default
+            </button>
             <button className="jira-btn-primary-sm" onClick={() => setShowAddForm((v) => !v)}>
               + Add State
             </button>

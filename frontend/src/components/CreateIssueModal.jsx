@@ -120,11 +120,11 @@ export default function CreateIssueModal({
                 onChange={(e) => setIssueType(e.target.value)}
                 required
               >
-                <option value="TASK">☑️ Task</option>
-                <option value="BUG">🐞 Bug</option>
-                <option value="STORY">📖 Story</option>
-                <option value="EPIC">⚡ Epic</option>
-                <option value="SUBTASK">↳ Subtask</option>
+                <option value="TASK">☑ Task</option>
+                <option value="BUG">Bug</option>
+                <option value="STORY">Story</option>
+                <option value="EPIC">Epic</option>
+                <option value="SUBTASK">Subtask</option>
               </select>
             </div>
           </div>
@@ -184,10 +184,10 @@ export default function CreateIssueModal({
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
               >
-                <option value="LOW">🟢 Low</option>
-                <option value="MEDIUM">🟡 Medium</option>
-                <option value="HIGH">🟠 High</option>
-                <option value="CRITICAL">🔴 Critical</option>
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="CRITICAL">Critical</option>
               </select>
             </div>
 

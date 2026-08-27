@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import api from "../api/client";
 import IssueModal from "./IssueModal";
 import AskAIModal from "./AskAIModal";
+import { IssueTypeIcon, PriorityIcon, MergeIcon, TrashIcon } from "./Icons";
 
 export default function ListView({ project, issues = [], members = [], onRefresh, currentUser }) {
   const [selectedIssueId, setSelectedIssueId] = useState(null);
@@ -423,10 +424,10 @@ export default function ListView({ project, issues = [], members = [], onRefresh
                   style={{ width: "100%", marginBottom: 10 }}
                 >
                   <option value="">All Priorities</option>
-                  <option value="CRITICAL">🔴 Critical</option>
-                  <option value="HIGH">🟠 High</option>
-                  <option value="MEDIUM">🟡 Medium</option>
-                  <option value="LOW">🟢 Low</option>
+                  <option value="CRITICAL">Critical</option>
+                  <option value="HIGH">High</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="LOW">Low</option>
                 </select>
 
                 <span className="jira-field-label" style={{ marginBottom: 4 }}>Type</span>
@@ -437,10 +438,10 @@ export default function ListView({ project, issues = [], members = [], onRefresh
                   style={{ width: "100%", marginBottom: 12 }}
                 >
                   <option value="">All Types</option>
-                  <option value="TASK">📋 Task</option>
-                  <option value="BUG">🐞 Bug</option>
-                  <option value="STORY">📖 Story</option>
-                  <option value="EPIC">⚡ Epic</option>
+                  <option value="TASK">Task</option>
+                  <option value="BUG">Bug</option>
+                  <option value="STORY">Story</option>
+                  <option value="EPIC">Epic</option>
                 </select>
 
                 <button
@@ -516,7 +517,7 @@ export default function ListView({ project, issues = [], members = [], onRefresh
               <div className="jira-nav-popover" style={{ right: 0, left: "auto", width: 220 }}>
                 <div className="jira-popover-header">LIST ACTIONS</div>
                 <button className="jira-popover-item-btn" onClick={handleExportCSV}>
-                  <span>📥</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                   <div>
                     <div className="jira-popover-item-title">Export to CSV</div>
                     <div className="jira-popover-item-sub">Download spreadsheet</div>
@@ -530,7 +531,7 @@ export default function ListView({ project, issues = [], members = [], onRefresh
                     setShowColumnConfig(true);
                   }}
                 >
-                  <span>👁️</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   <div>
                     <div className="jira-popover-item-title">Configure Columns</div>
                     <div className="jira-popover-item-sub">Toggle visible fields</div>
@@ -538,7 +539,7 @@ export default function ListView({ project, issues = [], members = [], onRefresh
                 </button>
 
                 <button className="jira-popover-item-btn" onClick={handleQuickSetDueDates}>
-                  <span>📅</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                   <div>
                     <div className="jira-popover-item-title">Set Sprint Due Dates</div>
                     <div className="jira-popover-item-sub">+7 days for open tasks</div>
@@ -552,7 +553,7 @@ export default function ListView({ project, issues = [], members = [], onRefresh
                     window.print();
                   }}
                 >
-                  <span>🖨️</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                   <div>
                     <div className="jira-popover-item-title">Print List</div>
                   </div>
@@ -570,7 +571,7 @@ export default function ListView({ project, issues = [], members = [], onRefresh
                     setShowMoreMenu(false);
                   }}
                 >
-                  <span>🔄</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
                   <div>
                     <div className="jira-popover-item-title">Reset All Filters</div>
                   </div>
@@ -677,12 +678,8 @@ export default function ListView({ project, issues = [], members = [], onRefresh
                       ? issue.reporter.username.substring(0, 2).toUpperCase()
                       : "U";
 
-                    // Type icon
-                    let typeIcon = "📋";
-                    if (issue.issue_type === "BUG") typeIcon = "🐞";
-                    if (issue.issue_type === "STORY") typeIcon = "📖";
-                    if (issue.issue_type === "EPIC") typeIcon = "⚡";
-                    if (issue.parent) typeIcon = "↳";
+                    // Type icon using SVG component
+                    const typeIconEl = <IssueTypeIcon type={issue.parent ? "SUBTASK" : issue.issue_type} size={14} />;
 
                     return (
                       <tr
@@ -704,7 +701,7 @@ export default function ListView({ project, issues = [], members = [], onRefresh
                         {columns.work && (
                           <td className="td-work">
                             <div className="jira-work-cell">
-                              <span className="jira-type-icon">{typeIcon}</span>
+                              <span className="jira-type-icon">{typeIconEl}</span>
 
                               <span
                                 className={`jira-issue-key ${isDone ? "strikethrough" : ""}`}
@@ -761,11 +758,12 @@ export default function ListView({ project, issues = [], members = [], onRefresh
                         {/* Priority column */}
                         {columns.priority && (
                           <td>
-                            <span className="jira-priority-text">
-                              {issue.priority === "CRITICAL" && "🔴 Critical"}
-                              {issue.priority === "HIGH" && "🟠 High"}
-                              {issue.priority === "MEDIUM" && "🟡 Medium"}
-                              {issue.priority === "LOW" && "🟢 Low"}
+                            <span className="jira-priority-text" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <PriorityIcon priority={issue.priority} size={11} />
+                              {issue.priority === "CRITICAL" && "Critical"}
+                              {issue.priority === "HIGH" && "High"}
+                              {issue.priority === "MEDIUM" && "Medium"}
+                              {issue.priority === "LOW" && "Low"}
                             </span>
                           </td>
                         )}
@@ -845,7 +843,7 @@ export default function ListView({ project, issues = [], members = [], onRefresh
                                 onClick={() => setEditingDueDateId(issue.id)}
                                 title="Click to edit due date"
                               >
-                                {issue.due_date ? `📅 ${new Date(issue.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : "— Set date"}
+                                {issue.due_date ? new Date(issue.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : "— Set date"}
                               </span>
                             )}
                           </td>
@@ -937,7 +935,9 @@ export default function ListView({ project, issues = [], members = [], onRefresh
               {/* Inline Create Row inside table */}
               {inlineCreating && (
                 <tr className="jira-row-inline-create">
-                  <td style={{ textAlign: "center" }}>↳</td>
+                  <td style={{ textAlign: "center" }}>
+                    <IssueTypeIcon type="SUBTASK" size={13} />
+                  </td>
                   <td colSpan={9}>
                     <form onSubmit={handleInlineCreate} className="jira-inline-create-form">
                       <select
@@ -945,9 +945,9 @@ export default function ListView({ project, issues = [], members = [], onRefresh
                         value={inlineType}
                         onChange={(e) => setInlineType(e.target.value)}
                       >
-                        <option value="TASK">📋 Task</option>
-                        <option value="BUG">🐞 Bug</option>
-                        <option value="STORY">📖 Story</option>
+                        <option value="TASK">Task</option>
+                        <option value="BUG">Bug</option>
+                        <option value="STORY">Story</option>
                       </select>
                       <input
                         type="text"
@@ -1026,7 +1026,7 @@ export default function ListView({ project, issues = [], members = [], onRefresh
               onClick={handleBulkMoveToTop}
               title="Prioritize issues to Critical"
             >
-              <span>🔝</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="18 15 12 9 6 15"/></svg>
               <span>Move to top</span>
             </button>
 
@@ -1035,7 +1035,7 @@ export default function ListView({ project, issues = [], members = [], onRefresh
               onClick={handleBulkMerge}
               title="Merge selected issues into one"
             >
-              <span>🔀</span>
+              <MergeIcon size={13} />
               <span>Merge</span>
             </button>
 
@@ -1044,7 +1044,7 @@ export default function ListView({ project, issues = [], members = [], onRefresh
               onClick={handleBulkArchive}
               title="Archive selected issues"
             >
-              <span>📦</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
               <span>Archive</span>
             </button>
 
@@ -1069,7 +1069,7 @@ export default function ListView({ project, issues = [], members = [], onRefresh
               onClick={handleBulkDelete}
               title="Delete selected issues"
             >
-              <span>🗑️</span>
+              <TrashIcon size={13} color="currentColor" />
               <span>Delete ({selectedIds.size})</span>
             </button>
           </div>

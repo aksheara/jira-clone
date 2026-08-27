@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import api from "../api/client";
 import MentionTextarea from "./MentionTextarea";
 import MarkdownRenderer from "./MarkdownRenderer";
+import { FileIcon, GitBranchIcon, PullRequestIcon, AttachmentIcon, IssueTypeIcon, PriorityIcon } from "./Icons";
 
 export default function IssueModal({ issueId, projectKey, members = [], onClose, onUpdate }) {
   const [issue, setIssue] = useState(null);
@@ -208,12 +209,7 @@ export default function IssueModal({ issueId, projectKey, members = [], onClose,
   }
 
   function getFileIcon(contentType = "") {
-    if (contentType.startsWith("image/")) return "🖼️";
-    if (contentType === "application/pdf") return "📄";
-    if (contentType.includes("zip") || contentType.includes("rar")) return "🗜️";
-    if (contentType.includes("word") || contentType.includes("document")) return "📝";
-    if (contentType.includes("sheet") || contentType.includes("excel")) return "📊";
-    return "📎";
+    return <FileIcon contentType={contentType} size={18} />;
   }
 
   if (!issue) return null;
@@ -239,7 +235,15 @@ export default function IssueModal({ issueId, projectKey, members = [], onClose,
         <div className="jira-drawer-top">
           <div className="jira-drawer-key-group">
             <span className="jira-drawer-type-badge">
-              {issue.parent ? "↳ Subtask" : issue.issue_type}
+              {issue.parent ? (
+                <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <IssueTypeIcon type="SUBTASK" size={12} /> Subtask
+                </span>
+              ) : (
+                <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <IssueTypeIcon type={issue.issue_type} size={12} /> {issue.issue_type}
+                </span>
+              )}
             </span>
             <span className="jira-drawer-key">{keyDisplay}</span>
           </div>
@@ -344,7 +348,8 @@ export default function IssueModal({ issueId, projectKey, members = [], onClose,
             <div className="jira-drawer-section">
               <div className="jira-section-header-flex">
                 <label className="jira-drawer-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span>🎨 Figma Design Preview</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF7262" strokeWidth="2"><path d="M5 3l14 9-14 9V3z"/></svg>
+                  <span>Figma Design Preview</span>
                   {issue.figma_url && <span className="jira-connected-pill">Connected</span>}
                 </label>
                 {!isEditingFigma && (
@@ -413,7 +418,8 @@ export default function IssueModal({ issueId, projectKey, members = [], onClose,
             <div className="jira-drawer-section">
               <div className="jira-section-header-flex">
                 <label className="jira-drawer-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span>🐙 Development (GitHub)</span>
+                  <GitBranchIcon size={14} />
+                  <span>Development (GitHub)</span>
                 </label>
                 {!isEditingGithub && (
                   <button
@@ -428,7 +434,7 @@ export default function IssueModal({ issueId, projectKey, members = [], onClose,
               {/* Git Branch Copy Bar */}
               <div className="jira-git-branch-card">
                 <div className="jira-git-branch-left">
-                  <span className="jira-git-icon">🌿</span>
+                  <span className="jira-git-icon"><GitBranchIcon size={15} /></span>
                   <div>
                     <span className="jira-git-label">Suggested Git Branch:</span>
                     <code className="jira-git-code">{branchName}</code>
@@ -439,7 +445,7 @@ export default function IssueModal({ issueId, projectKey, members = [], onClose,
                   onClick={copyGitBranch}
                   title="Copy git checkout command"
                 >
-                  {copiedBranch ? "✓ Copied!" : "Copy Branch"}
+                  {copiedBranch ? "Copied!" : "Copy Branch"}
                 </button>
               </div>
 
@@ -460,7 +466,7 @@ export default function IssueModal({ issueId, projectKey, members = [], onClose,
                 </div>
               ) : issue.github_pr ? (
                 <div className="jira-linked-pr-badge">
-                  <span className="jira-pr-icon">🔀</span>
+                  <span className="jira-pr-icon"><PullRequestIcon size={14} /></span>
                   <span className="jira-pr-text">{issue.github_pr}</span>
                   <span className="jira-pr-status-merged">MERGED</span>
                 </div>
@@ -501,7 +507,6 @@ export default function IssueModal({ issueId, projectKey, members = [], onClose,
                   {issue.subtasks?.map((st) => (
                     <div key={st.id} className="jira-subtask-row">
                       <div className="jira-subtask-row-left">
-                        <span className="jira-type-icon icon-subtask">↳</span>
                         <span className={`jira-subtask-key ${st.status === "DONE" ? "strikethrough" : ""}`}>
                           {projectKey}-{st.id}
                         </span>
@@ -520,7 +525,9 @@ export default function IssueModal({ issueId, projectKey, members = [], onClose,
             <div className="jira-drawer-section">
               <div className="jira-section-header-flex">
                 <label className="jira-drawer-label">
-                  📎 Attachments ({issue.attachments?.length || 0})
+                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <AttachmentIcon size={14} /> Attachments ({issue.attachments?.length || 0})
+                  </span>
                 </label>
                 <button
                   className="jira-btn-link-sm"
@@ -768,10 +775,10 @@ export default function IssueModal({ issueId, projectKey, members = [], onClose,
                 value={issue.priority}
                 onChange={(e) => updateField("priority", e.target.value)}
               >
-                <option value="LOW">🟢 Low</option>
-                <option value="MEDIUM">🟡 Medium</option>
-                <option value="HIGH">🟠 High</option>
-                <option value="CRITICAL">🔴 Critical</option>
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="CRITICAL">Critical</option>
               </select>
             </div>
 

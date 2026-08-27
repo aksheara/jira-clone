@@ -98,10 +98,10 @@ export default function AutomationModal({ isOpen, onClose, projectId, projectNam
       <div className="jira-modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 680 }}>
         <div className="jira-modal-header">
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 20 }}>⚡</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6554C0" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
             <div>
               <h2 className="jira-modal-title">Automation Rules for {projectName}</h2>
-              <span className="jira-sub-key">Persisted in Django Database • Live Event Triggers</span>
+              <span className="jira-sub-key">Persisted in Django Database — Live Event Triggers</span>
             </div>
           </div>
           <button className="jira-btn-icon-close" onClick={onClose}>✕</button>
@@ -119,7 +119,7 @@ export default function AutomationModal({ isOpen, onClose, projectId, projectNam
 
           {showNewRule && (
             <form onSubmit={handleCreateRule} className="jira-new-rule-card">
-              <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>⚡ New Automation Rule</h4>
+              <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>New Automation Rule</h4>
               <div className="jira-form-field">
                 <label className="jira-field-label">Rule Name <span className="jira-req">*</span></label>
                 <input
@@ -195,7 +195,7 @@ export default function AutomationModal({ isOpen, onClose, projectId, projectNam
                     </div>
 
                     <div className="jira-rule-meta">
-                      <span>⚡ Executed {r.execution_count || 0} times</span>
+                      <span>Executed {r.execution_count || 0} times</span>
                     </div>
                   </div>
 

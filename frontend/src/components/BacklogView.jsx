@@ -1,20 +1,21 @@
 import { useEffect, useState } from "react";
 import api from "../api/client";
 import IssueModal from "./IssueModal";
+import { IssueTypeIcon, PriorityIcon, SprintGoalIcon } from "./Icons";
 
-// Issue type icons
+// Issue type config (no emojis)
 const TYPE_ICONS = {
-  BUG: { emoji: "🐛", color: "#DE350B" },
-  TASK: { emoji: "✅", color: "#0052CC" },
-  STORY: { emoji: "📖", color: "#00875A" },
-  EPIC: { emoji: "⚡", color: "#6554C0" },
+  BUG:   { color: "#DE350B" },
+  TASK:  { color: "#0052CC" },
+  STORY: { color: "#00875A" },
+  EPIC:  { color: "#6554C0" },
 };
 
-const PRIORITY_ICONS = {
-  CRITICAL: { emoji: "🔴", label: "Critical" },
-  HIGH: { emoji: "🟠", label: "High" },
-  MEDIUM: { emoji: "🟡", label: "Medium" },
-  LOW: { emoji: "🟢", label: "Low" },
+const PRIORITY_LABELS = {
+  CRITICAL: "Critical",
+  HIGH: "High",
+  MEDIUM: "Medium",
+  LOW: "Low",
 };
 
 export default function BacklogView({ project, issues = [], members = [], onRefresh, currentUser }) {
@@ -369,7 +370,7 @@ export default function BacklogView({ project, issues = [], members = [], onRefr
                     )}
                     {sprint.goal && (
                       <span className="jira-sprint-goal" title={sprint.goal}>
-                        🎯 {sprint.goal}
+                        <SprintGoalIcon size={12} /> {sprint.goal}
                       </span>
                     )}
                     <span className="jira-sprint-count">
@@ -644,8 +645,7 @@ export default function BacklogView({ project, issues = [], members = [], onRefr
 // ---- Sub-components ----
 
 function IssueRow({ issue, projectKey, onOpen, onDragStart }) {
-  const typeIcon = TYPE_ICONS[issue.issue_type] || TYPE_ICONS.TASK;
-  const priorityIcon = PRIORITY_ICONS[issue.priority] || PRIORITY_ICONS.MEDIUM;
+  const typeColor = TYPE_ICONS[issue.issue_type]?.color || "#0052CC";
   const keyStr = `${projectKey}-${issue.id}`;
 
   return (
@@ -663,13 +663,13 @@ function IssueRow({ issue, projectKey, onOpen, onDragStart }) {
           <circle cx="3" cy="13" r="1.5"/><circle cx="7" cy="13" r="1.5"/>
         </svg>
       </span>
-      <span className="jira-backlog-type-icon" style={{ color: typeIcon.color }} title={issue.issue_type}>
-        {typeIcon.emoji}
+      <span className="jira-backlog-type-icon" style={{ color: typeColor }} title={issue.issue_type}>
+        <IssueTypeIcon type={issue.issue_type} size={14} />
       </span>
       <span className="jira-backlog-key">{keyStr}</span>
       <span className="jira-backlog-title">{issue.title}</span>
       <div className="jira-backlog-row-right">
-        <span title={priorityIcon.label}>{priorityIcon.emoji}</span>
+        <PriorityIcon priority={issue.priority} size={12} />
         <span className={`jira-status-pill-mini ${issue.status.toLowerCase().replace("_", "-")}`}>
           {issue.status === "IN_PROGRESS" ? "In Progress" : issue.status === "DONE" ? "Done" : "To Do"}
         </span>
@@ -692,12 +692,12 @@ function InlineCreate({ title, setTitle, type, setType, onSubmit, onCancel }) {
         className="jira-select-sm"
         value={type}
         onChange={(e) => setType(e.target.value)}
-        style={{ width: 100, flexShrink: 0 }}
+        style={{ width: 110, flexShrink: 0 }}
       >
-        <option value="TASK">✅ Task</option>
-        <option value="BUG">🐛 Bug</option>
-        <option value="STORY">📖 Story</option>
-        <option value="EPIC">⚡ Epic</option>
+        <option value="TASK">Task</option>
+        <option value="BUG">Bug</option>
+        <option value="STORY">Story</option>
+        <option value="EPIC">Epic</option>
       </select>
       <input
         type="text"

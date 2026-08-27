@@ -61,7 +61,7 @@ export default function SettingsModal({ isOpen, onClose }) {
       <div className="jira-modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 780 }}>
         <div className="jira-modal-header">
           <div className="jira-modal-title-group">
-            <h2 className="jira-modal-title">⚙️ Jira Workspace & Profile Settings</h2>
+            <h2 className="jira-modal-title">Jira Workspace & Profile Settings</h2>
             <span className="jira-sub-key">Configure your account, project preferences, and notifications</span>
           </div>
           <button className="jira-btn-icon-close" onClick={onClose}>
@@ -72,29 +72,17 @@ export default function SettingsModal({ isOpen, onClose }) {
         <div className="jira-modal-body" style={{ display: "grid", gridTemplateColumns: "180px 1fr", gap: 20, minHeight: 320 }}>
           {/* Settings Sidebar */}
           <div className="jira-settings-sidebar">
-            <button
-              className={`jira-settings-nav-item ${activeSection === "general" ? "active" : ""}`}
-              onClick={() => setActiveSection("general")}
-            >
-              👤 Profile & Account
+            <button className={`jira-settings-nav-item ${activeSection === "general" ? "active" : ""}`} onClick={() => setActiveSection("general")}>
+              Profile & Account
             </button>
-            <button
-              className={`jira-settings-nav-item ${activeSection === "preferences" ? "active" : ""}`}
-              onClick={() => setActiveSection("preferences")}
-            >
-              🛠️ Preferences
+            <button className={`jira-settings-nav-item ${activeSection === "preferences" ? "active" : ""}`} onClick={() => setActiveSection("preferences")}>
+              Preferences
             </button>
-            <button
-              className={`jira-settings-nav-item ${activeSection === "workflows" ? "active" : ""}`}
-              onClick={() => setActiveSection("workflows")}
-            >
-              🔄 Workflows & Statuses
+            <button className={`jira-settings-nav-item ${activeSection === "workflows" ? "active" : ""}`} onClick={() => setActiveSection("workflows")}>
+              Workflows & Statuses
             </button>
-            <button
-              className={`jira-settings-nav-item ${activeSection === "notifications" ? "active" : ""}`}
-              onClick={() => setActiveSection("notifications")}
-            >
-              🔔 Notifications
+            <button className={`jira-settings-nav-item ${activeSection === "notifications" ? "active" : ""}`} onClick={() => setActiveSection("notifications")}>
+              Notifications
             </button>
           </div>
 
@@ -221,7 +209,7 @@ export default function SettingsModal({ isOpen, onClose }) {
             Cancel
           </button>
           <button className="jira-btn-primary" onClick={handleSaveSettings} disabled={saving}>
-            {savedSuccess ? "✓ Saved to Database!" : saving ? "Saving..." : "Save Settings"}
+            {savedSuccess ? "Saved!" : saving ? "Saving..." : "Save Settings"}
           </button>
         </div>
       </div>
