@@ -88,8 +88,7 @@ class IssueViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("You are not a member of this project.")
 
         # Only ADMINs can set assignee when creating an issue
-        assignee_id = serializer.validated_data.get("assignee_id")
-        if assignee_id:
+        if "assignee_id" in self.request.data and self.request.data["assignee_id"]:
             is_admin = project.memberships.filter(
                 user=self.request.user, role="ADMIN"
             ).exists()
@@ -107,14 +106,16 @@ class IssueViewSet(viewsets.ModelViewSet):
         old_assignee_id = old_instance.assignee_id
 
         # Block non-admins from changing assignee
-        new_assignee_id = serializer.validated_data.get("assignee_id", old_assignee_id)
-        if new_assignee_id != old_assignee_id:
-            project = old_instance.project
-            is_admin = project.memberships.filter(
-                user=self.request.user, role="ADMIN"
-            ).exists()
-            if not is_admin:
-                raise PermissionDenied("Only project Admins can assign or reassign issues.")
+        # Only check if assignee_id was explicitly sent in this request
+        if "assignee_id" in self.request.data:
+            new_assignee_id = serializer.validated_data.get("assignee_id")
+            if new_assignee_id != old_assignee_id:
+                project = old_instance.project
+                is_admin = project.memberships.filter(
+                    user=self.request.user, role="ADMIN"
+                ).exists()
+                if not is_admin:
+                    raise PermissionDenied("Only project Admins can assign or reassign issues.")
 
         instance = serializer.save()
 
