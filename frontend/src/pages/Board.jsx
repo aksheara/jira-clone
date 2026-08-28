@@ -516,6 +516,7 @@ export default function Board() {
           issueId={selectedIssueId}
           projectKey={projectKey}
           members={members}
+          currentUser={user}
           onClose={() => setSelectedIssueId(null)}
           onUpdate={loadIssues}
         />

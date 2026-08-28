@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../api/client";
+import { useAuth } from "../context/AuthContext";
 
 export default function CreateIssueModal({
   isOpen,
@@ -9,6 +10,7 @@ export default function CreateIssueModal({
   projects = [],
   members = [],
 }) {
+  const { user } = useAuth();
   const [projectId, setProjectId] = useState(currentProjectId || "");
   const [issueType, setIssueType] = useState("TASK");
   const [title, setTitle] = useState("");
@@ -191,21 +193,24 @@ export default function CreateIssueModal({
               </select>
             </div>
 
-            <div className="jira-form-field">
-              <label className="jira-field-label">Assignee</label>
-              <select
-                className="jira-select"
-                value={assigneeId}
-                onChange={(e) => setAssigneeId(e.target.value)}
-              >
-                <option value="">Unassigned</option>
-                {projectMembers.map((m) => (
-                  <option key={m.user?.id || m.id} value={m.user?.id || m.id}>
-                    {m.user?.username || m.username}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Assignee — only visible to Admins */}
+            {projectMembers.some((m) => (m.user?.id || m.id) === user?.id && m.role === "ADMIN") && (
+              <div className="jira-form-field">
+                <label className="jira-field-label">Assignee</label>
+                <select
+                  className="jira-select"
+                  value={assigneeId}
+                  onChange={(e) => setAssigneeId(e.target.value)}
+                >
+                  <option value="">Unassigned</option>
+                  {projectMembers.map((m) => (
+                    <option key={m.user?.id || m.id} value={m.user?.id || m.id}>
+                      {m.user?.username || m.username}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Due Date */}

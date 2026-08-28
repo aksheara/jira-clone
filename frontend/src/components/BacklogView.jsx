@@ -634,6 +634,7 @@ export default function BacklogView({ project, issues = [], members = [], onRefr
           issueId={selectedIssueId}
           projectKey={project?.key}
           members={members}
+          currentUser={currentUser}
           onClose={() => setSelectedIssueId(null)}
           onUpdate={refresh}
         />

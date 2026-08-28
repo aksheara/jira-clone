@@ -6742,3 +6742,21 @@ kbd {
   margin-top: 7px;
   box-shadow: 0 0 0 3px rgba(0,82,204,0.15);
 }
+
+/* ── Admin-only assignee field ── */
+.jira-drawer-field-readonly {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 7px 10px;
+  background: #F4F5F7;
+  border: 1px solid #EBECF0;
+  border-radius: 6px;
+  font-size: 13.5px;
+  color: #172B4D;
+}
+.jira-admin-only-hint {
+  font-size: 11px;
+  color: #97A0AF;
+  font-style: italic;
+}

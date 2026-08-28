@@ -4,7 +4,7 @@ import MentionTextarea from "./MentionTextarea";
 import MarkdownRenderer from "./MarkdownRenderer";
 import { FileIcon, GitBranchIcon, PullRequestIcon, AttachmentIcon, IssueTypeIcon, PriorityIcon } from "./Icons";
 
-export default function IssueModal({ issueId, projectKey, members = [], onClose, onUpdate }) {
+export default function IssueModal({ issueId, projectKey, members = [], currentUser, onClose, onUpdate }) {
   const [issue, setIssue] = useState(null);
   const [newComment, setNewComment] = useState("");
   const [tab, setTab] = useState("comments");
@@ -785,18 +785,32 @@ export default function IssueModal({ issueId, projectKey, members = [], onClose,
             {/* Assignee Field */}
             <div className="jira-drawer-field">
               <label className="jira-drawer-field-label">Assignee</label>
-              <select
-                className="jira-select"
-                value={issue.assignee?.id || ""}
-                onChange={(e) => updateField("assignee_id", e.target.value ? Number(e.target.value) : null)}
-              >
-                <option value="">Unassigned</option>
-                {members.map((m) => (
-                  <option key={m.user?.id || m.id} value={m.user?.id || m.id}>
-                    {m.user?.username || m.username}
-                  </option>
-                ))}
-              </select>
+              {members.some((m) => (m.user?.id || m.id) === (currentUser?.id) && m.role === "ADMIN") ? (
+                <select
+                  className="jira-select"
+                  value={issue.assignee?.id || ""}
+                  onChange={(e) => updateField("assignee_id", e.target.value ? Number(e.target.value) : null)}
+                >
+                  <option value="">Unassigned</option>
+                  {members.map((m) => (
+                    <option key={m.user?.id || m.id} value={m.user?.id || m.id}>
+                      {m.user?.username || m.username}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="jira-drawer-field-readonly">
+                  {issue.assignee ? (
+                    <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div className="jira-avatar-circle small">{issue.assignee.username.substring(0, 2).toUpperCase()}</div>
+                      {issue.assignee.username}
+                    </span>
+                  ) : (
+                    <span style={{ color: "#97A0AF" }}>Unassigned</span>
+                  )}
+                  <span className="jira-admin-only-hint">Only Admins can assign</span>
+                </div>
+              )}
             </div>
 
             {/* Due Date Field */}

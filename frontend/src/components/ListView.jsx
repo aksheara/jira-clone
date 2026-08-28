@@ -1078,6 +1078,7 @@ export default function ListView({ project, issues = [], members = [], onRefresh
           issueId={selectedIssueId}
           projectKey={project?.key}
           members={project?.members || members || []}
+          currentUser={currentUser}
           onClose={() => setSelectedIssueId(null)}
           onUpdate={onRefresh}
         />
