@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import api from "../api/client";
 
-export default function TeamsModal({ isOpen, onClose }) {
+export default function TeamsModal({ isOpen, onClose, projectId = null }) {
   const [users, setUsers] = useState([]);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("members"); // 'members', 'projects'
+  const [activeTab, setActiveTab] = useState("members");
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
@@ -24,19 +24,33 @@ export default function TeamsModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  const filteredUsers = users.filter(
-    (u) =>
+  // If a projectId is given, filter members to only that project's members
+  const selectedProject = projectId ? projects.find((p) => String(p.id) === String(projectId)) : null;
+  const projectMemberIds = selectedProject
+    ? new Set(selectedProject.members?.map((m) => m.user?.id) || [])
+    : null;
+
+  const filteredUsers = users.filter((u) => {
+    const matchesSearch =
       u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (u.email && u.email.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+      (u.email && u.email.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesProject = projectMemberIds ? projectMemberIds.has(u.id) : true;
+    return matchesSearch && matchesProject;
+  });
 
   return (
     <div className="jira-modal-backdrop" onClick={onClose}>
       <div className="jira-modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 720 }}>
         <div className="jira-modal-header">
           <div className="jira-modal-title-group">
-            <h2 className="jira-modal-title">Organization & Teams Directory</h2>
-            <span className="jira-sub-key">Real-time team members and active workspace projects</span>
+            <h2 className="jira-modal-title">
+              {selectedProject ? `${selectedProject.name} — Team` : "Organization & Teams Directory"}
+            </h2>
+            <span className="jira-sub-key">
+              {selectedProject
+                ? `${filteredUsers.length} member${filteredUsers.length !== 1 ? "s" : ""} · ${selectedProject.key}`
+                : "Real-time team members and active workspace projects"}
+            </span>
           </div>
           <button className="jira-btn-icon-close" onClick={onClose}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -95,6 +109,11 @@ export default function TeamsModal({ isOpen, onClose }) {
                     <span className="jira-status-pill jira-status-done" style={{ fontSize: 11 }}>
                       {u.projects_count || 1} Projects
                     </span>
+                    {selectedProject && (
+                      <span className="jira-team-meta-pill" style={{ marginLeft: 6 }}>
+                        {selectedProject.members?.find((m) => m.user?.id === u.id)?.role || "Member"}
+                      </span>
+                    )}
                     <span className="jira-team-meta-pill" style={{ marginLeft: 6 }}>
                       Joined {new Date(u.date_joined || Date.now()).toLocaleDateString(undefined, { month: "short", year: "numeric" })}
                     </span>

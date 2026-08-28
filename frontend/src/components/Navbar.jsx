@@ -30,6 +30,7 @@ export default function Navbar({
   const [showDashboardModal, setShowDashboardModal] = useState(false);
   const [showMarketplaceModal, setShowMarketplaceModal] = useState(false);
   const [showTeamsModal, setShowTeamsModal] = useState(false);
+  const [teamsProjectId, setTeamsProjectId] = useState(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
 
@@ -297,45 +298,43 @@ export default function Navbar({
 
               {activeMenu === "teams" && (
                 <div className="jira-nav-popover" style={{ width: 280 }}>
-                  <div className="jira-popover-header">YOUR TEAMS</div>
+                  <div className="jira-popover-header">YOUR PROJECT TEAMS</div>
                   <div className="jira-popover-list">
-                    <button
-                      className="jira-popover-item-btn"
-                      onClick={() => {
-                        setActiveMenu(null);
-                        setShowTeamsModal(true);
-                      }}
-                    >
-                      <span className="jira-project-dot" style={{ background: "#6554c0" }} />
-                      <div>
-                        <div className="jira-popover-item-title">My Data Science Team</div>
-                        <div className="jira-popover-item-sub">Lead: {userFullName}</div>
-                      </div>
-                    </button>
-
-                    <button
-                      className="jira-popover-item-btn"
-                      onClick={() => {
-                        setActiveMenu(null);
-                        setShowTeamsModal(true);
-                      }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                      <div>
-                        <div className="jira-popover-item-title">Frontend Core Engineers</div>
-                        <div className="jira-popover-item-sub">UI & Design System</div>
-                      </div>
-                    </button>
+                    {filteredProjects.map((p) => (
+                      <button
+                        key={p.id}
+                        className="jira-popover-item-btn"
+                        onClick={() => {
+                          setActiveMenu(null);
+                          setTeamsProjectId(p.id);
+                          setShowTeamsModal(true);
+                        }}
+                      >
+                        <div className="jira-avatar-circle" style={{ width: 24, height: 24, fontSize: 10, flexShrink: 0, background: "linear-gradient(135deg,#0052CC,#6554C0)" }}>
+                          {p.key.substring(0, 2)}
+                        </div>
+                        <div>
+                          <div className="jira-popover-item-title">{p.name}</div>
+                          <div className="jira-popover-item-sub">
+                            {p.members?.length || 0} member{p.members?.length !== 1 ? "s" : ""} · {p.my_role || "Member"}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                    {filteredProjects.length === 0 && (
+                      <div className="jira-empty-muted">No projects found.</div>
+                    )}
                   </div>
                   <div className="jira-popover-footer">
                     <button
                       className="jira-popover-btn-action"
                       onClick={() => {
                         setActiveMenu(null);
+                        setTeamsProjectId(null);
                         setShowTeamsModal(true);
                       }}
                     >
-                      + Create a team / View all
+                      View full team directory
                     </button>
                   </div>
                 </div>
@@ -557,7 +556,8 @@ export default function Navbar({
 
       <TeamsModal
         isOpen={showTeamsModal}
-        onClose={() => setShowTeamsModal(false)}
+        onClose={() => { setShowTeamsModal(false); setTeamsProjectId(null); }}
+        projectId={teamsProjectId}
       />
 
       <SettingsModal
