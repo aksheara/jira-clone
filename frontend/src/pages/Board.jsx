@@ -318,10 +318,6 @@ export default function Board() {
               <span>Backlog</span>
             </button>
 
-            {/* + Add view */}
-            <button className="jira-tab-btn-add" title="Add view">
-              <span>+</span>
-            </button>
           </div>
         </div>
 
