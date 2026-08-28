@@ -29,6 +29,13 @@ export default function ListView({ project, issues = [], members = [], onRefresh
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showColumnConfig, setShowColumnConfig] = useState(false);
 
+  // Saved filters state
+  const [savedFilters, setSavedFilters] = useState([]);
+  const [showSavedFilters, setShowSavedFilters] = useState(false);
+  const [showSaveInput, setShowSaveInput] = useState(false);
+  const [saveFilterName, setSaveFilterName] = useState("");
+  const savedFiltersRef = useRef(null);
+
   // Date edit inline state
   const [editingDueDateId, setEditingDueDateId] = useState(null);
 
@@ -58,6 +65,14 @@ export default function ListView({ project, issues = [], members = [], onRefresh
   const moreMenuRef = useRef(null);
   const columnMenuRef = useRef(null);
 
+  // Load saved filters for this project
+  useEffect(() => {
+    if (!project?.id) return;
+    api.get(`/saved-filters/?project=${project.id}`)
+      .then((res) => setSavedFilters(res.data))
+      .catch(() => {});
+  }, [project?.id]);
+
   useEffect(() => {
     function handleClickOutside(e) {
       if (moreMenuRef.current && !moreMenuRef.current.contains(e.target)) {
@@ -65,6 +80,10 @@ export default function ListView({ project, issues = [], members = [], onRefresh
       }
       if (columnMenuRef.current && !columnMenuRef.current.contains(e.target)) {
         setShowColumnConfig(false);
+      }
+      if (savedFiltersRef.current && !savedFiltersRef.current.contains(e.target)) {
+        setShowSavedFilters(false);
+        setShowSaveInput(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -332,6 +351,41 @@ export default function ListView({ project, issues = [], members = [], onRefresh
     : "U";
   const userFullName = currentUser?.username || "User";
 
+  // ── Saved filter handlers ──
+  async function handleSaveFilter() {
+    const name = saveFilterName.trim();
+    if (!name) return;
+    try {
+      const res = await api.post("/saved-filters/", {
+        project: project.id,
+        name,
+        status: null,       // ListView doesn't have a single status filter currently
+        priority: priorityFilter || null,
+        assignee: typeof assigneeFilter === "number" ? assigneeFilter : null,
+      });
+      setSavedFilters((prev) => [...prev, res.data]);
+      setSaveFilterName("");
+      setShowSaveInput(false);
+    } catch (err) {
+      alert(err?.response?.data?.non_field_errors?.[0] || "Could not save filter.");
+    }
+  }
+
+  async function handleDeleteSavedFilter(id) {
+    try {
+      await api.delete(`/saved-filters/${id}/`);
+      setSavedFilters((prev) => prev.filter((f) => f.id !== id));
+    } catch {
+      alert("Could not delete filter.");
+    }
+  }
+
+  function handleApplySavedFilter(f) {
+    setPriorityFilter(f.priority || null);
+    setAssigneeFilter(f.assignee || null);
+    setShowSavedFilters(false);
+  }
+
   // Grouping logic if enabled
   const groupedSections = [];
   if (groupBy === "STATUS") {
@@ -455,6 +509,105 @@ export default function ListView({ project, issues = [], members = [], onRefresh
                 >
                   Reset Filters
                 </button>
+              </div>
+            )}
+          </div>
+
+          {/* ── Saved Filters ── */}
+          <div className="jira-nav-dropdown-wrap" ref={savedFiltersRef}>
+
+            {/* Saved Filters dropdown */}
+            <button
+              className={`jira-toolbar-action-btn ${showSavedFilters ? "active" : ""}`}
+              onClick={() => { setShowSavedFilters((v) => !v); setShowSaveInput(false); }}
+              title="Saved Filters"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                <polyline points="17 21 17 13 7 13 7 21"/>
+                <polyline points="7 3 7 8 15 8"/>
+              </svg>
+              <span>Saved {savedFilters.length > 0 ? `(${savedFilters.length})` : ""}</span>
+            </button>
+
+            {showSavedFilters && (
+              <div className="jira-nav-popover" style={{ width: 240, padding: 0 }}>
+                <div className="jira-popover-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>SAVED FILTERS</span>
+                  <button
+                    className="jira-btn-link-sm"
+                    style={{ fontSize: 11 }}
+                    onClick={() => { setShowSaveInput((v) => !v); setSaveFilterName(""); }}
+                  >
+                    + Save current
+                  </button>
+                </div>
+
+                {/* Save current filter input */}
+                {showSaveInput && (
+                  <div style={{ padding: "8px 12px", borderBottom: "1px solid #EBECF0" }}>
+                    <div style={{ fontSize: 11, color: "#6B778C", marginBottom: 5 }}>
+                      Saving: {[priorityFilter, typeof assigneeFilter === "number" ? "Assignee" : null].filter(Boolean).join(", ") || "No active filters"}
+                    </div>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <input
+                        type="text"
+                        className="jira-input-sm"
+                        placeholder='e.g. "My Urgent Bugs"'
+                        value={saveFilterName}
+                        onChange={(e) => setSaveFilterName(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleSaveFilter()}
+                        autoFocus
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        className="jira-btn-primary-sm"
+                        onClick={handleSaveFilter}
+                        disabled={!saveFilterName.trim()}
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* List of saved filters */}
+                <div style={{ maxHeight: 220, overflowY: "auto" }}>
+                  {savedFilters.length === 0 && (
+                    <div style={{ padding: "14px 12px", fontSize: 13, color: "#97A0AF", textAlign: "center" }}>
+                      No saved filters yet.
+                    </div>
+                  )}
+                  {savedFilters.map((f) => (
+                    <div key={f.id} className="jira-sf-row">
+                      <button
+                        className="jira-sf-apply-btn"
+                        onClick={() => handleApplySavedFilter(f)}
+                        title="Apply this filter"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0052CC" strokeWidth="2.5">
+                          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                        </svg>
+                        <div className="jira-sf-info">
+                          <span className="jira-sf-name">{f.name}</span>
+                          <span className="jira-sf-meta">
+                            {[f.priority, f.assignee_username ? `@${f.assignee_username}` : null]
+                              .filter(Boolean).join(" · ") || "No filters"}
+                          </span>
+                        </div>
+                      </button>
+                      <button
+                        className="jira-sf-delete-btn"
+                        onClick={() => handleDeleteSavedFilter(f.id)}
+                        title="Delete this filter"
+                      >
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#DE350B" strokeWidth="2.5">
+                          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

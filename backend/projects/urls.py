@@ -4,6 +4,7 @@ from .views import (
     AutomationRuleViewSet,
     ProjectDocViewSet,
     ProjectViewSet,
+    SavedFilterViewSet,
     SprintViewSet,
     WorkflowStateViewSet,
     WorkflowTransitionViewSet,
@@ -16,5 +17,6 @@ router.register("automation-rules", AutomationRuleViewSet, basename="automation-
 router.register("sprints", SprintViewSet, basename="sprint")
 router.register("workflow-states", WorkflowStateViewSet, basename="workflow-state")
 router.register("workflow-transitions", WorkflowTransitionViewSet, basename="workflow-transition")
+router.register("saved-filters", SavedFilterViewSet, basename="saved-filter")
 
 urlpatterns = router.urls

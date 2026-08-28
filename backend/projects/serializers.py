@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from users.serializers import UserSerializer
 
-from .models import AutomationRule, Project, ProjectDoc, ProjectMembership, Sprint, WorkflowState, WorkflowTransition
+from .models import AutomationRule, Project, ProjectDoc, ProjectMembership, Sprint, WorkflowState, WorkflowTransition, SavedFilter
 
 
 class ProjectMembershipSerializer(serializers.ModelSerializer):
@@ -93,3 +93,17 @@ class ProjectSerializer(serializers.ModelSerializer):
             return None
         membership = obj.memberships.filter(user=request.user).first()
         return membership.role if membership else None
+
+
+class SavedFilterSerializer(serializers.ModelSerializer):
+    assignee_username = serializers.ReadOnlyField(source="assignee.username")
+
+    class Meta:
+        model = SavedFilter
+        fields = [
+            "id", "project", "name",
+            "status", "priority",
+            "assignee", "assignee_username",
+            "created_at",
+        ]
+        read_only_fields = ["created_at"]

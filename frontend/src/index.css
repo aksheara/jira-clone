@@ -6760,3 +6760,57 @@ kbd {
   color: #97A0AF;
   font-style: italic;
 }
+
+/* ========== SAVED FILTERS ========== */
+.jira-sf-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #F4F5F7;
+  transition: background 0.1s;
+}
+.jira-sf-row:last-child { border-bottom: none; }
+.jira-sf-row:hover { background: #F8F9FF; }
+
+.jira-sf-apply-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  padding: 9px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.jira-sf-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.jira-sf-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #172B4D;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.jira-sf-meta {
+  font-size: 11px;
+  color: #6B778C;
+}
+
+.jira-sf-delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 10px;
+  opacity: 0.5;
+  transition: opacity 0.1s;
+  flex-shrink: 0;
+}
+.jira-sf-delete-btn:hover { opacity: 1; }

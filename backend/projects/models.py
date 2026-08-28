@@ -174,3 +174,31 @@ class AutomationRule(models.Model):
 
     def __str__(self):
         return f"{self.name} ({'Enabled' if self.enabled else 'Disabled'})"
+
+
+class SavedFilter(models.Model):
+    """
+    A named filter preset saved by a user, scoped to a project.
+    Stores optional status / priority / assignee values.
+    """
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="saved_filters"
+    )
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="saved_filters"
+    )
+    name = models.CharField(max_length=100)
+    status = models.CharField(max_length=15, blank=True, null=True)
+    priority = models.CharField(max_length=10, blank=True, null=True)
+    assignee = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="saved_filter_assignees"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+        unique_together = ("owner", "project", "name")
+
+    def __str__(self):
+        return f"{self.owner} — {self.name} [{self.project.key}]"

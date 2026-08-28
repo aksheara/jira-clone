@@ -6,13 +6,14 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from .models import AutomationRule, Project, ProjectDoc, ProjectMembership, Sprint, WorkflowState, WorkflowTransition
-from .models import create_default_workflow
+from .models import create_default_workflow, SavedFilter
 from .permissions import IsProjectMember, IsProjectMemberOrAbove
 from .serializers import (
     AutomationRuleSerializer,
     ProjectDocSerializer,
     ProjectMembershipSerializer,
     ProjectSerializer,
+    SavedFilterSerializer,
     SprintSerializer,
     WorkflowStateSerializer,
     WorkflowTransitionSerializer,
@@ -290,3 +291,28 @@ class WorkflowTransitionViewSet(viewsets.ModelViewSet):
             from rest_framework.exceptions import PermissionDenied
             raise PermissionDenied("You are not a member of this project.")
         serializer.save()
+
+
+class SavedFilterViewSet(viewsets.ModelViewSet):
+    """
+    GET    /api/saved-filters/?project=<id>  — list saved filters for a project (owner only)
+    POST   /api/saved-filters/               — create a saved filter
+    DELETE /api/saved-filters/<id>/          — delete a saved filter
+    """
+    serializer_class = SavedFilterSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ["get", "post", "delete", "head", "options"]
+
+    def get_queryset(self):
+        qs = SavedFilter.objects.filter(owner=self.request.user)
+        project_id = self.request.query_params.get("project")
+        if project_id:
+            qs = qs.filter(project_id=project_id)
+        return qs
+
+    def perform_create(self, serializer):
+        project = serializer.validated_data["project"]
+        if not project.memberships.filter(user=self.request.user).exists():
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("You are not a member of this project.")
+        serializer.save(owner=self.request.user)
