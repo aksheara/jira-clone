@@ -18,7 +18,7 @@ const PRIORITY_LABELS = {
   LOW: "Low",
 };
 
-export default function BacklogView({ project, issues = [], members = [], onRefresh, currentUser }) {
+export default function BacklogView({ project, issues = [], members = [], onRefresh, currentUser, isViewer = false, isAdmin = false }) {
   const [sprints, setSprints] = useState([]);
   const [selectedIssueId, setSelectedIssueId] = useState(null);
 
@@ -237,16 +237,15 @@ export default function BacklogView({ project, issues = [], members = [], onRefr
             />
           </div>
         </div>
-        <button
-          className="jira-btn-primary-sm"
-          onClick={() => setShowCreateSprint(true)}
-        >
-          + Create Sprint
-        </button>
+        {!isViewer && (
+          <button className="jira-btn-primary-sm" onClick={() => setShowCreateSprint(true)}>
+            + Create Sprint
+          </button>
+        )}
       </div>
 
-      {/* Create Sprint Form */}
-      {showCreateSprint && (
+      {/* Create Sprint Form — Member/Admin only */}
+      {showCreateSprint && !isViewer && (
         <div className="jira-sprint-create-card">
           <h4 className="jira-sprint-create-title">New Sprint</h4>
           <form onSubmit={handleCreateSprint} className="jira-sprint-create-form">
@@ -315,9 +314,9 @@ export default function BacklogView({ project, issues = [], members = [], onRefr
           <div
             key={sprint.id}
             className={`jira-sprint-section ${sprint.status === "ACTIVE" ? "active-sprint" : ""} ${dragOverSection === sprint.id ? "drag-over" : ""}`}
-            onDragOver={(e) => { e.preventDefault(); setDragOverSection(sprint.id); }}
-            onDragLeave={() => setDragOverSection(null)}
-            onDrop={() => handleDrop(sprint.id)}
+            onDragOver={isViewer ? undefined : (e) => { e.preventDefault(); setDragOverSection(sprint.id); }}
+            onDragLeave={isViewer ? undefined : () => setDragOverSection(null)}
+            onDrop={isViewer ? undefined : () => handleDrop(sprint.id)}
           >
             {/* Sprint Header */}
             <div className="jira-sprint-header">
@@ -379,39 +378,35 @@ export default function BacklogView({ project, issues = [], members = [], onRefr
                   </div>
 
                   <div className="jira-sprint-header-actions">
-                    {sprint.status === "PLANNED" && (
-                      <button
-                        className="jira-btn-primary-sm"
-                        onClick={() => handleStartSprint(sprint.id)}
-                      >
+                    {!isViewer && sprint.status === "PLANNED" && (
+                      <button className="jira-btn-primary-sm" onClick={() => handleStartSprint(sprint.id)}>
                         Start Sprint
                       </button>
                     )}
-                    {sprint.status === "ACTIVE" && (
-                      <button
-                        className="jira-btn-complete-sprint"
-                        onClick={() => setCompletingSprintId(sprint.id)}
-                      >
+                    {!isViewer && sprint.status === "ACTIVE" && (
+                      <button className="jira-btn-complete-sprint" onClick={() => setCompletingSprintId(sprint.id)}>
                         Complete Sprint
                       </button>
                     )}
-                    <button
-                      className="jira-btn-icon-plain"
-                      title="Edit sprint"
-                      onClick={() => {
-                        setEditingSprintId(sprint.id);
-                        setEditSprintName(sprint.name);
-                        setEditSprintGoal(sprint.goal || "");
-                        setEditSprintStart(sprint.start_date || "");
-                        setEditSprintEnd(sprint.end_date || "");
-                      }}
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                      </svg>
-                    </button>
-                    {sprint.status === "PLANNED" && (
+                    {!isViewer && (
+                      <button
+                        className="jira-btn-icon-plain"
+                        title="Edit sprint"
+                        onClick={() => {
+                          setEditingSprintId(sprint.id);
+                          setEditSprintName(sprint.name);
+                          setEditSprintGoal(sprint.goal || "");
+                          setEditSprintStart(sprint.start_date || "");
+                          setEditSprintEnd(sprint.end_date || "");
+                        }}
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                    )}
+                    {!isViewer && sprint.status === "PLANNED" && (
                       <button
                         className="jira-btn-icon-plain"
                         title="Delete sprint"
@@ -434,7 +429,7 @@ export default function BacklogView({ project, issues = [], members = [], onRefr
                 <div className="jira-backlog-issue-list">
                   {sprintIssues.length === 0 && (
                     <div className="jira-backlog-empty-drop">
-                      Drag issues here to add them to this sprint
+                      {isViewer ? "No issues in this sprint." : "Drag issues here to add them to this sprint"}
                     </div>
                   )}
                   {sprintIssues.map((issue) => (
@@ -443,12 +438,12 @@ export default function BacklogView({ project, issues = [], members = [], onRefr
                       issue={issue}
                       projectKey={project?.key}
                       onOpen={() => setSelectedIssueId(issue.id)}
-                      onDragStart={() => setDraggingIssueId(issue.id)}
+                      onDragStart={isViewer ? undefined : () => setDraggingIssueId(issue.id)}
                     />
                   ))}
                 </div>
-                {/* Inline create */}
-                {inlineSection === sprint.id ? (
+                {/* Inline create — Member/Admin only */}
+                {!isViewer && (inlineSection === sprint.id ? (
                   <InlineCreate
                     title={inlineTitle}
                     setTitle={setInlineTitle}
@@ -464,7 +459,7 @@ export default function BacklogView({ project, issues = [], members = [], onRefr
                   >
                     + Create issue
                   </button>
-                )}
+                ))}
               </>
             )}
           </div>
@@ -501,7 +496,7 @@ export default function BacklogView({ project, issues = [], members = [], onRefr
             <div className="jira-backlog-issue-list">
               {backlogIssues.length === 0 && (
                 <div className="jira-backlog-empty-drop">
-                  No issues in backlog. Create one below or drag issues here from sprints.
+                  {isViewer ? "No issues in backlog." : "No issues in backlog. Create one below or drag issues here from sprints."}
                 </div>
               )}
               {backlogIssues.map((issue) => (
@@ -510,11 +505,11 @@ export default function BacklogView({ project, issues = [], members = [], onRefr
                   issue={issue}
                   projectKey={project?.key}
                   onOpen={() => setSelectedIssueId(issue.id)}
-                  onDragStart={() => setDraggingIssueId(issue.id)}
+                  onDragStart={isViewer ? undefined : () => setDraggingIssueId(issue.id)}
                 />
               ))}
             </div>
-            {inlineSection === "backlog" ? (
+            {!isViewer && (inlineSection === "backlog" ? (
               <InlineCreate
                 title={inlineTitle}
                 setTitle={setInlineTitle}
@@ -530,7 +525,7 @@ export default function BacklogView({ project, issues = [], members = [], onRefr
               >
                 + Create issue
               </button>
-            )}
+            ))}
           </>
         )}
       </div>
@@ -635,6 +630,8 @@ export default function BacklogView({ project, issues = [], members = [], onRefr
           projectKey={project?.key}
           members={members}
           currentUser={currentUser}
+          isViewer={isViewer}
+          isAdmin={isAdmin}
           onClose={() => setSelectedIssueId(null)}
           onUpdate={refresh}
         />

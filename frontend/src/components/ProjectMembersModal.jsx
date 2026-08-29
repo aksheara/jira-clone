@@ -5,6 +5,7 @@ export default function ProjectMembersModal({
   isOpen,
   onClose,
   project,
+  isAdmin = false,
   onMembersUpdated,
 }) {
   const [members, setMembers] = useState([]);
@@ -114,58 +115,60 @@ export default function ProjectMembersModal({
           {error && <div className="jira-alert-error">{error}</div>}
           {successMsg && <div className="jira-alert-success">{successMsg}</div>}
 
-          {/* Add Member Section */}
-          <div className="jira-member-add-box">
-            <h3 className="jira-section-title">Add team member</h3>
-            <form onSubmit={handleAddMember}>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 8 }}>
-                <div style={{ flex: "2 1 200px", minWidth: 180 }}>
-                  {availableUsersToAdd.length > 0 ? (
+          {/* Add Member Section — Admin only */}
+          {isAdmin && (
+            <div className="jira-member-add-box">
+              <h3 className="jira-section-title">Add team member</h3>
+              <form onSubmit={handleAddMember}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 8 }}>
+                  <div style={{ flex: "2 1 200px", minWidth: 180 }}>
+                    {availableUsersToAdd.length > 0 ? (
+                      <select
+                        className="jira-select"
+                        value={selectedUserId}
+                        onChange={(e) => {
+                          setSelectedUserId(e.target.value);
+                          setCustomUsername("");
+                        }}
+                        style={{ width: "100%" }}
+                      >
+                        <option value="">Select registered user...</option>
+                        {availableUsersToAdd.map((u) => (
+                          <option key={u.id} value={u.id}>
+                            {u.username} ({u.email || "no email"})
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        className="jira-input"
+                        placeholder="Enter username..."
+                        value={customUsername}
+                        onChange={(e) => setCustomUsername(e.target.value)}
+                        style={{ width: "100%" }}
+                      />
+                    )}
+                  </div>
+                  <div style={{ flex: "1 1 110px", minWidth: 110 }}>
                     <select
                       className="jira-select"
-                      value={selectedUserId}
-                      onChange={(e) => {
-                        setSelectedUserId(e.target.value);
-                        setCustomUsername("");
-                      }}
+                      value={selectedRole}
+                      onChange={(e) => setSelectedRole(e.target.value)}
                       style={{ width: "100%" }}
                     >
-                      <option value="">Select registered user...</option>
-                      {availableUsersToAdd.map((u) => (
-                        <option key={u.id} value={u.id}>
-                          {u.username} ({u.email || "no email"})
-                        </option>
-                      ))}
+                      <option value="MEMBER">Member</option>
+                      <option value="ADMIN">Admin</option>
+                      <option value="VIEWER">Viewer</option>
                     </select>
-                  ) : (
-                    <input
-                      type="text"
-                      className="jira-input"
-                      placeholder="Enter username..."
-                      value={customUsername}
-                      onChange={(e) => setCustomUsername(e.target.value)}
-                      style={{ width: "100%" }}
-                    />
-                  )}
+                  </div>
+                  <button type="submit" className="jira-btn-primary" disabled={loading} style={{ flexShrink: 0 }}>
+                    {loading ? "Adding..." : "+ Add"}
+                  </button>
                 </div>
-                <div style={{ flex: "1 1 110px", minWidth: 110 }}>
-                  <select
-                    className="jira-select"
-                    value={selectedRole}
-                    onChange={(e) => setSelectedRole(e.target.value)}
-                    style={{ width: "100%" }}
-                  >
-                    <option value="MEMBER">Member</option>
-                    <option value="ADMIN">Admin</option>
-                    <option value="VIEWER">Viewer</option>
-                  </select>
-                </div>
-                <button type="submit" className="jira-btn-primary" disabled={loading} style={{ flexShrink: 0 }}>
-                  {loading ? "Adding..." : "+ Add"}
-                </button>
-              </div>
-            </form>
-          </div>
+              </form>
+            </div>
+          )}
 
           {/* Current Members List */}
           <div className="jira-members-list-wrapper">
@@ -197,26 +200,31 @@ export default function ProjectMembersModal({
                     </div>
 
                     <div className="jira-member-right">
-                      <select
-                        className="jira-select-sm"
-                        value={m.role}
-                        onChange={(e) => handleChangeRole(m.user?.id, e.target.value)}
-                      >
-                        <option value="ADMIN">Admin</option>
-                        <option value="MEMBER">Member</option>
-                        <option value="VIEWER">Viewer</option>
-                      </select>
-
-                      <button
-                        className="jira-btn-icon-danger"
-                        onClick={() => handleRemoveMember(m.user?.id)}
-                        title="Remove member"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="3 6 5 6 21 6"/>
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                        </svg>
-                      </button>
+                      {isAdmin ? (
+                        <>
+                          <select
+                            className="jira-select-sm"
+                            value={m.role}
+                            onChange={(e) => handleChangeRole(m.user?.id, e.target.value)}
+                          >
+                            <option value="ADMIN">Admin</option>
+                            <option value="MEMBER">Member</option>
+                            <option value="VIEWER">Viewer</option>
+                          </select>
+                          <button
+                            className="jira-btn-icon-danger"
+                            onClick={() => handleRemoveMember(m.user?.id)}
+                            title="Remove member"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <polyline points="3 6 5 6 21 6"/>
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                            </svg>
+                          </button>
+                        </>
+                      ) : (
+                        <span className="jira-member-role-tag">{m.role}</span>
+                      )}
                     </div>
                   </div>
                 );

@@ -4,7 +4,7 @@ import IssueModal from "./IssueModal";
 import AskAIModal from "./AskAIModal";
 import { IssueTypeIcon, PriorityIcon, MergeIcon, TrashIcon } from "./Icons";
 
-export default function ListView({ project, issues = [], members = [], onRefresh, currentUser }) {
+export default function ListView({ project, issues = [], members = [], onRefresh, currentUser, isViewer = false }) {
   const [selectedIssueId, setSelectedIssueId] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [activeDropdownId, setActiveDropdownId] = useState(null);
@@ -1029,7 +1029,7 @@ export default function ListView({ project, issues = [], members = [], onRefresh
 
         {/* Footer Create bar matching screenshot */}
         <div className="jira-table-footer-bar">
-          {!inlineCreating ? (
+          {!isViewer && !inlineCreating ? (
             <button
               className="jira-btn-inline-add-trigger"
               onClick={() => setInlineCreating(true)}
@@ -1133,6 +1133,7 @@ export default function ListView({ project, issues = [], members = [], onRefresh
           projectKey={project?.key}
           members={project?.members || members || []}
           currentUser={currentUser}
+          isViewer={isViewer}
           onClose={() => setSelectedIssueId(null)}
           onUpdate={onRefresh}
         />

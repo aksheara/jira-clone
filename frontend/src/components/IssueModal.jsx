@@ -4,7 +4,7 @@ import MentionTextarea from "./MentionTextarea";
 import MarkdownRenderer from "./MarkdownRenderer";
 import { FileIcon, GitBranchIcon, PullRequestIcon, AttachmentIcon, IssueTypeIcon, PriorityIcon } from "./Icons";
 
-export default function IssueModal({ issueId, projectKey, members = [], currentUser, onClose, onUpdate }) {
+export default function IssueModal({ issueId, projectKey, members = [], currentUser, isViewer = false, isAdmin = false, onClose, onUpdate }) {
   const [issue, setIssue] = useState(null);
   const [newComment, setNewComment] = useState("");
   const [tab, setTab] = useState("comments");
@@ -249,12 +249,15 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
           </div>
 
           <div className="jira-drawer-actions">
-            <button className="jira-btn-icon-plain" onClick={handleDeleteIssue} title="Delete issue">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#de350b" strokeWidth="2">
-                <polyline points="3 6 5 6 21 6"/>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-              </svg>
-            </button>
+            {/* Delete — Admin only */}
+            {isAdmin && (
+              <button className="jira-btn-icon-plain" onClick={handleDeleteIssue} title="Delete issue">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#de350b" strokeWidth="2">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+              </button>
+            )}
             <button className="jira-btn-icon-close" onClick={onClose} aria-label="Close">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="18" y1="6" x2="6" y2="18"/>
@@ -269,7 +272,7 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
           {/* Left Main Column */}
           <div className="jira-drawer-left">
             {/* Title */}
-            {isEditingTitle ? (
+            {isEditingTitle && !isViewer ? (
               <div style={{ marginBottom: 16 }}>
                 <input
                   type="text"
@@ -291,10 +294,12 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
               <h1
                 className="jira-drawer-title"
                 onClick={() => {
+                  if (isViewer) return;
                   setTitleVal(issue.title || "");
                   setIsEditingTitle(true);
                 }}
-                title="Click to edit summary"
+                title={isViewer ? undefined : "Click to edit summary"}
+                style={{ cursor: isViewer ? "default" : "pointer" }}
               >
                 {issue.title}
               </h1>
@@ -303,7 +308,7 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
             {/* Description */}
             <div className="jira-drawer-section">
               <label className="jira-drawer-label">Description</label>
-              {isEditingDesc ? (
+              {isEditingDesc && !isViewer ? (
                 <div>
                   <textarea
                     className="jira-textarea"
@@ -330,15 +335,17 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
                 <div
                   className="jira-desc-preview"
                   onClick={() => {
+                    if (isViewer) return;
                     setDescVal(issue.description || "");
                     setIsEditingDesc(true);
                   }}
-                  title="Click to edit description"
+                  title={isViewer ? undefined : "Click to edit description"}
+                  style={{ cursor: isViewer ? "default" : "pointer" }}
                 >
                   {issue.description ? (
                     <div style={{ whiteSpace: "pre-wrap" }}>{issue.description}</div>
                   ) : (
-                    <span className="jira-placeholder-text">Add a description...</span>
+                    <span className="jira-placeholder-text">{isViewer ? "No description." : "Add a description..."}</span>
                   )}
                 </div>
               )}
@@ -352,7 +359,7 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
                   <span>Figma Design Preview</span>
                   {issue.figma_url && <span className="jira-connected-pill">Connected</span>}
                 </label>
-                {!isEditingFigma && (
+                {!isEditingFigma && !isViewer && (
                   <button
                     className="jira-btn-link-sm"
                     onClick={() => setIsEditingFigma(true)}
@@ -421,7 +428,7 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
                   <GitBranchIcon size={14} />
                   <span>Development (GitHub)</span>
                 </label>
-                {!isEditingGithub && (
+                {!isEditingGithub && !isViewer && (
                   <button
                     className="jira-btn-link-sm"
                     onClick={() => setIsEditingGithub(true)}
@@ -478,12 +485,11 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
               <div className="jira-drawer-section">
                 <div className="jira-section-header-flex">
                   <label className="jira-drawer-label">Subtasks ({issue.subtasks?.length || 0})</label>
-                  <button
-                    className="jira-btn-link-sm"
-                    onClick={() => setShowSubtaskAdd(true)}
-                  >
-                    + Add subtask
-                  </button>
+                  {!isViewer && (
+                    <button className="jira-btn-link-sm" onClick={() => setShowSubtaskAdd(true)}>
+                      + Add subtask
+                    </button>
+                  )}
                 </div>
 
                 {showSubtaskAdd && (
@@ -529,20 +535,16 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
                     <AttachmentIcon size={14} /> Attachments ({issue.attachments?.length || 0})
                   </span>
                 </label>
-                <button
-                  className="jira-btn-link-sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingFile}
-                >
-                  {uploadingFile ? "Uploading..." : "+ Attach File"}
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  style={{ display: "none" }}
-                  onChange={handleFileUpload}
-                />
+                  {!isViewer && (
+                    <button
+                      className="jira-btn-link-sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingFile}
+                    >
+                      {uploadingFile ? "Uploading..." : "+ Attach File"}
+                    </button>
+                  )}
+                  <input ref={fileInputRef} type="file" multiple style={{ display: "none" }} onChange={handleFileUpload} />
               </div>
 
               {uploadError && (
@@ -597,16 +599,18 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
                           {formatBytes(att.file_size)} · {att.uploaded_by?.username} · {new Date(att.uploaded_at).toLocaleDateString()}
                         </span>
                       </div>
-                      <button
-                        className="jira-btn-icon-plain"
-                        title="Delete attachment"
-                        onClick={() => handleDeleteAttachment(att.id)}
-                      >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#de350b" strokeWidth="2.5">
-                          <polyline points="3 6 5 6 21 6"/>
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                        </svg>
-                      </button>
+                      {!isViewer && (
+                        <button
+                          className="jira-btn-icon-plain"
+                          title="Delete attachment"
+                          onClick={() => handleDeleteAttachment(att.id)}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#de350b" strokeWidth="2.5">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                          </svg>
+                        </button>
+                      )}
                     </div>
                   ))}
                   {/* Re-upload button when files already exist */}
@@ -681,14 +685,18 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
                               <MarkdownRenderer>{c.body}</MarkdownRenderer>
                             </div>
                             <div className="jira-comment-actions">
-                              <button
-                                className="jira-comment-action-btn"
-                                onClick={() => { setEditingCommentId(c.id); setEditCommentBody(c.body); }}
-                              >Edit</button>
-                              <button
-                                className="jira-comment-action-btn danger"
-                                onClick={() => handleDeleteComment(c.id)}
-                              >Delete</button>
+                              {!isViewer && (
+                                <>
+                                  <button
+                                    className="jira-comment-action-btn"
+                                    onClick={() => { setEditingCommentId(c.id); setEditCommentBody(c.body); }}
+                                  >Edit</button>
+                                  <button
+                                    className="jira-comment-action-btn danger"
+                                    onClick={() => handleDeleteComment(c.id)}
+                                  >Delete</button>
+                                </>
+                              )}
                             </div>
                           </>
                         )}
@@ -696,20 +704,22 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
                     </div>
                   ))}
 
-                  <form onSubmit={submitComment} className="jira-add-comment-form">
-                    <MentionTextarea
-                      value={newComment}
-                      onChange={setNewComment}
-                      members={members}
-                      rows={3}
-                      disabled={submittingComment}
-                    />
-                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
-                      <button type="submit" className="jira-btn-primary-sm" disabled={submittingComment || !newComment.trim()}>
-                        {submittingComment ? "Saving..." : "Save"}
-                      </button>
-                    </div>
-                  </form>
+                  {!isViewer && (
+                    <form onSubmit={submitComment} className="jira-add-comment-form">
+                      <MentionTextarea
+                        value={newComment}
+                        onChange={setNewComment}
+                        members={members}
+                        rows={3}
+                        disabled={submittingComment}
+                      />
+                      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+                        <button type="submit" className="jira-btn-primary-sm" disabled={submittingComment || !newComment.trim()}>
+                          {submittingComment ? "Saving..." : "Save"}
+                        </button>
+                      </div>
+                    </form>
+                  )}
                 </div>
               ) : (
                 <div className="jira-activity-log-list">
@@ -733,53 +743,53 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
             {/* Status Field */}
             <div className="jira-drawer-field">
               <label className="jira-drawer-field-label">Status</label>
-              <select
-                className="jira-select"
-                value={issue.status}
-                onChange={(e) => updateField("status", e.target.value)}
-              >
-                <option value="TODO">To Do</option>
-                <option value="IN_PROGRESS">In Progress</option>
-                <option value="DONE">Done</option>
-              </select>
+              {isViewer ? (
+                <div className="jira-drawer-field-readonly"><span>{issue.status === "IN_PROGRESS" ? "In Progress" : issue.status === "DONE" ? "Done" : "To Do"}</span></div>
+              ) : (
+                <select className="jira-select" value={issue.status} onChange={(e) => updateField("status", e.target.value)}>
+                  <option value="TODO">To Do</option>
+                  <option value="IN_PROGRESS">In Progress</option>
+                  <option value="DONE">Done</option>
+                </select>
+              )}
             </div>
 
             {/* Resolution Field */}
             <div className="jira-drawer-field">
               <label className="jira-drawer-field-label">Resolution</label>
-              <select
-                className="jira-select"
-                value={issue.resolution || (issue.status === "DONE" ? "Resolved" : "Unresolved")}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === "Resolved" || val === "Solved") {
-                    updateField("resolution", val);
-                    updateField("status", "DONE");
-                  } else {
-                    updateField("resolution", val);
-                  }
-                }}
-              >
-                <option value="Unresolved">Unresolved</option>
-                <option value="Resolved">Resolved</option>
-                <option value="Solved">Solved</option>
-                <option value="Won't Fix">Won't Fix</option>
-              </select>
+              {isViewer ? (
+                <div className="jira-drawer-field-readonly"><span>{issue.resolution || "Unresolved"}</span></div>
+              ) : (
+                <select
+                  className="jira-select"
+                  value={issue.resolution || (issue.status === "DONE" ? "Resolved" : "Unresolved")}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "Resolved" || val === "Solved") { updateField("resolution", val); updateField("status", "DONE"); }
+                    else { updateField("resolution", val); }
+                  }}
+                >
+                  <option value="Unresolved">Unresolved</option>
+                  <option value="Resolved">Resolved</option>
+                  <option value="Solved">Solved</option>
+                  <option value="Won't Fix">Won't Fix</option>
+                </select>
+              )}
             </div>
 
             {/* Priority Field */}
             <div className="jira-drawer-field">
               <label className="jira-drawer-field-label">Priority</label>
-              <select
-                className="jira-select"
-                value={issue.priority}
-                onChange={(e) => updateField("priority", e.target.value)}
-              >
-                <option value="LOW">Low</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HIGH">High</option>
-                <option value="CRITICAL">Critical</option>
-              </select>
+              {isViewer ? (
+                <div className="jira-drawer-field-readonly"><span>{issue.priority}</span></div>
+              ) : (
+                <select className="jira-select" value={issue.priority} onChange={(e) => updateField("priority", e.target.value)}>
+                  <option value="LOW">Low</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="HIGH">High</option>
+                  <option value="CRITICAL">Critical</option>
+                </select>
+              )}
             </div>
 
             {/* Assignee Field */}
@@ -816,12 +826,11 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
             {/* Due Date Field */}
             <div className="jira-drawer-field">
               <label className="jira-drawer-field-label">Due Date</label>
-              <input
-                type="date"
-                className="jira-input"
-                value={issue.due_date || ""}
-                onChange={(e) => updateField("due_date", e.target.value || null)}
-              />
+              {isViewer ? (
+                <div className="jira-drawer-field-readonly"><span>{issue.due_date || "Not set"}</span></div>
+              ) : (
+                <input type="date" className="jira-input" value={issue.due_date || ""} onChange={(e) => updateField("due_date", e.target.value || null)} />
+              )}
             </div>
 
             {/* Reporter Field */}

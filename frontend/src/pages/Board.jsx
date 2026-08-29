@@ -3,6 +3,7 @@ import { useParams, Link, useSearchParams } from "react-router-dom";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { useProjectRole } from "../hooks/useProjectRole";
 import Navbar from "../components/Navbar";
 import ListView from "../components/ListView";
 import SummaryView from "../components/SummaryView";
@@ -99,6 +100,9 @@ export default function Board() {
   const projectName = projectDetails?.name || "My Data Science Team";
   const projectKey = projectDetails?.key || "KAN";
 
+  // Role-based visibility
+  const { isAdmin, isMember, isViewer } = useProjectRole(projectDetails, user);
+
   // Build kanban columns from project's workflow states if available, else use fallback
   const kanbanColumns = projectDetails?.workflow_states?.length
     ? projectDetails.workflow_states.map((s) => ({
@@ -146,11 +150,11 @@ export default function Board() {
               {/* Project Title Text */}
               <h1 className="jira-project-heading">{projectName}</h1>
 
-              {/* Members Button with Group Icon */}
+              {/* Members Button — visible to all, but manage controls hidden inside for non-Admins */}
               <button
                 className="jira-btn-members-group"
                 onClick={() => setShowMembersModal(true)}
-                title="Manage team members & roles"
+                title="View team members"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -171,63 +175,41 @@ export default function Board() {
               </button>
             </div>
 
-            {/* Right Action Icons: Share, Automation, Export, Fullscreen */}
+            {/* Right Action Icons — role-gated */}
             <div className="jira-project-actions-right">
-              {/* Share button */}
-              <button
-                className="jira-btn-action-icon"
-                title="Share project"
-                onClick={() => setShowShareModal(true)}
-              >
+              {/* Share — all roles */}
+              <button className="jira-btn-action-icon" title="Share project" onClick={() => setShowShareModal(true)}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="18" cy="5" r="3"/>
-                  <circle cx="6" cy="12" r="3"/>
-                  <circle cx="18" cy="19" r="3"/>
-                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                  <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                 </svg>
               </button>
 
-              {/* Automation (Lightning) */}
-              <button
-                className="jira-btn-action-icon"
-                title="Automation rules"
-                onClick={() => setShowAutomationModal(true)}
-              >
+              {/* Automation — Admin only */}
+              {isAdmin && (
+                <button className="jira-btn-action-icon" title="Automation rules (Admin only)" onClick={() => setShowAutomationModal(true)}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                  </svg>
+                </button>
+              )}
+
+              {/* Export — all roles */}
+              <button className="jira-btn-action-icon" title="Export / View" onClick={() => setShowExportModal(true)}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                  <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/>
                 </svg>
               </button>
 
-              {/* Export / Views icon */}
-              <button
-                className="jira-btn-action-icon"
-                title="Export / View"
-                onClick={() => setShowExportModal(true)}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                  <line x1="9" y1="3" x2="9" y2="21"/>
-                </svg>
-              </button>
-
-              {/* Fullscreen icon */}
-              <button
-                className="jira-btn-action-icon"
-                title="Fullscreen / Expand"
+              {/* Fullscreen — all roles */}
+              <button className="jira-btn-action-icon" title="Fullscreen / Expand"
                 onClick={() => {
-                  if (!document.fullscreenElement) {
-                    document.documentElement.requestFullscreen().catch(() => {});
-                  } else {
-                    document.exitFullscreen().catch(() => {});
-                  }
-                }}
-              >
+                  if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+                  else document.exitFullscreen().catch(() => {});
+                }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="15 3 21 3 21 9"/>
-                  <polyline points="9 21 3 21 3 15"/>
-                  <line x1="21" y1="3" x2="14" y2="10"/>
-                  <line x1="3" y1="21" x2="10" y2="14"/>
+                  <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+                  <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
                 </svg>
               </button>
             </div>
@@ -316,6 +298,7 @@ export default function Board() {
               issues={issues}
               members={members}
               currentUser={user}
+              isViewer={isViewer}
               onSelectIssue={(id) => setSelectedIssueId(id)}
               onRefresh={loadIssues}
             />
@@ -335,7 +318,45 @@ export default function Board() {
           {/* 3. KANBAN BOARD VIEW */}
           {activeTab === "board" && (
             <div className="jira-board-view-container">
-              <DragDropContext onDragEnd={onDragEnd}>
+              {/* Viewer sees board read-only — no drag, no quick-add */}
+              {isViewer ? (
+                <div className="jira-kanban-board">
+                  {kanbanColumns.map((col) => {
+                    const colIssues = issues.filter((i) =>
+                      i.status === col.key || i.status === col.category
+                    );
+                    return (
+                      <div key={col.key} className="jira-kanban-column">
+                        <div className="jira-column-header" style={{ borderTop: `3px solid ${col.color}` }}>
+                          <div className="jira-column-title-group">
+                            <span className="jira-column-title" style={{ color: col.color }}>{col.label}</span>
+                            <span className="jira-column-count">{colIssues.length}</span>
+                          </div>
+                        </div>
+                        <div className="jira-column-cards-list">
+                          {colIssues.map((issue) => (
+                            <div
+                              key={issue.id}
+                              className="jira-card-box"
+                              onClick={() => setSelectedIssueId(issue.id)}
+                              style={{ cursor: "pointer" }}
+                            >
+                              <div className="jira-card-title">{issue.title}</div>
+                              <div className="jira-card-bottom">
+                                <span className="jira-card-key">{projectKey}-{issue.id}</span>
+                                {issue.assignee && (
+                                  <div className="jira-avatar-circle small">{issue.assignee.username.substring(0, 2).toUpperCase()}</div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <DragDropContext onDragEnd={onDragEnd}>
                 <div className="jira-kanban-board">
                   {kanbanColumns.map((col) => {
                     // Match issues by state name OR legacy category key (TODO/IN_PROGRESS/DONE)
@@ -406,39 +427,21 @@ export default function Board() {
                               {provided.placeholder}
                             </div>
 
-                            {/* Quick Add Button / Inline Form */}
-                            {quickAddCol === col.key ? (
+                            {/* Quick Add — Member/Admin only */}
+                            {isMember && (quickAddCol === col.key ? (
                               <form onSubmit={(e) => handleQuickAdd(col.key, e)} className="jira-quick-add-form">
-                                <input
-                                  type="text"
-                                  className="jira-input-sm"
-                                  placeholder="What needs to be done?"
-                                  value={quickTitle}
-                                  onChange={(e) => setQuickTitle(e.target.value)}
-                                  autoFocus
-                                />
+                                <input type="text" className="jira-input-sm" placeholder="What needs to be done?"
+                                  value={quickTitle} onChange={(e) => setQuickTitle(e.target.value)} autoFocus />
                                 <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
                                   <button type="submit" className="jira-btn-primary-sm">Add</button>
-                                  <button
-                                    type="button"
-                                    className="jira-btn-secondary-sm"
-                                    onClick={() => setQuickAddCol(null)}
-                                  >
-                                    Cancel
-                                  </button>
+                                  <button type="button" className="jira-btn-secondary-sm" onClick={() => setQuickAddCol(null)}>Cancel</button>
                                 </div>
                               </form>
                             ) : (
-                              <button
-                                className="jira-btn-column-add"
-                                onClick={() => {
-                                  setQuickAddCol(col.key);
-                                  setQuickTitle("");
-                                }}
-                              >
+                              <button className="jira-btn-column-add" onClick={() => { setQuickAddCol(col.key); setQuickTitle(""); }}>
                                 + Create issue
                               </button>
-                            )}
+                            ))}
                           </div>
                         )}
                       </Droppable>
@@ -446,6 +449,7 @@ export default function Board() {
                   })}
                 </div>
               </DragDropContext>
+              )}
             </div>
           )}
 
@@ -461,6 +465,8 @@ export default function Board() {
               issues={issues}
               members={members}
               currentUser={user}
+              isViewer={isViewer}
+              isAdmin={isAdmin}
               onRefresh={loadIssues}
             />
           )}
@@ -472,6 +478,7 @@ export default function Board() {
         isOpen={showMembersModal}
         onClose={() => setShowMembersModal(false)}
         project={projectDetails}
+        isAdmin={isAdmin}
         onMembersUpdated={(updatedProj) => {
           setProjectDetails(updatedProj);
           setMembers(updatedProj.members || []);
@@ -495,6 +502,8 @@ export default function Board() {
           projectKey={projectKey}
           members={members}
           currentUser={user}
+          isViewer={isViewer}
+          isAdmin={isAdmin}
           onClose={() => setSelectedIssueId(null)}
           onUpdate={loadIssues}
         />

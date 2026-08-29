@@ -18,11 +18,15 @@ export default function SettingsModal({ isOpen, onClose }) {
   // Workflow section state
   const [projects, setProjects] = useState([]);
   const [selectedWorkflowProject, setSelectedWorkflowProject] = useState(null);
+  const [isAdminInAnyProject, setIsAdminInAnyProject] = useState(false);
 
   useEffect(() => {
     api.get("/projects/").then((res) => {
       setProjects(res.data);
       if (res.data.length > 0) setSelectedWorkflowProject(res.data[0]);
+      // Check if user is Admin in at least one project
+      const hasAdmin = res.data.some((p) => p.my_role === "ADMIN");
+      setIsAdminInAnyProject(hasAdmin);
     }).catch(() => {});
   }, []);
 
@@ -78,9 +82,11 @@ export default function SettingsModal({ isOpen, onClose }) {
             <button className={`jira-settings-nav-item ${activeSection === "preferences" ? "active" : ""}`} onClick={() => setActiveSection("preferences")}>
               Preferences
             </button>
-            <button className={`jira-settings-nav-item ${activeSection === "workflows" ? "active" : ""}`} onClick={() => setActiveSection("workflows")}>
-              Workflows & Statuses
-            </button>
+            {isAdminInAnyProject && (
+              <button className={`jira-settings-nav-item ${activeSection === "workflows" ? "active" : ""}`} onClick={() => setActiveSection("workflows")}>
+                Workflows & Statuses
+              </button>
+            )}
             <button className={`jira-settings-nav-item ${activeSection === "notifications" ? "active" : ""}`} onClick={() => setActiveSection("notifications")}>
               Notifications
             </button>
@@ -151,7 +157,7 @@ export default function SettingsModal({ isOpen, onClose }) {
               </div>
             )}
 
-            {activeSection === "workflows" && (
+            {activeSection === "workflows" && isAdminInAnyProject && (
               <div className="jira-settings-group">
                 <h3 className="jira-section-title">Project Workflow Columns</h3>
                 <p className="jira-setting-desc" style={{ marginBottom: 12 }}>
@@ -171,7 +177,7 @@ export default function SettingsModal({ isOpen, onClose }) {
                           setSelectedWorkflowProject(p || null);
                         }}
                       >
-                        {projects.map((p) => (
+                        {projects.filter((p) => p.my_role === "ADMIN").map((p) => (
                           <option key={p.id} value={p.id}>{p.name} ({p.key})</option>
                         ))}
                       </select>
