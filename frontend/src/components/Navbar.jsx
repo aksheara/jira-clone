@@ -152,15 +152,18 @@ export default function Navbar({
                     )}
                   </div>
                   <div className="jira-popover-footer">
-                    <button
-                      className="jira-popover-btn-action"
-                      onClick={() => {
-                        setActiveMenu(null);
-                        setShowCreateProjectModal(true);
-                      }}
-                    >
-                      + Create project
-                    </button>
+                    {/* Only show Create project if user is Admin in at least one project, or has no projects yet */}
+                    {(projects.length === 0 || projects.some((p) => p.my_role === "ADMIN")) && (
+                      <button
+                        className="jira-popover-btn-action"
+                        onClick={() => {
+                          setActiveMenu(null);
+                          setShowCreateProjectModal(true);
+                        }}
+                      >
+                        + Create project
+                      </button>
+                    )}
                     <Link
                       to="/projects"
                       className="jira-popover-btn-link"
@@ -434,12 +437,14 @@ export default function Navbar({
                   </div>
                 </div>
                 <div className="jira-popover-divider"></div>
-                <button
-                  className="jira-user-popover-action"
-                  onClick={() => { setActiveMenu(null); setShowCreateProjectModal(true); }}
-                >
-                  + Create new project
-                </button>
+                {(projects.length === 0 || projects.some((p) => p.my_role === "ADMIN")) && (
+                  <button
+                    className="jira-user-popover-action"
+                    onClick={() => { setActiveMenu(null); setShowCreateProjectModal(true); }}
+                  >
+                    + Create new project
+                  </button>
+                )}
                 <Link to="/projects" className="jira-user-popover-action" onClick={() => setActiveMenu(null)}>
                   All projects
                 </Link>
