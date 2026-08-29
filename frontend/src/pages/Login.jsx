@@ -227,11 +227,12 @@ export default function Login() {
         <div className="jira-auth-card">
           <div className="jira-auth-card-inner">
             {/* Top Brand Logo */}
-            <div className="jira-auth-header-brand">
-              <div className="jira-auth-logo">
-                <img src="/dp-logo.png" alt="DataPattern Logo" style={{ height: 32, width: "auto" }} />
+            <div className="jira-auth-header-brand" style={{ flexDirection: "column", alignItems: "center", gap: 8, paddingBottom: 8 }}>
+              <img src="/dp-logo.png" alt="DataPattern Logo" style={{ height: 40, width: "auto", objectFit: "contain" }} />
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                <span className="jira-auth-brand-name" style={{ fontSize: 22, fontWeight: 800, letterSpacing: 2, color: "#172B4D" }}>NEXA</span>
+                <span style={{ fontSize: 11, color: "#6B778C", letterSpacing: 0.5 }}>Powered by DataPattern</span>
               </div>
-              <span className="jira-auth-brand-name">NEXA</span>
             </div>
 
             {/* Header / Nav switcher */}

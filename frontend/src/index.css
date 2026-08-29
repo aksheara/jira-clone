@@ -4205,10 +4205,12 @@ input:checked + .jira-switch-slider:before {
 
 .jira-auth-header-brand {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 24px;
+  text-align: center;
 }
 
 .jira-auth-header-brand .jira-auth-logo {
