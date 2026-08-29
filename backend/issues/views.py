@@ -153,57 +153,100 @@ class CommentViewSet(viewsets.ModelViewSet):
         if not issue.project.memberships.filter(user=self.request.user).exists():
             raise PermissionDenied("You are not a member of this project.")
         comment = serializer.save(author=self.request.user)
-        # Parse @mentions and notify each mentioned user
-        _notify_mentions(comment, self.request.user)
+        # Notify assignee + reporter + @mentioned members
+        _notify_on_comment(comment, self.request.user)
 
 
-def _notify_mentions(comment, actor):
+def _notify_on_comment(comment, commenter):
     """
-    Parses @username tokens from comment body.
-    For each valid project member found, creates an in-app Notification
-    and sends a mention email. Skips the commenter themselves.
+    Dual notification on every new comment — matching real Jira's behaviour:
+
+    1. DEFAULT recipients  — assignee + reporter get notified on every comment
+    2. @MENTION recipients — any @username found in the comment body that maps
+       to a valid project member gets an additional MENTION notification
+
+    The commenter is always excluded from both lists.
     """
     import re as _re
     from django.contrib.auth import get_user_model
     from users.models import Notification
-    from users.utils import send_mention_email
+    from users.utils import send_comment_email
 
     User = get_user_model()
     issue = comment.issue
     issue_key = f"{issue.project.key}-{issue.pk}"
 
-    # Extract all @username tokens (alphanumeric + underscore)
-    mentioned_usernames = set(_re.findall(r"@([\w]+)", comment.body))
-    if not mentioned_usernames:
-        return
+    # ── Build default recipient set (assignee + reporter) ──
+    default_recipients = set()
+    if issue.assignee and issue.assignee != commenter:
+        default_recipients.add(issue.assignee)
+    if issue.reporter and issue.reporter != commenter:
+        default_recipients.add(issue.reporter)
 
+    # ── Parse @mentions from comment body ──
+    mentioned_usernames = set(_re.findall(r"@([\w]+)", comment.body))
+    mention_recipients = set()
     for username in mentioned_usernames:
         user = User.objects.filter(username__iexact=username).first()
-        if not user or user == actor:
+        if not user or user == commenter:
             continue
-        # Only notify if they're a member of the project
         if not issue.project.memberships.filter(user=user).exists():
             continue
+        mention_recipients.add(user)
 
-        # In-app notification
+    # ── Notify default recipients ──
+    for recipient in default_recipients:
         Notification.objects.create(
-            recipient=user,
-            actor=actor,
-            action=f"mentioned you in a comment on {issue_key}",
+            recipient=recipient,
+            actor=commenter,
+            action=f"commented on issue {issue_key}",
             target=issue.title,
         )
-
-        # Email notification
-        if user.email:
-            send_mention_email(
-                mentioned_email=user.email,
-                mentioned_username=user.username,
-                mentioned_by=actor.username,
+        if recipient.email:
+            send_comment_email(
+                recipient_email=recipient.email,
+                recipient_username=recipient.username,
+                commenter=commenter.username,
                 issue_title=issue.title,
                 issue_key=issue_key,
                 project_name=issue.project.name,
                 comment_body=comment.body,
+                is_mention=False,
+                project_id=issue.project.id,
+                issue_id=issue.pk,
             )
+
+    # ── Notify @mention recipients (skip if already notified as default) ──
+    for recipient in mention_recipients - default_recipients:
+        Notification.objects.create(
+            recipient=recipient,
+            actor=commenter,
+            action=f"mentioned you in a comment on {issue_key}",
+            target=issue.title,
+        )
+        if recipient.email:
+            send_comment_email(
+                recipient_email=recipient.email,
+                recipient_username=recipient.username,
+                commenter=commenter.username,
+                issue_title=issue.title,
+                issue_key=issue_key,
+                project_name=issue.project.name,
+                comment_body=comment.body,
+                is_mention=True,
+                project_id=issue.project.id,
+                issue_id=issue.pk,
+            )
+
+    # ── If someone is both default + mentioned, send a combined notification ──
+    for recipient in default_recipients & mention_recipients:
+        # Already sent default email above; add a mention in-app notification too
+        Notification.objects.create(
+            recipient=recipient,
+            actor=commenter,
+            action=f"mentioned you in a comment on {issue_key}",
+            target=issue.title,
+        )
 
 
 class LabelViewSet(viewsets.ModelViewSet):

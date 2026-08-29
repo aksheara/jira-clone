@@ -339,3 +339,107 @@ The NEXA Team
         print(f"[Mention Email Error]: {e}")
         return False
 
+
+
+def send_comment_email(recipient_email: str, recipient_username: str, commenter: str,
+                       issue_title: str, issue_key: str, project_name: str,
+                       comment_body: str, is_mention: bool = False,
+                       project_id: int = None, issue_id: int = None) -> bool:
+    """
+    Sends a comment notification email.
+    - is_mention=False → "New comment on ISSUE-KEY" (default recipient)
+    - is_mention=True  → "You were mentioned in ISSUE-KEY" (mention recipient)
+    """
+    if is_mention:
+        subject = f"[NEXA] {commenter} mentioned you in {issue_key}"
+        intro = f"<strong>{commenter}</strong> mentioned you in a comment on"
+        plain_intro = f"{commenter} mentioned you in a comment on"
+    else:
+        subject = f"[NEXA] New comment on {issue_key}"
+        intro = f"<strong>{commenter}</strong> commented on"
+        plain_intro = f"{commenter} commented on"
+
+    preview = comment_body[:300] + ("..." if len(comment_body) > 300 else "")
+
+    frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
+    if project_id and issue_id:
+        issue_url = f"{frontend_url}/projects/{project_id}/board?issue={issue_id}"
+    else:
+        issue_url = f"{frontend_url}/projects"
+
+    message = f"""Hello {recipient_username},
+
+{plain_intro} {issue_key} — {issue_title} ({project_name}):
+
+"{preview}"
+
+View the full issue: {issue_url}
+
+The NEXA Team
+"""
+
+    html_message = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px;
+                border: 1px solid #DFE1E6; border-radius: 8px; background: #FFFFFF;">
+        <h2 style="color: #0052CC; margin: 0 0 16px 0;">NEXA</h2>
+        <h3 style="color: #172B4D; margin-top: 0;">
+            {'You were mentioned in a comment' if is_mention else 'New comment on your issue'}
+        </h3>
+        <p style="color: #42526E; font-size: 14px; line-height: 1.6;">
+            {intro}
+            <strong>{issue_key} — {issue_title}</strong> in <strong>{project_name}</strong>:
+        </p>
+        <div style="background: #F4F5F7; border-left: 4px solid {'#6554C0' if is_mention else '#0052CC'};
+                    border-radius: 4px; padding: 12px 16px; margin: 16px 0;
+                    font-size: 14px; color: #172B4D; font-style: italic;">
+            "{preview}"
+        </div>
+        <a href="{issue_url}"
+           style="display: inline-block; margin: 8px 0 16px; padding: 10px 22px;
+                  background: linear-gradient(135deg, #0065FF, #0052CC);
+                  color: #FFFFFF; font-weight: 700; font-size: 14px;
+                  border-radius: 7px; text-decoration: none;
+                  box-shadow: 0 2px 8px rgba(0,82,204,0.35);">
+            View Issue →
+        </a>
+        <hr style="border: none; border-top: 1px solid #EBECF0; margin: 20px 0;" />
+        <p style="color: #8993A4; font-size: 12px; margin: 0;">
+            You received this because you are {'mentioned in' if is_mention else 'the assignee or reporter of'} this issue in
+            <strong>{project_name}</strong>.
+        </p>
+    </div>
+    """
+
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@nexa.local")
+
+    try:
+        import ssl, smtplib
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = from_email
+        msg["To"] = recipient_email
+        msg.attach(MIMEText(message, "plain"))
+        msg.attach(MIMEText(html_message, "html"))
+
+        context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+
+        host = getattr(settings, "EMAIL_HOST", "smtp.gmail.com")
+        port = getattr(settings, "EMAIL_PORT", 587)
+        user = getattr(settings, "EMAIL_HOST_USER", "")
+        password = getattr(settings, "EMAIL_HOST_PASSWORD", "")
+
+        with smtplib.SMTP(host, port, timeout=10) as server:
+            server.ehlo()
+            server.starttls(context=context)
+            server.login(user, password)
+            server.sendmail(from_email, [recipient_email], msg.as_string())
+
+        return True
+    except Exception as e:
+        print(f"[Comment Email Error]: {e}")
+        return False
