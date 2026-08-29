@@ -65,6 +65,9 @@ CORS_ALLOWED_ORIGINS = [
     'http://10.169.235.240:5173',
 ]
 
+# Allow any origin during LAN development
+CORS_ALLOW_ALL_ORIGINS = True
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
