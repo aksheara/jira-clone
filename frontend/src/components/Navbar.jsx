@@ -85,12 +85,20 @@ export default function Navbar({
     <>
       <header className="jira-global-topbar" ref={menuRef}>
         <div className="jira-topbar-left">
-          {/* Jira Agent Brand Logo */}
+          {/* NEXA Brand Logo */}
           <Link to="/projects" className="jira-topbar-brand">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <path d="M11.53 2.3A1.85 1.85 0 0 0 8.92 2.3L2.3 8.92A1.85 1.85 0 0 0 2.3 11.53L8.92 18.15C9.64 18.87 10.81 18.87 11.53 18.15L18.15 11.53A1.85 1.85 0 0 0 18.15 8.92L11.53 2.3Z" fill="#0052CC"/>
-              <path opacity="0.75" d="M17.53 8.3A1.85 1.85 0 0 0 14.92 8.3L8.3 14.92A1.85 1.85 0 0 0 8.3 17.53L14.92 24.15C15.64 24.87 16.81 24.87 17.53 24.15L24.15 17.53A1.85 1.85 0 0 0 24.15 14.92L17.53 8.3Z" fill="#2684FF"/>
-            </svg>
+            <img
+              src="/dp-logo.png"
+              alt="DataPattern Logo"
+              style={{
+                height: 32,
+                width: "auto",
+                objectFit: "contain",
+                background: "#FFFFFF",
+                borderRadius: 6,
+                padding: "2px 6px",
+              }}
+            />
             <div className="jira-brand-title-wrap">
               <span className="jira-brand-title">NEXA</span>
               <span className="jira-brand-agent-badge">Powered by DataPattern</span>

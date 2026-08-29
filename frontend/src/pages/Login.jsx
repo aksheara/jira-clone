@@ -229,20 +229,7 @@ export default function Login() {
             {/* Top Brand Logo */}
             <div className="jira-auth-header-brand">
               <div className="jira-auth-logo">
-                <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-                  <path
-                    d="M15.938 1.5C11.517 1.5 7.938 5.08 7.938 9.5V15.5H13.938C18.359 15.5 21.938 11.92 21.938 7.5V1.5H15.938Z"
-                    fill="#0052CC"
-                  />
-                  <path
-                    d="M23.938 9.5C19.517 9.5 15.938 13.08 15.938 17.5V23.5H21.938C26.359 23.5 29.938 19.92 29.938 15.5V9.5H23.938Z"
-                    fill="#2684FF"
-                  />
-                  <path
-                    d="M7.938 17.5C3.517 17.5 -0.062 21.08 -0.062 25.5V31.5H5.938C10.359 31.5 13.938 27.92 13.938 23.5V17.5H7.938Z"
-                    fill="#0052CC"
-                  />
-                </svg>
+                <img src="/dp-logo.png" alt="DataPattern Logo" style={{ height: 32, width: "auto" }} />
               </div>
               <span className="jira-auth-brand-name">NEXA</span>
             </div>
