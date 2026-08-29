@@ -92,8 +92,8 @@ export default function Navbar({
               <path opacity="0.75" d="M17.53 8.3A1.85 1.85 0 0 0 14.92 8.3L8.3 14.92A1.85 1.85 0 0 0 8.3 17.53L14.92 24.15C15.64 24.87 16.81 24.87 17.53 24.15L24.15 17.53A1.85 1.85 0 0 0 24.15 14.92L17.53 8.3Z" fill="#2684FF"/>
             </svg>
             <div className="jira-brand-title-wrap">
-              <span className="jira-brand-title">Jira</span>
-              <span className="jira-brand-agent-badge">Agent</span>
+              <span className="jira-brand-title">NEXA</span>
+              <span className="jira-brand-agent-badge">Powered by DataPattern</span>
             </div>
           </Link>
 
@@ -326,7 +326,7 @@ export default function Navbar({
                         setShowMarketplaceModal(true);
                       }}
                     >
-                      Explore Atlassian Marketplace →
+                      Explore NEXA Marketplace →
                     </button>
                   </div>
                 </div>

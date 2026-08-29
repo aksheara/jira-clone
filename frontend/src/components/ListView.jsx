@@ -404,7 +404,7 @@ export default function ListView({ project, issues = [], members = [], onRefresh
           {/* Ask AI button */}
           <button
             className="jira-btn-ask-ai"
-            title="Ask Jira AI assistant"
+            title="Ask NEXA AI assistant"
             onClick={() => setShowAskAI(true)}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">

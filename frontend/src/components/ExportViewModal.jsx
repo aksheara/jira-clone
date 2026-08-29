@@ -32,7 +32,7 @@ export default function ExportViewModal({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `${project?.key || 'JIRA'}_export.csv`);
+    link.setAttribute("download", `${project?.key || 'NEXA'}_export.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -43,7 +43,7 @@ export default function ExportViewModal({
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(issues, null, 2));
     const link = document.createElement("a");
     link.setAttribute("href", dataStr);
-    link.setAttribute("download", `${project?.key || 'JIRA'}_issues.json`);
+    link.setAttribute("download", `${project?.key || 'NEXA'}_issues.json`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

@@ -5,7 +5,7 @@ export default function AskAIModal({ isOpen, onClose, project, issues = [] }) {
   const [messages, setMessages] = useState([
     {
       sender: "ai",
-      text: `Hello! I'm your Jira AI Assistant for **${project?.name || "this project"}**. I can analyze your backlog, draft user stories, estimate story points, or find blockers. What would you like help with?`,
+      text: `Hello! I'm your NEXA AI Assistant for **${project?.name || "this project"}**. I can analyze your backlog, draft user stories, estimate story points, or find blockers. What would you like help with?`,
     },
   ]);
   const [loading, setLoading] = useState(false);
@@ -48,7 +48,7 @@ export default function AskAIModal({ isOpen, onClose, project, issues = [] }) {
       <div className="jira-modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 680, height: 600 }}>
         <div className="jira-modal-header">
           <div className="jira-modal-title-group">
-            <h2 className="jira-modal-title">Atlassian Intelligence (Jira AI)</h2>
+            <h2 className="jira-modal-title">NEXA Intelligence (AI Assistant)</h2>
             <span className="jira-sub-key">Context-aware assistant for {project?.name}</span>
           </div>
           <button className="jira-btn-icon-close" onClick={onClose}>

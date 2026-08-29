@@ -60,8 +60,9 @@ MIDDLEWARE = [
 AUTH_USER_MODEL = 'users.User'
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',  # Vite dev server
+    'http://localhost:5173',
     'http://localhost:3000',
+    'http://10.169.235.240:5173',
 ]
 
 REST_FRAMEWORK = {

@@ -88,15 +88,15 @@ def send_verification_email(email: str, code: str, purpose: str = "REGISTRATION"
     Dispatches a formatted verification email with the 6-digit OTP code.
     Uses Django's send_mail (console backend in dev, SMTP in prod).
     """
-    subject = "Jira Software - Your Verification Code"
+    subject = "NEXA - Your Verification Code"
     if purpose == "PASSWORD_RESET":
-        subject = "Jira Software - Password Reset Code"
+        subject = "NEXA - Password Reset Code"
 
     purpose_text = "verify your email address and activate your account" if purpose == "REGISTRATION" else "reset your account password"
 
     message = f"""Hello {username or 'there'},
 
-Your Jira Software verification code is:
+Your NEXA verification code is:
 
     ======================
            {code}
@@ -108,13 +108,13 @@ This code is valid for 15 minutes.
 If you did not request this code, please ignore this email.
 
 Best regards,
-The Jira Software Team
+The NEXA Team
 """
 
     html_message = f"""
     <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; border: 1px solid #DFE1E6; border-radius: 8px; background: #FFFFFF;">
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
-            <h2 style="color: #0052CC; margin: 0;">Jira Software</h2>
+            <h2 style="color: #0052CC; margin: 0;">NEXA</h2>
         </div>
         <h3 style="color: #172B4D; margin-top: 0;">{ 'Activate Your Account' if purpose == 'REGISTRATION' else 'Reset Your Password' }</h3>
         <p style="color: #42526E; font-size: 14px; line-height: 1.5;">
@@ -177,7 +177,7 @@ def send_assignment_email(assignee_email: str, assignee_username: str, issue_tit
     """
     Sends an email to the user who has been assigned to an issue.
     """
-    subject = f"[Jira] You've been assigned to {issue_key}"
+    subject = f"[NEXA] You've been assigned to {issue_key}"
 
     # Build deep link if project_id and issue_id are available
     frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
@@ -196,13 +196,13 @@ def send_assignment_email(assignee_email: str, assignee_username: str, issue_tit
 Open the issue directly: {issue_url}
 
 Best regards,
-The Jira Software Team
+The NEXA Team
 """
 
     html_message = f"""
     <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px;
                 border: 1px solid #DFE1E6; border-radius: 8px; background: #FFFFFF;">
-        <h2 style="color: #0052CC; margin: 0 0 16px 0;">Jira Software</h2>
+        <h2 style="color: #0052CC; margin: 0 0 16px 0;">NEXA</h2>
         <h3 style="color: #172B4D; margin-top: 0;">You've been assigned to an issue</h3>
         <p style="color: #42526E; font-size: 14px; line-height: 1.6;">
             <strong>{assigned_by}</strong> assigned you to:
@@ -268,7 +268,7 @@ The Jira Software Team
 def send_mention_email(mentioned_email: str, mentioned_username: str, mentioned_by: str,
                        issue_title: str, issue_key: str, project_name: str, comment_body: str) -> bool:
     """Sends an email when a user is @mentioned in a comment."""
-    subject = f"[Jira] {mentioned_by} mentioned you in {issue_key}"
+    subject = f"[NEXA] {mentioned_by} mentioned you in {issue_key}"
 
     # Trim comment body for preview
     preview = comment_body[:200] + ("..." if len(comment_body) > 200 else "")
@@ -279,16 +279,16 @@ def send_mention_email(mentioned_email: str, mentioned_username: str, mentioned_
 
 "{preview}"
 
-Log in to Jira Software to view and reply.
+Log in to NEXA to view and reply.
 
 Best regards,
-The Jira Software Team
+The NEXA Team
 """
 
     html_message = f"""
     <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px;
                 border: 1px solid #DFE1E6; border-radius: 8px; background: #FFFFFF;">
-        <h2 style="color: #0052CC; margin: 0 0 16px 0;">Jira Software</h2>
+        <h2 style="color: #0052CC; margin: 0 0 16px 0;">NEXA</h2>
         <h3 style="color: #172B4D; margin-top: 0;">You were mentioned in a comment</h3>
         <p style="color: #42526E; font-size: 14px;">
             <strong>{mentioned_by}</strong> mentioned you on
@@ -338,3 +338,4 @@ The Jira Software Team
     except Exception as e:
         print(f"[Mention Email Error]: {e}")
         return False
+

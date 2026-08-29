@@ -143,7 +143,7 @@ export default function Register() {
                   />
                 </svg>
               </div>
-              <span className="jira-auth-brand-name">Jira Software</span>
+              <span className="jira-auth-brand-name">NEXA</span>
             </div>
 
             {/* Header / Nav switcher */}
@@ -393,7 +393,7 @@ export default function Register() {
             </div>
 
             <div className="jira-auth-legal">
-              By creating an account, you agree to the Atlassian Cloud Terms of Service and Privacy Policy.
+              By creating an account, you agree to the NEXA Terms of Service and Privacy Policy.
             </div>
           </div>
         </div>
