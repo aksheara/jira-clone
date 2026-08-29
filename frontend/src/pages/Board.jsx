@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link, useSearchParams } from "react-router-dom";
+import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
@@ -25,6 +25,7 @@ const FALLBACK_COLUMNS = [
 export default function Board() {
   const { projectId } = useParams();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
 
   const [projectDetails, setProjectDetails] = useState(null);
@@ -41,6 +42,7 @@ export default function Board() {
   const [quickAddCol, setQuickAddCol] = useState(null);
   const [quickTitle, setQuickTitle] = useState("");
   const [allProjects, setAllProjects] = useState([]);
+  const [showMoreProjectMenu, setShowMoreProjectMenu] = useState(false);
 
   function loadProjectData() {
     api.get(`/projects/${projectId}/`)
@@ -69,6 +71,16 @@ export default function Board() {
     if (issueParam) setSelectedIssueId(Number(issueParam));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
+
+  async function handleDeleteProject() {
+    if (!window.confirm(`Are you sure you want to permanently delete "${projectName}"?\n\nThis will delete ALL issues, sprints, and data. This cannot be undone.`)) return;
+    try {
+      await api.delete(`/projects/${projectId}/`);
+      navigate("/projects");
+    } catch {
+      alert("Could not delete project. Please try again.");
+    }
+  }
 
   async function onDragEnd(result) {
     const { source, destination, draggableId } = result;
@@ -165,14 +177,46 @@ export default function Board() {
                 {members.length > 0 && <span className="jira-members-badge-num">{members.length}</span>}
               </button>
 
-              {/* More options button */}
-              <button className="jira-btn-icon-plain" title="Project settings & options">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                  <circle cx="5" cy="12" r="2"/>
-                  <circle cx="12" cy="12" r="2"/>
-                  <circle cx="19" cy="12" r="2"/>
-                </svg>
-              </button>
+              {/* More options — Admin only shows Delete Project */}
+              {isAdmin && (
+                <div className="jira-nav-dropdown-wrap" style={{ position: "relative" }}>
+                  <button
+                    className="jira-btn-icon-plain"
+                    title="Project settings & options"
+                    onClick={() => setShowMoreProjectMenu((v) => !v)}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="5" cy="12" r="2"/>
+                      <circle cx="12" cy="12" r="2"/>
+                      <circle cx="19" cy="12" r="2"/>
+                    </svg>
+                  </button>
+                  {showMoreProjectMenu && (
+                    <div className="jira-nav-popover" style={{ top: "110%", left: 0, width: 200, zIndex: 999 }}>
+                      <div className="jira-popover-header">PROJECT ACTIONS</div>
+                      <div className="jira-popover-list">
+                        <button
+                          className="jira-popover-item-btn"
+                          style={{ color: "#DE350B" }}
+                          onClick={() => {
+                            setShowMoreProjectMenu(false);
+                            handleDeleteProject();
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#DE350B" strokeWidth="2">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                          </svg>
+                          <div>
+                            <div className="jira-popover-item-title" style={{ color: "#DE350B" }}>Delete Project</div>
+                            <div className="jira-popover-item-sub">Permanently remove this project</div>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Right Action Icons — role-gated */}
