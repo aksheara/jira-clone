@@ -116,8 +116,11 @@ class IssueViewSet(viewsets.ModelViewSet):
                 raise PermissionDenied("Members can only assign issues to themselves.")
 
         instance = serializer.save(reporter=self.request.user)
-        if instance.assignee:
-            _notify_assignee(instance, self.request.user)
+        try:
+            if instance.assignee:
+                _notify_assignee(instance, self.request.user)
+        except Exception as e:
+            print(f"[Assignment notification error]: {e}")
 
     def perform_update(self, serializer):
         old_instance = self.get_object()
@@ -157,8 +160,11 @@ class IssueViewSet(viewsets.ModelViewSet):
                 new_value=str(instance.assignee_id or ""),
             )
             # Notify the new assignee (in-app + email)
-            if instance.assignee:
-                _notify_assignee(instance, self.request.user)
+            try:
+                if instance.assignee:
+                    _notify_assignee(instance, self.request.user)
+            except Exception as e:
+                print(f"[Assignment notification error]: {e}")
 
 
 class CommentViewSet(viewsets.ModelViewSet):
@@ -174,7 +180,11 @@ class CommentViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("You are not a member of this project.")
         comment = serializer.save(author=self.request.user)
         # Notify assignee + reporter + @mentioned members
-        _notify_on_comment(comment, self.request.user)
+        # Wrapped in try/except so email failures never break comment saving
+        try:
+            _notify_on_comment(comment, self.request.user)
+        except Exception as e:
+            print(f"[Comment notification error]: {e}")
 
 
 def _notify_on_comment(comment, commenter):
