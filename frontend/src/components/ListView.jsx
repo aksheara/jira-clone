@@ -990,7 +990,26 @@ export default function ListView({ project, issues = [], members = [], onRefresh
                           </td>
                         )}
 
-                        <td />
+                        {/* Row delete action */}
+                        <td onClick={(e) => e.stopPropagation()} style={{ textAlign: "center", width: 36 }}>
+                          {!isViewer && (
+                            <button
+                              className="jira-btn-icon-plain"
+                              title="Delete issue"
+                              onClick={async () => {
+                                if (!window.confirm(`Delete "${issue.title}"? This cannot be undone.`)) return;
+                                try {
+                                  await api.delete(`/issues/${issue.id}/`);
+                                  onRefresh && onRefresh();
+                                } catch (err) {
+                                  alert(err?.response?.data?.detail || "Could not delete issue.");
+                                }
+                              }}
+                            >
+                              <TrashIcon size={13} color="#DE350B" />
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     );
                   })}
