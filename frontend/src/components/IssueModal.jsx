@@ -143,10 +143,14 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
   }
 
   async function handleDeleteIssue() {
-    if (window.confirm("Are you sure you want to delete this issue?")) {
+    if (!window.confirm("Are you sure you want to delete this issue? This cannot be undone.")) return;
+    try {
       await api.delete(`/issues/${issueId}/`);
       onClose();
       onUpdate && onUpdate();
+    } catch (err) {
+      const msg = err?.response?.data?.detail || "Could not delete issue.";
+      alert(msg);
     }
   }
 
@@ -257,8 +261,8 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
           </div>
 
           <div className="jira-drawer-actions">
-            {/* Delete — Admin or reporter of this issue */}
-            {can(ACTIONS.DELETE_ISSUE, { isReporter: issue?.reporter?.id === currentUser?.id }) && (
+            {/* Delete — shown for Admin and Members (backend enforces reporter check) */}
+            {!isViewer && (
               <button className="jira-btn-icon-plain" onClick={handleDeleteIssue} title="Delete issue">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#de350b" strokeWidth="2">
                   <polyline points="3 6 5 6 21 6"/>
@@ -748,18 +752,15 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
             <div className="jira-drawer-field">
               <label className="jira-drawer-field-label">Status</label>
               {isViewer ? (
-                <div className="jira-drawer-field-readonly"><span>{issue.status === "IN_PROGRESS" ? "In Progress" : issue.status === "DONE" ? "Done" : "To Do"}</span></div>
-              ) : can(ACTIONS.CHANGE_ISSUE_STATUS, { isAssignee: issue.assignee?.id === currentUser?.id }) ? (
+                <div className="jira-drawer-field-readonly">
+                  <span>{issue.status === "IN_PROGRESS" ? "In Progress" : issue.status === "DONE" ? "Done" : "To Do"}</span>
+                </div>
+              ) : (
                 <select className="jira-select" value={issue.status} onChange={(e) => updateField("status", e.target.value)}>
                   <option value="TODO">To Do</option>
                   <option value="IN_PROGRESS">In Progress</option>
                   <option value="DONE">Done</option>
                 </select>
-              ) : (
-                <div className="jira-drawer-field-readonly">
-                  <span>{issue.status === "IN_PROGRESS" ? "In Progress" : issue.status === "DONE" ? "Done" : "To Do"}</span>
-                  <span className="jira-admin-only-hint">Only the assignee or Admin can change status</span>
-                </div>
               )}
             </div>
 
@@ -804,8 +805,20 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
             {/* Assignee Field */}
             <div className="jira-drawer-field">
               <label className="jira-drawer-field-label">Assignee</label>
-              {can(ACTIONS.ASSIGN_ISSUE_OTHERS) ? (
-                /* Admin — full dropdown with all members */
+              {isViewer ? (
+                <div className="jira-drawer-field-readonly">
+                  {issue.assignee ? (
+                    <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div className="jira-avatar-circle small">{issue.assignee.username.substring(0, 2).toUpperCase()}</div>
+                      {issue.assignee.username}
+                    </span>
+                  ) : (
+                    <span style={{ color: "#97A0AF" }}>Unassigned</span>
+                  )}
+                  <span className="jira-admin-only-hint">Only Admins can assign</span>
+                </div>
+              ) : can(ACTIONS.ASSIGN_ISSUE_OTHERS) ? (
+                /* Admin — full dropdown */
                 <select
                   className="jira-select"
                   value={issue.assignee?.id || ""}
@@ -818,43 +831,20 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
                     </option>
                   ))}
                 </select>
-              ) : can(ACTIONS.ASSIGN_ISSUE_SELF) ? (
-                /* Member — can only assign to themselves or unassign themselves */
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  {issue.assignee ? (
-                    <>
-                      <div className="jira-avatar-circle small">{issue.assignee.username.substring(0, 2).toUpperCase()}</div>
-                      <span style={{ fontSize: 13, color: "#172B4D" }}>{issue.assignee.username}</span>
-                      {issue.assignee.id === currentUser?.id && (
-                        <button className="jira-btn-link-sm" onClick={() => updateField("assignee_id", null)}>
-                          Unassign me
-                        </button>
-                      )}
-                      {issue.assignee.id !== currentUser?.id && (
-                        <button className="jira-btn-link-sm" onClick={() => updateField("assignee_id", currentUser?.id)}>
-                          Assign to me
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <button className="jira-btn-link-sm" onClick={() => updateField("assignee_id", currentUser?.id)}>
-                      + Assign to me
-                    </button>
-                  )}
-                </div>
               ) : (
-                /* Viewer — read only */
-                <div className="jira-drawer-field-readonly">
-                  {issue.assignee ? (
-                    <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <div className="jira-avatar-circle small">{issue.assignee.username.substring(0, 2).toUpperCase()}</div>
-                      {issue.assignee.username}
-                    </span>
-                  ) : (
-                    <span style={{ color: "#97A0AF" }}>Unassigned</span>
-                  )}
-                  <span className="jira-admin-only-hint">Only Admins can assign</span>
-                </div>
+                /* Member — full dropdown (can assign anyone including self) */
+                <select
+                  className="jira-select"
+                  value={issue.assignee?.id || ""}
+                  onChange={(e) => updateField("assignee_id", e.target.value ? Number(e.target.value) : null)}
+                >
+                  <option value="">Unassigned</option>
+                  {members.map((m) => (
+                    <option key={m.user?.id || m.id} value={m.user?.id || m.id}>
+                      {m.user?.username || m.username}
+                    </option>
+                  ))}
+                </select>
               )}
             </div>
 
