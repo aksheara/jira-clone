@@ -179,12 +179,29 @@ class CommentViewSet(viewsets.ModelViewSet):
         if not issue.project.memberships.filter(user=self.request.user).exists():
             raise PermissionDenied("You are not a member of this project.")
         comment = serializer.save(author=self.request.user)
-        # Notify assignee + reporter + @mentioned members
-        # Wrapped in try/except so email failures never break comment saving
         try:
             _notify_on_comment(comment, self.request.user)
         except Exception as e:
             print(f"[Comment notification error]: {e}")
+
+    def perform_update(self, serializer):
+        """Only the comment author can edit their own comment."""
+        instance = self.get_object()
+        if instance.author != self.request.user:
+            raise PermissionDenied("You can only edit your own comments.")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        """Only the comment author or a project Admin can delete a comment."""
+        from projects.models import ProjectMembership
+        user = self.request.user
+        is_author = instance.author == user
+        is_admin = instance.issue.project.memberships.filter(
+            user=user, role=ProjectMembership.Role.ADMIN
+        ).exists()
+        if not is_author and not is_admin:
+            raise PermissionDenied("You can only delete your own comments.")
+        instance.delete()
 
 
 def _notify_on_comment(comment, commenter):

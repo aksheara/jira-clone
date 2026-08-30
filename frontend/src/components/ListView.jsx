@@ -209,12 +209,14 @@ export default function ListView({ project, issues = [], members = [], onRefresh
 
   async function handleBulkDelete() {
     if (selectedIds.size === 0) { alert("Select at least one issue first."); return; }
-    if (!window.confirm(`Permanently delete ${selectedIds.size} selected issue(s)? This cannot be undone.`)) return;
+    const count = selectedIds.size;
+    if (!window.confirm(`Permanently delete ${count} selected issue(s)? This cannot be undone.`)) return;
     let failed = 0;
-    for (const id of selectedIds) {
+    const ids = Array.from(selectedIds);
+    for (const id of ids) {
       try {
         await api.delete(`/issues/${id}/`);
-      } catch (e) {
+      } catch {
         failed++;
       }
     }
