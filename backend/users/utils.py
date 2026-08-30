@@ -232,15 +232,15 @@ def send_comment_email(recipient_email: str, recipient_username: str, commenter:
 def send_notification_email(
     recipient_email: str,
     recipient_username: str,
-    actor: str,                        # who performed the action
-    action: str,                       # e.g. "assigned you to", "commented on"
+    actor: str,
+    action: str,
     issue_key: str,
     issue_title: str,
     project_name: str,
     project_id: int = None,
     issue_id: int = None,
-    why_reason: str = "assignee",      # "assignee" | "reporter" | "mention"
-    comment_body: str = None,          # only for comment/mention emails
+    why_reason: str = "assignee",
+    comment_body: str = None,
     issue_type: str = None,
     issue_priority: str = None,
     issue_status: str = None,
