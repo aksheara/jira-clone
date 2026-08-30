@@ -179,19 +179,23 @@ export default function ListView({ project, issues = [], members = [], onRefresh
 
   // --- BULK OPERATIONS ---
   async function handleBulkMoveToTop() {
+    if (selectedIds.size === 0) { alert("Select at least one issue first."); return; }
+    if (!window.confirm(`Set ${selectedIds.size} issue(s) to Critical priority?`)) return;
     try {
       for (const id of selectedIds) {
         await api.patch(`/issues/${id}/`, { priority: "CRITICAL" });
       }
       setSelectedIds(new Set());
       onRefresh && onRefresh();
+      alert(`${selectedIds.size === 0 ? "Issues" : selectedIds.size + " issue(s)"} moved to Critical priority.`);
     } catch (e) {
-      alert("Failed to move issues to top.");
+      alert("Failed to move issues to top. " + (e?.response?.data?.detail || ""));
     }
   }
 
   async function handleBulkArchive() {
-    if (!window.confirm(`Archive ${selectedIds.size} selected issues?`)) return;
+    if (selectedIds.size === 0) { alert("Select at least one issue first."); return; }
+    if (!window.confirm(`Archive ${selectedIds.size} selected issue(s)? They will be marked as Done.`)) return;
     try {
       for (const id of selectedIds) {
         await api.patch(`/issues/${id}/`, { status: "DONE", resolution: "Archived" });
@@ -199,20 +203,25 @@ export default function ListView({ project, issues = [], members = [], onRefresh
       setSelectedIds(new Set());
       onRefresh && onRefresh();
     } catch (e) {
-      alert("Failed to archive issues.");
+      alert("Failed to archive issues. " + (e?.response?.data?.detail || ""));
     }
   }
 
   async function handleBulkDelete() {
-    if (!window.confirm(`Are you sure you want to permanently delete ${selectedIds.size} issues?`)) return;
-    try {
-      for (const id of selectedIds) {
+    if (selectedIds.size === 0) { alert("Select at least one issue first."); return; }
+    if (!window.confirm(`Permanently delete ${selectedIds.size} selected issue(s)? This cannot be undone.`)) return;
+    let failed = 0;
+    for (const id of selectedIds) {
+      try {
         await api.delete(`/issues/${id}/`);
+      } catch (e) {
+        failed++;
       }
-      setSelectedIds(new Set());
-      onRefresh && onRefresh();
-    } catch (e) {
-      alert("Failed to delete selected issues.");
+    }
+    setSelectedIds(new Set());
+    onRefresh && onRefresh();
+    if (failed > 0) {
+      alert(`${failed} issue(s) could not be deleted — you can only delete issues you reported, or you need Admin role.`);
     }
   }
 
