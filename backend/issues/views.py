@@ -5,7 +5,7 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from projects.models import ProjectMembership
 from projects.permissions import IsProjectMemberOrAbove
 from users.models import Notification
-from users.utils import send_assignment_email
+from users.utils import send_assignment_email, send_notification_email
 
 from .models import ActivityLog, Comment, Issue, IssueAttachment, Label
 from .serializers import (
@@ -22,20 +22,21 @@ TRACKED_FIELDS = ["status", "priority", "assignee_id"]
 
 def _notify_assignee(issue, assigned_by_user):
     """
-    Creates an in-app Notification row and sends an assignment email
-    to the issue's current assignee. Safe to call — silently skips
-    if assignee has no email or is the same person doing the assigning.
+    Notifies the assignee when an issue is assigned to them.
+    Rules:
+    - Never notify if the assignee is the same person doing the assigning (self-assign)
+    - Sends one email with full issue card + why-footer (assignee reason)
     """
     assignee = issue.assignee
     if not assignee:
         return
-    # Don't notify if someone assigned themselves
+    # Rule 1: Never notify about your own action
     if assignee == assigned_by_user:
         return
 
     issue_key = f"{issue.project.key}-{issue.pk}"
 
-    # 1. In-app notification
+    # In-app notification
     Notification.objects.create(
         recipient=assignee,
         actor=assigned_by_user,
@@ -43,17 +44,24 @@ def _notify_assignee(issue, assigned_by_user):
         target=issue.title,
     )
 
-    # 2. Email notification (non-blocking — errors are logged, not raised)
+    # Email — uses shared template with full issue card
     if assignee.email:
-        send_assignment_email(
-            assignee_email=assignee.email,
-            assignee_username=assignee.username,
-            issue_title=issue.title,
+        send_notification_email(
+            recipient_email=assignee.email,
+            recipient_username=assignee.username,
+            actor=assigned_by_user.username,
+            action="assigned you to",
             issue_key=issue_key,
+            issue_title=issue.title,
             project_name=issue.project.name,
-            assigned_by=assigned_by_user.username,
             project_id=issue.project.id,
             issue_id=issue.pk,
+            why_reason="assignee",
+            issue_type=issue.issue_type,
+            issue_priority=issue.priority,
+            issue_status=issue.status,
+            issue_reporter=issue.reporter.username if issue.reporter else None,
+            issue_assignee=assignee.username,
         )
 
 
@@ -183,94 +191,101 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 def _notify_on_comment(comment, commenter):
     """
-    Dual notification on every new comment — matching real Jira's behaviour:
+    Dual notification on every new comment — matching real Jira's behaviour.
 
-    1. DEFAULT recipients  — assignee + reporter get notified on every comment
-    2. @MENTION recipients — any @username found in the comment body that maps
-       to a valid project member gets an additional MENTION notification
-
-    The commenter is always excluded from both lists.
+    Rules:
+    1. Never notify the commenter about their own comment
+    2. Assignee + reporter are default recipients on every comment
+    3. @mentions add extra recipients from project members
+    4. DEDUP — if someone qualifies under multiple reasons, send ONE email
+       with the most relevant reason (mention > assignee > reporter)
+    5. Shared send_notification_email() template with comment block + why-footer
     """
     import re as _re
     from django.contrib.auth import get_user_model
     from users.models import Notification
-    from users.utils import send_comment_email
+    from users.utils import send_notification_email
 
     User = get_user_model()
     issue = comment.issue
     issue_key = f"{issue.project.key}-{issue.pk}"
 
-    # ── Build default recipient set (assignee + reporter) ──
-    default_recipients = set()
-    if issue.assignee and issue.assignee != commenter:
-        default_recipients.add(issue.assignee)
-    if issue.reporter and issue.reporter != commenter:
-        default_recipients.add(issue.reporter)
+    # Common issue card data passed to every email
+    issue_card = dict(
+        issue_key=issue_key,
+        issue_title=issue.title,
+        project_name=issue.project.name,
+        project_id=issue.project.id,
+        issue_id=issue.pk,
+        comment_body=comment.body,
+        issue_type=issue.issue_type,
+        issue_priority=issue.priority,
+        issue_status=issue.status,
+        issue_reporter=issue.reporter.username if issue.reporter else None,
+        issue_assignee=issue.assignee.username if issue.assignee else None,
+    )
 
-    # ── Parse @mentions from comment body ──
+    # ── Step 1: Parse @mentions ──
     mentioned_usernames = set(_re.findall(r"@([\w]+)", comment.body))
-    mention_recipients = set()
+    mention_set = set()
     for username in mentioned_usernames:
         user = User.objects.filter(username__iexact=username).first()
         if not user or user == commenter:
             continue
         if not issue.project.memberships.filter(user=user).exists():
             continue
-        mention_recipients.add(user)
+        mention_set.add(user)
 
-    # ── Notify default recipients ──
-    for recipient in default_recipients:
+    # ── Step 2: Build recipient map {user → highest_reason} ──
+    # Priority order: mention > assignee > reporter
+    recipient_reasons = {}
+
+    # Reporter (lowest priority)
+    if issue.reporter and issue.reporter != commenter:
+        recipient_reasons[issue.reporter] = "reporter"
+
+    # Assignee (overrides reporter)
+    if issue.assignee and issue.assignee != commenter:
+        recipient_reasons[issue.assignee] = "assignee"
+
+    # Mention (highest priority — overrides both)
+    for user in mention_set:
+        recipient_reasons[user] = "mention"
+
+    # ── Step 3: Send one notification per recipient (deduplicated) ──
+    for recipient, reason in recipient_reasons.items():
+
+        # In-app notification
+        action_text = {
+            "assignee": f"commented on issue {issue_key}",
+            "reporter":  f"commented on issue {issue_key}",
+            "mention":   f"mentioned you in a comment on {issue_key}",
+        }[reason]
+
         Notification.objects.create(
             recipient=recipient,
             actor=commenter,
-            action=f"commented on issue {issue_key}",
+            action=action_text,
             target=issue.title,
         )
+
+        # Email — one email per recipient, correct why-footer
         if recipient.email:
-            send_comment_email(
+            action_label = {
+                "assignee": "commented on",
+                "reporter":  "commented on",
+                "mention":   "mentioned you in a comment on",
+            }[reason]
+
+            send_notification_email(
                 recipient_email=recipient.email,
                 recipient_username=recipient.username,
-                commenter=commenter.username,
-                issue_title=issue.title,
-                issue_key=issue_key,
-                project_name=issue.project.name,
-                comment_body=comment.body,
-                is_mention=False,
-                project_id=issue.project.id,
-                issue_id=issue.pk,
+                actor=commenter.username,
+                action=action_label,
+                why_reason=reason,
+                **issue_card,
             )
 
-    # ── Notify @mention recipients (skip if already notified as default) ──
-    for recipient in mention_recipients - default_recipients:
-        Notification.objects.create(
-            recipient=recipient,
-            actor=commenter,
-            action=f"mentioned you in a comment on {issue_key}",
-            target=issue.title,
-        )
-        if recipient.email:
-            send_comment_email(
-                recipient_email=recipient.email,
-                recipient_username=recipient.username,
-                commenter=commenter.username,
-                issue_title=issue.title,
-                issue_key=issue_key,
-                project_name=issue.project.name,
-                comment_body=comment.body,
-                is_mention=True,
-                project_id=issue.project.id,
-                issue_id=issue.pk,
-            )
-
-    # ── If someone is both default + mentioned, send a combined notification ──
-    for recipient in default_recipients & mention_recipients:
-        # Already sent default email above; add a mention in-app notification too
-        Notification.objects.create(
-            recipient=recipient,
-            actor=commenter,
-            action=f"mentioned you in a comment on {issue_key}",
-            target=issue.title,
-        )
 
 
 class LabelViewSet(viewsets.ModelViewSet):

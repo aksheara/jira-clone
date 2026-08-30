@@ -174,6 +174,233 @@ The NEXA Team
 def send_assignment_email(assignee_email: str, assignee_username: str, issue_title: str,
                           issue_key: str, project_name: str, assigned_by: str,
                           project_id: int = None, issue_id: int = None) -> bool:
+    """Kept for backward compatibility — delegates to send_notification_email."""
+    return send_notification_email(
+        recipient_email=assignee_email,
+        recipient_username=assignee_username,
+        actor=assigned_by,
+        action="assigned you to",
+        issue_key=issue_key,
+        issue_title=issue_title,
+        project_name=project_name,
+        project_id=project_id,
+        issue_id=issue_id,
+        why_reason="assignee",
+    )
+
+
+def send_mention_email(mentioned_email: str, mentioned_username: str, mentioned_by: str,
+                       issue_title: str, issue_key: str, project_name: str,
+                       comment_body: str) -> bool:
+    """Kept for backward compatibility — delegates to send_notification_email."""
+    return send_notification_email(
+        recipient_email=mentioned_email,
+        recipient_username=mentioned_username,
+        actor=mentioned_by,
+        action="mentioned you in a comment on",
+        issue_key=issue_key,
+        issue_title=issue_title,
+        project_name=project_name,
+        why_reason="mention",
+        comment_body=comment_body,
+    )
+
+
+def send_comment_email(recipient_email: str, recipient_username: str, commenter: str,
+                       issue_title: str, issue_key: str, project_name: str,
+                       comment_body: str, is_mention: bool = False,
+                       project_id: int = None, issue_id: int = None) -> bool:
+    """Kept for backward compatibility — delegates to send_notification_email."""
+    return send_notification_email(
+        recipient_email=recipient_email,
+        recipient_username=recipient_username,
+        actor=commenter,
+        action="mentioned you in a comment on" if is_mention else "commented on",
+        issue_key=issue_key,
+        issue_title=issue_title,
+        project_name=project_name,
+        project_id=project_id,
+        issue_id=issue_id,
+        why_reason="mention" if is_mention else "assignee",
+        comment_body=comment_body,
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SHARED NOTIFICATION EMAIL — single source of truth for all notification emails
+# ─────────────────────────────────────────────────────────────────────────────
+def send_notification_email(
+    recipient_email: str,
+    recipient_username: str,
+    actor: str,                        # who performed the action
+    action: str,                       # e.g. "assigned you to", "commented on"
+    issue_key: str,
+    issue_title: str,
+    project_name: str,
+    project_id: int = None,
+    issue_id: int = None,
+    why_reason: str = "assignee",      # "assignee" | "reporter" | "mention"
+    comment_body: str = None,          # only for comment/mention emails
+    issue_type: str = None,
+    issue_priority: str = None,
+    issue_status: str = None,
+    issue_reporter: str = None,
+    issue_assignee: str = None,
+) -> bool:
+    """
+    Unified NEXA notification email matching real Jira's structure:
+
+    Header  : NEXA logo + app name
+    Action  : "[Actor] [action] on [Issue Key]"
+    Issue   : Key, Title, Type, Priority, Status, Reporter, Assignee
+    Comment : (only for comment/mention) — commenter name + full comment text
+    Button  : View Issue →
+    Footer  : Why you're receiving this
+    """
+    frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
+    issue_url = (
+        f"{frontend_url}/projects/{project_id}/board?issue={issue_id}"
+        if project_id and issue_id
+        else f"{frontend_url}/projects"
+    )
+
+    # Subject line
+    subject_map = {
+        "assignee": f"[NEXA] {actor} assigned you to {issue_key}",
+        "reporter": f"[NEXA] New activity on your issue {issue_key}",
+        "mention":  f"[NEXA] {actor} mentioned you in {issue_key}",
+    }
+    subject = subject_map.get(why_reason, f"[NEXA] Update on {issue_key}")
+
+    # Footer reason
+    footer_map = {
+        "assignee": f"You're receiving this email because you are the <strong>assignee</strong> on this issue.",
+        "reporter": f"You're receiving this email because you are the <strong>reporter</strong> on this issue.",
+        "mention":  f"You're receiving this email because you were <strong>mentioned</strong> in this issue.",
+    }
+    footer_reason = footer_map.get(why_reason, "You're receiving this email because you are a member of this project.")
+
+    # Issue card rows
+    issue_rows = ""
+    if issue_type:
+        issue_rows += f"<tr><td style='color:#6B778C;padding:3px 0;font-size:13px;width:110px'>Type</td><td style='font-size:13px;color:#172B4D'>{issue_type}</td></tr>"
+    if issue_priority:
+        issue_rows += f"<tr><td style='color:#6B778C;padding:3px 0;font-size:13px'>Priority</td><td style='font-size:13px;color:#172B4D'>{issue_priority}</td></tr>"
+    if issue_status:
+        issue_rows += f"<tr><td style='color:#6B778C;padding:3px 0;font-size:13px'>Status</td><td style='font-size:13px;color:#172B4D'>{issue_status}</td></tr>"
+    if issue_reporter:
+        issue_rows += f"<tr><td style='color:#6B778C;padding:3px 0;font-size:13px'>Reporter</td><td style='font-size:13px;color:#172B4D'>{issue_reporter}</td></tr>"
+    if issue_assignee:
+        issue_rows += f"<tr><td style='color:#6B778C;padding:3px 0;font-size:13px'>Assignee</td><td style='font-size:13px;color:#172B4D'>{issue_assignee}</td></tr>"
+
+    # Comment block (only for comment/mention emails)
+    comment_block = ""
+    if comment_body:
+        preview = comment_body[:400] + ("..." if len(comment_body) > 400 else "")
+        comment_block = f"""
+        <div style="margin: 20px 0;">
+            <p style="font-size: 12px; font-weight: 700; color: #6B778C; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                Comment by {actor}
+            </p>
+            <div style="background: #F8F9FF; border-left: 4px solid #6554C0; border-radius: 0 6px 6px 0;
+                        padding: 14px 16px; font-size: 14px; color: #172B4D; line-height: 1.6;">
+                {preview}
+            </div>
+        </div>
+        """
+
+    html_message = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto;
+                border: 1px solid #DFE1E6; border-radius: 10px; overflow: hidden; background: #FFFFFF;">
+
+        <!-- HEADER -->
+        <div style="background: linear-gradient(135deg, #0052CC, #6554C0); padding: 18px 24px; display: flex; align-items: center; gap: 10px;">
+            <span style="color: #FFFFFF; font-size: 20px; font-weight: 800; letter-spacing: 1px;">NEXA</span>
+            <span style="color: rgba(255,255,255,0.6); font-size: 12px;">Powered by DataPattern</span>
+        </div>
+
+        <!-- BODY -->
+        <div style="padding: 24px;">
+
+            <!-- ACTION LINE -->
+            <p style="font-size: 15px; color: #172B4D; margin: 0 0 20px 0; line-height: 1.5;">
+                <strong>{actor}</strong> {action}
+                <strong>{issue_key}</strong> in <strong>{project_name}</strong>.
+            </p>
+
+            <!-- ISSUE CARD -->
+            <div style="background: #F4F5F7; border-radius: 8px; padding: 16px 18px; margin-bottom: 20px;">
+                <div style="font-size: 11px; color: #6B778C; font-weight: 700; text-transform: uppercase;
+                            letter-spacing: 0.6px; margin-bottom: 6px;">{project_name} &nbsp;·&nbsp; {issue_key}</div>
+                <div style="font-size: 17px; font-weight: 700; color: #172B4D; margin-bottom: 12px;">{issue_title}</div>
+                {f'<table style="border-collapse:collapse">{issue_rows}</table>' if issue_rows else ""}
+            </div>
+
+            <!-- COMMENT BLOCK (only for comment/mention emails) -->
+            {comment_block}
+
+            <!-- VIEW ISSUE BUTTON -->
+            <a href="{issue_url}"
+               style="display: inline-block; padding: 11px 24px;
+                      background: linear-gradient(135deg, #0065FF, #0052CC);
+                      color: #FFFFFF; font-weight: 700; font-size: 14px;
+                      border-radius: 8px; text-decoration: none;
+                      box-shadow: 0 2px 8px rgba(0,82,204,0.35); margin-bottom: 24px;">
+                View Issue →
+            </a>
+
+        </div>
+
+        <!-- FOOTER -->
+        <div style="background: #F4F5F7; border-top: 1px solid #EBECF0; padding: 14px 24px;">
+            <p style="color: #6B778C; font-size: 12px; margin: 0; line-height: 1.6;">
+                {footer_reason}
+            </p>
+        </div>
+    </div>
+    """
+
+    plain_message = (
+        f"Hello {recipient_username},\n\n"
+        f"{actor} {action} {issue_key} — {issue_title} in {project_name}.\n\n"
+        f"{('Comment: ' + comment_body[:300]) if comment_body else ''}\n\n"
+        f"View issue: {issue_url}\n\n"
+        f"The NEXA Team\n"
+    )
+
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@nexa.local")
+
+    try:
+        import ssl, smtplib
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = from_email
+        msg["To"] = recipient_email
+        msg.attach(MIMEText(plain_message, "plain"))
+        msg.attach(MIMEText(html_message, "html"))
+
+        context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+
+        host = getattr(settings, "EMAIL_HOST", "smtp.gmail.com")
+        port = getattr(settings, "EMAIL_PORT", 587)
+        user = getattr(settings, "EMAIL_HOST_USER", "")
+        password = getattr(settings, "EMAIL_HOST_PASSWORD", "")
+
+        with smtplib.SMTP(host, port, timeout=10) as server:
+            server.ehlo()
+            server.starttls(context=context)
+            server.login(user, password)
+            server.sendmail(from_email, [recipient_email], msg.as_string())
+
+        return True
+    except Exception as e:
+        print(f"[NEXA Email Error]: {e}")
+        return False
     """
     Sends an email to the user who has been assigned to an issue.
     """
@@ -262,184 +489,4 @@ The NEXA Team
         return True
     except Exception as e:
         print(f"[Assignment Email Error]: {e}")
-        return False
-
-
-def send_mention_email(mentioned_email: str, mentioned_username: str, mentioned_by: str,
-                       issue_title: str, issue_key: str, project_name: str, comment_body: str) -> bool:
-    """Sends an email when a user is @mentioned in a comment."""
-    subject = f"[NEXA] {mentioned_by} mentioned you in {issue_key}"
-
-    # Trim comment body for preview
-    preview = comment_body[:200] + ("..." if len(comment_body) > 200 else "")
-
-    message = f"""Hello {mentioned_username},
-
-{mentioned_by} mentioned you in a comment on issue {issue_key} — {issue_title} ({project_name}):
-
-"{preview}"
-
-Log in to NEXA to view and reply.
-
-Best regards,
-The NEXA Team
-"""
-
-    html_message = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px;
-                border: 1px solid #DFE1E6; border-radius: 8px; background: #FFFFFF;">
-        <h2 style="color: #0052CC; margin: 0 0 16px 0;">NEXA</h2>
-        <h3 style="color: #172B4D; margin-top: 0;">You were mentioned in a comment</h3>
-        <p style="color: #42526E; font-size: 14px;">
-            <strong>{mentioned_by}</strong> mentioned you on
-            <strong>{issue_key} — {issue_title}</strong> in <strong>{project_name}</strong>:
-        </p>
-        <div style="background: #F4F5F7; border-left: 4px solid #0052CC; border-radius: 4px;
-                    padding: 12px 16px; margin: 16px 0; font-size: 14px; color: #172B4D; font-style: italic;">
-            "{preview}"
-        </div>
-        <hr style="border: none; border-top: 1px solid #EBECF0; margin: 20px 0;" />
-        <p style="color: #8993A4; font-size: 12px; margin: 0;">
-            You received this because you are a member of <strong>{project_name}</strong>.
-        </p>
-    </div>
-    """
-
-    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@jira-software.local")
-
-    try:
-        import ssl, smtplib
-        from email.mime.multipart import MIMEMultipart
-        from email.mime.text import MIMEText
-
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = from_email
-        msg["To"] = mentioned_email
-        msg.attach(MIMEText(message, "plain"))
-        msg.attach(MIMEText(html_message, "html"))
-
-        context = ssl.create_default_context()
-        context.check_hostname = False
-        context.verify_mode = ssl.CERT_NONE
-
-        host = getattr(settings, "EMAIL_HOST", "smtp.gmail.com")
-        port = getattr(settings, "EMAIL_PORT", 587)
-        user = getattr(settings, "EMAIL_HOST_USER", "")
-        password = getattr(settings, "EMAIL_HOST_PASSWORD", "")
-
-        with smtplib.SMTP(host, port, timeout=10) as server:
-            server.ehlo()
-            server.starttls(context=context)
-            server.login(user, password)
-            server.sendmail(from_email, [mentioned_email], msg.as_string())
-
-        return True
-    except Exception as e:
-        print(f"[Mention Email Error]: {e}")
-        return False
-
-
-
-def send_comment_email(recipient_email: str, recipient_username: str, commenter: str,
-                       issue_title: str, issue_key: str, project_name: str,
-                       comment_body: str, is_mention: bool = False,
-                       project_id: int = None, issue_id: int = None) -> bool:
-    """
-    Sends a comment notification email.
-    - is_mention=False → "New comment on ISSUE-KEY" (default recipient)
-    - is_mention=True  → "You were mentioned in ISSUE-KEY" (mention recipient)
-    """
-    if is_mention:
-        subject = f"[NEXA] {commenter} mentioned you in {issue_key}"
-        intro = f"<strong>{commenter}</strong> mentioned you in a comment on"
-        plain_intro = f"{commenter} mentioned you in a comment on"
-    else:
-        subject = f"[NEXA] New comment on {issue_key}"
-        intro = f"<strong>{commenter}</strong> commented on"
-        plain_intro = f"{commenter} commented on"
-
-    preview = comment_body[:300] + ("..." if len(comment_body) > 300 else "")
-
-    frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
-    if project_id and issue_id:
-        issue_url = f"{frontend_url}/projects/{project_id}/board?issue={issue_id}"
-    else:
-        issue_url = f"{frontend_url}/projects"
-
-    message = f"""Hello {recipient_username},
-
-{plain_intro} {issue_key} — {issue_title} ({project_name}):
-
-"{preview}"
-
-View the full issue: {issue_url}
-
-The NEXA Team
-"""
-
-    html_message = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px;
-                border: 1px solid #DFE1E6; border-radius: 8px; background: #FFFFFF;">
-        <h2 style="color: #0052CC; margin: 0 0 16px 0;">NEXA</h2>
-        <h3 style="color: #172B4D; margin-top: 0;">
-            {'You were mentioned in a comment' if is_mention else 'New comment on your issue'}
-        </h3>
-        <p style="color: #42526E; font-size: 14px; line-height: 1.6;">
-            {intro}
-            <strong>{issue_key} — {issue_title}</strong> in <strong>{project_name}</strong>:
-        </p>
-        <div style="background: #F4F5F7; border-left: 4px solid {'#6554C0' if is_mention else '#0052CC'};
-                    border-radius: 4px; padding: 12px 16px; margin: 16px 0;
-                    font-size: 14px; color: #172B4D; font-style: italic;">
-            "{preview}"
-        </div>
-        <a href="{issue_url}"
-           style="display: inline-block; margin: 8px 0 16px; padding: 10px 22px;
-                  background: linear-gradient(135deg, #0065FF, #0052CC);
-                  color: #FFFFFF; font-weight: 700; font-size: 14px;
-                  border-radius: 7px; text-decoration: none;
-                  box-shadow: 0 2px 8px rgba(0,82,204,0.35);">
-            View Issue →
-        </a>
-        <hr style="border: none; border-top: 1px solid #EBECF0; margin: 20px 0;" />
-        <p style="color: #8993A4; font-size: 12px; margin: 0;">
-            You received this because you are {'mentioned in' if is_mention else 'the assignee or reporter of'} this issue in
-            <strong>{project_name}</strong>.
-        </p>
-    </div>
-    """
-
-    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@nexa.local")
-
-    try:
-        import ssl, smtplib
-        from email.mime.multipart import MIMEMultipart
-        from email.mime.text import MIMEText
-
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = from_email
-        msg["To"] = recipient_email
-        msg.attach(MIMEText(message, "plain"))
-        msg.attach(MIMEText(html_message, "html"))
-
-        context = ssl.create_default_context()
-        context.check_hostname = False
-        context.verify_mode = ssl.CERT_NONE
-
-        host = getattr(settings, "EMAIL_HOST", "smtp.gmail.com")
-        port = getattr(settings, "EMAIL_PORT", 587)
-        user = getattr(settings, "EMAIL_HOST_USER", "")
-        password = getattr(settings, "EMAIL_HOST_PASSWORD", "")
-
-        with smtplib.SMTP(host, port, timeout=10) as server:
-            server.ehlo()
-            server.starttls(context=context)
-            server.login(user, password)
-            server.sendmail(from_email, [recipient_email], msg.as_string())
-
-        return True
-    except Exception as e:
-        print(f"[Comment Email Error]: {e}")
         return False
