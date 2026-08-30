@@ -88,7 +88,13 @@ export default function Board() {
     if (!destination || (source.droppableId === destination.droppableId && source.index === destination.index)) {
       return;
     }
-
+    // Only Admin or the assignee of the dragged issue can move it
+    const draggedIssue = issues.find((i) => i.id === Number(draggableId));
+    const isAdmin = projectDetails?.my_role === "ADMIN";
+    const isAssignee = draggedIssue?.assignee?.id === user?.id;
+    if (!isAdmin && !isAssignee) {
+      return; // silently block — non-assignee Member cannot drag
+    }
     setIssues((prev) =>
       prev.map((i) => (i.id === Number(draggableId) ? { ...i, status: destination.droppableId } : i))
     );

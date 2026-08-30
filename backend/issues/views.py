@@ -129,6 +129,18 @@ class IssueViewSet(viewsets.ModelViewSet):
                 if not is_admin and not is_self_assign:
                     raise PermissionDenied("Members can only assign issues to themselves. Only Admins can assign to others.")
 
+        # Block non-admins from changing status unless they are the assignee
+        if "status" in self.request.data:
+            new_status = self.request.data.get("status")
+            if new_status != old_instance.status:
+                project = old_instance.project
+                is_admin = project.memberships.filter(
+                    user=self.request.user, role="ADMIN"
+                ).exists()
+                is_assignee = old_instance.assignee == self.request.user
+                if not is_admin and not is_assignee:
+                    raise PermissionDenied("Only the assignee or an Admin can change the status of this issue.")
+
         instance = serializer.save()
 
         # Write activity log entries for fields that actually changed

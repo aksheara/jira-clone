@@ -74,7 +74,11 @@ const PERMISSIONS = {
     ADMIN: true, MEMBER: true, VIEWER: false,
   },
   [ACTIONS.CHANGE_ISSUE_STATUS]: {
-    ADMIN: true, MEMBER: true, VIEWER: false,
+    ADMIN: true,
+    MEMBER: "conditional",
+    VIEWER: false,
+    // Member can only change status if they are the assignee
+    check: (ctx) => ctx?.isAssignee === true,
   },
   [ACTIONS.ADD_COMMENT]: {
     ADMIN: true, MEMBER: true, VIEWER: false,

@@ -745,12 +745,17 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
               <label className="jira-drawer-field-label">Status</label>
               {isViewer ? (
                 <div className="jira-drawer-field-readonly"><span>{issue.status === "IN_PROGRESS" ? "In Progress" : issue.status === "DONE" ? "Done" : "To Do"}</span></div>
-              ) : (
+              ) : can(ACTIONS.CHANGE_ISSUE_STATUS, { isAssignee: issue.assignee?.id === currentUser?.id }) ? (
                 <select className="jira-select" value={issue.status} onChange={(e) => updateField("status", e.target.value)}>
                   <option value="TODO">To Do</option>
                   <option value="IN_PROGRESS">In Progress</option>
                   <option value="DONE">Done</option>
                 </select>
+              ) : (
+                <div className="jira-drawer-field-readonly">
+                  <span>{issue.status === "IN_PROGRESS" ? "In Progress" : issue.status === "DONE" ? "Done" : "To Do"}</span>
+                  <span className="jira-admin-only-hint">Only the assignee or Admin can change status</span>
+                </div>
               )}
             </div>
 
