@@ -4,8 +4,12 @@ import MentionTextarea from "./MentionTextarea";
 import MarkdownRenderer from "./MarkdownRenderer";
 import { FileIcon, GitBranchIcon, PullRequestIcon, AttachmentIcon, IssueTypeIcon, PriorityIcon } from "./Icons";
 import { can as canPermission, ACTIONS } from "../permissions";
+import { useAuth } from "../context/AuthContext";
 
-export default function IssueModal({ issueId, projectKey, members = [], currentUser, isViewer = false, isAdmin = false, onClose, onUpdate }) {
+export default function IssueModal({ issueId, projectKey, members = [], currentUser: currentUserProp, isViewer = false, isAdmin = false, onClose, onUpdate }) {
+  const { user: authUser } = useAuth();
+  // Use prop if passed, fall back to auth context
+  const currentUser = currentUserProp || authUser;
   // Derive role for can() — single source of truth
   const role = isAdmin ? "ADMIN" : isViewer ? "VIEWER" : "MEMBER";
   const can = (action, ctx = {}) => canPermission(role, action, ctx);
