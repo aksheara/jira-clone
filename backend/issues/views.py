@@ -60,6 +60,17 @@ def _notify_assignee(issue, assigned_by_user):
 class IssueViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsProjectMemberOrAbove]
 
+    def perform_destroy(self, instance):
+        """Reporter or Admin can delete an issue — matching real Jira."""
+        from projects.models import ProjectMembership
+        user = self.request.user
+        is_reporter = instance.reporter == user
+        is_admin = instance.project.memberships.filter(
+            user=user, role=ProjectMembership.Role.ADMIN
+        ).exists()
+        if not (is_reporter or is_admin):
+            raise PermissionDenied("Only the issue reporter or a project Admin can delete this issue.")
+
     def get_queryset(self):
         # Visibility: only issues in projects the user is a member of.
         # Optional query params for filtering: ?status=, ?assignee=, ?priority=, ?project=
@@ -87,13 +98,14 @@ class IssueViewSet(viewsets.ModelViewSet):
         if not project.memberships.filter(user=self.request.user).exists():
             raise PermissionDenied("You are not a member of this project.")
 
-        # Only ADMINs can set assignee when creating an issue
+        # Only ADMINs can assign to others when creating — Members can self-assign
         if "assignee_id" in self.request.data and self.request.data["assignee_id"]:
             is_admin = project.memberships.filter(
                 user=self.request.user, role="ADMIN"
             ).exists()
-            if not is_admin:
-                raise PermissionDenied("Only project Admins can assign issues to team members.")
+            is_self = str(self.request.data["assignee_id"]) == str(self.request.user.id)
+            if not is_admin and not is_self:
+                raise PermissionDenied("Members can only assign issues to themselves.")
 
         instance = serializer.save(reporter=self.request.user)
         if instance.assignee:
@@ -105,8 +117,7 @@ class IssueViewSet(viewsets.ModelViewSet):
         old_priority = old_instance.priority
         old_assignee_id = old_instance.assignee_id
 
-        # Block non-admins from changing assignee
-        # Only check if assignee_id was explicitly sent in this request
+        # Block non-admins from changing assignee — but allow Members to self-assign
         if "assignee_id" in self.request.data:
             new_assignee_id = serializer.validated_data.get("assignee_id")
             if new_assignee_id != old_assignee_id:
@@ -114,8 +125,9 @@ class IssueViewSet(viewsets.ModelViewSet):
                 is_admin = project.memberships.filter(
                     user=self.request.user, role="ADMIN"
                 ).exists()
-                if not is_admin:
-                    raise PermissionDenied("Only project Admins can assign or reassign issues.")
+                is_self_assign = (new_assignee_id == self.request.user.id) or (new_assignee_id is None and old_assignee_id == self.request.user.id)
+                if not is_admin and not is_self_assign:
+                    raise PermissionDenied("Members can only assign issues to themselves. Only Admins can assign to others.")
 
         instance = serializer.save()
 

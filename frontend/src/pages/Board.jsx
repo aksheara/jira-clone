@@ -4,6 +4,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useProjectRole } from "../hooks/useProjectRole";
+import { ACTIONS } from "../permissions";
 import Navbar from "../components/Navbar";
 import ListView from "../components/ListView";
 import SummaryView from "../components/SummaryView";
@@ -113,7 +114,7 @@ export default function Board() {
   const projectKey = projectDetails?.key || "KAN";
 
   // Role-based visibility
-  const { isAdmin, isMember, isViewer } = useProjectRole(projectDetails, user);
+  const { isAdmin, isMember, isViewer, can } = useProjectRole(projectDetails, user);
 
   // Build kanban columns from project's workflow states if available, else use fallback
   const kanbanColumns = projectDetails?.workflow_states?.length
@@ -230,7 +231,7 @@ export default function Board() {
               </button>
 
               {/* Automation — Admin only */}
-              {isAdmin && (
+              {can(ACTIONS.EDIT_PROJECT_SETTINGS) && (
                 <button className="jira-btn-action-icon" title="Automation rules (Admin only)" onClick={() => setShowAutomationModal(true)}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
@@ -472,7 +473,7 @@ export default function Board() {
                             </div>
 
                             {/* Quick Add — Member/Admin only */}
-                            {isMember && (quickAddCol === col.key ? (
+                            {can(ACTIONS.MOVE_ISSUE) && (quickAddCol === col.key ? (
                               <form onSubmit={(e) => handleQuickAdd(col.key, e)} className="jira-quick-add-form">
                                 <input type="text" className="jira-input-sm" placeholder="What needs to be done?"
                                   value={quickTitle} onChange={(e) => setQuickTitle(e.target.value)} autoFocus />

@@ -3,8 +3,12 @@ import api from "../api/client";
 import MentionTextarea from "./MentionTextarea";
 import MarkdownRenderer from "./MarkdownRenderer";
 import { FileIcon, GitBranchIcon, PullRequestIcon, AttachmentIcon, IssueTypeIcon, PriorityIcon } from "./Icons";
+import { can as canPermission, ACTIONS } from "../permissions";
 
 export default function IssueModal({ issueId, projectKey, members = [], currentUser, isViewer = false, isAdmin = false, onClose, onUpdate }) {
+  // Derive role for can() — single source of truth
+  const role = isAdmin ? "ADMIN" : isViewer ? "VIEWER" : "MEMBER";
+  const can = (action, ctx = {}) => canPermission(role, action, ctx);
   const [issue, setIssue] = useState(null);
   const [newComment, setNewComment] = useState("");
   const [tab, setTab] = useState("comments");
@@ -249,8 +253,8 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
           </div>
 
           <div className="jira-drawer-actions">
-            {/* Delete — Admin only */}
-            {isAdmin && (
+            {/* Delete — Admin or reporter of this issue */}
+            {can(ACTIONS.DELETE_ISSUE, { isReporter: issue?.reporter?.id === currentUser?.id }) && (
               <button className="jira-btn-icon-plain" onClick={handleDeleteIssue} title="Delete issue">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#de350b" strokeWidth="2">
                   <polyline points="3 6 5 6 21 6"/>
@@ -485,7 +489,7 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
               <div className="jira-drawer-section">
                 <div className="jira-section-header-flex">
                   <label className="jira-drawer-label">Subtasks ({issue.subtasks?.length || 0})</label>
-                  {!isViewer && (
+                  {can(ACTIONS.CREATE_SUBTASK) && (
                     <button className="jira-btn-link-sm" onClick={() => setShowSubtaskAdd(true)}>
                       + Add subtask
                     </button>
@@ -535,7 +539,7 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
                     <AttachmentIcon size={14} /> Attachments ({issue.attachments?.length || 0})
                   </span>
                 </label>
-                  {!isViewer && (
+                  {can(ACTIONS.UPLOAD_ATTACHMENT) && (
                     <button
                       className="jira-btn-link-sm"
                       onClick={() => fileInputRef.current?.click()}
@@ -599,7 +603,7 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
                           {formatBytes(att.file_size)} · {att.uploaded_by?.username} · {new Date(att.uploaded_at).toLocaleDateString()}
                         </span>
                       </div>
-                      {!isViewer && (
+                      {can(ACTIONS.DELETE_ATTACHMENT, { isOwnAttachment: att.uploaded_by?.id === currentUser?.id }) && (
                         <button
                           className="jira-btn-icon-plain"
                           title="Delete attachment"
@@ -685,17 +689,13 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
                               <MarkdownRenderer>{c.body}</MarkdownRenderer>
                             </div>
                             <div className="jira-comment-actions">
-                              {!isViewer && (
-                                <>
-                                  <button
-                                    className="jira-comment-action-btn"
-                                    onClick={() => { setEditingCommentId(c.id); setEditCommentBody(c.body); }}
-                                  >Edit</button>
-                                  <button
-                                    className="jira-comment-action-btn danger"
-                                    onClick={() => handleDeleteComment(c.id)}
-                                  >Delete</button>
-                                </>
+                              {(can(ACTIONS.EDIT_OWN_COMMENT, { isOwnComment: c.author?.id === currentUser?.id })) && (
+                                <button className="jira-comment-action-btn"
+                                  onClick={() => { setEditingCommentId(c.id); setEditCommentBody(c.body); }}>Edit</button>
+                              )}
+                              {(can(ACTIONS.DELETE_OWN_COMMENT, { isOwnComment: c.author?.id === currentUser?.id })) && (
+                                <button className="jira-comment-action-btn danger"
+                                  onClick={() => handleDeleteComment(c.id)}>Delete</button>
                               )}
                             </div>
                           </>
@@ -704,7 +704,7 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
                     </div>
                   ))}
 
-                  {!isViewer && (
+                  {can(ACTIONS.ADD_COMMENT) && (
                     <form onSubmit={submitComment} className="jira-add-comment-form">
                       <MentionTextarea
                         value={newComment}
@@ -795,7 +795,8 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
             {/* Assignee Field */}
             <div className="jira-drawer-field">
               <label className="jira-drawer-field-label">Assignee</label>
-              {members.some((m) => (m.user?.id || m.id) === (currentUser?.id) && m.role === "ADMIN") ? (
+              {can(ACTIONS.ASSIGN_ISSUE_OTHERS) ? (
+                /* Admin — full dropdown with all members */
                 <select
                   className="jira-select"
                   value={issue.assignee?.id || ""}
@@ -808,7 +809,32 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
                     </option>
                   ))}
                 </select>
+              ) : can(ACTIONS.ASSIGN_ISSUE_SELF) ? (
+                /* Member — can only assign to themselves or unassign themselves */
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {issue.assignee ? (
+                    <>
+                      <div className="jira-avatar-circle small">{issue.assignee.username.substring(0, 2).toUpperCase()}</div>
+                      <span style={{ fontSize: 13, color: "#172B4D" }}>{issue.assignee.username}</span>
+                      {issue.assignee.id === currentUser?.id && (
+                        <button className="jira-btn-link-sm" onClick={() => updateField("assignee_id", null)}>
+                          Unassign me
+                        </button>
+                      )}
+                      {issue.assignee.id !== currentUser?.id && (
+                        <button className="jira-btn-link-sm" onClick={() => updateField("assignee_id", currentUser?.id)}>
+                          Assign to me
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <button className="jira-btn-link-sm" onClick={() => updateField("assignee_id", currentUser?.id)}>
+                      + Assign to me
+                    </button>
+                  )}
+                </div>
               ) : (
+                /* Viewer — read only */
                 <div className="jira-drawer-field-readonly">
                   {issue.assignee ? (
                     <span style={{ display: "flex", alignItems: "center", gap: 8 }}>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../api/client";
 import IssueModal from "./IssueModal";
 import { IssueTypeIcon, PriorityIcon, SprintGoalIcon } from "./Icons";
+import { can as canPermission, ACTIONS } from "../permissions";
 
 // Issue type config (no emojis)
 const TYPE_ICONS = {
@@ -19,6 +20,9 @@ const PRIORITY_LABELS = {
 };
 
 export default function BacklogView({ project, issues = [], members = [], onRefresh, currentUser, isViewer = false, isAdmin = false }) {
+  // Derive role string for can() calls
+  const role = isAdmin ? "ADMIN" : isViewer ? "VIEWER" : "MEMBER";
+  const can = (action, ctx = {}) => canPermission(role, action, ctx);
   const [sprints, setSprints] = useState([]);
   const [selectedIssueId, setSelectedIssueId] = useState(null);
 
@@ -237,15 +241,15 @@ export default function BacklogView({ project, issues = [], members = [], onRefr
             />
           </div>
         </div>
-        {!isViewer && (
+        {can(ACTIONS.CREATE_SPRINT) && (
           <button className="jira-btn-primary-sm" onClick={() => setShowCreateSprint(true)}>
             + Create Sprint
           </button>
         )}
       </div>
 
-      {/* Create Sprint Form — Member/Admin only */}
-      {showCreateSprint && !isViewer && (
+      {/* Create Sprint Form — Admin only */}
+      {showCreateSprint && can(ACTIONS.CREATE_SPRINT) && (
         <div className="jira-sprint-create-card">
           <h4 className="jira-sprint-create-title">New Sprint</h4>
           <form onSubmit={handleCreateSprint} className="jira-sprint-create-form">
@@ -378,40 +382,27 @@ export default function BacklogView({ project, issues = [], members = [], onRefr
                   </div>
 
                   <div className="jira-sprint-header-actions">
-                    {!isViewer && sprint.status === "PLANNED" && (
+                    {can(ACTIONS.START_COMPLETE_SPRINT) && sprint.status === "PLANNED" && (
                       <button className="jira-btn-primary-sm" onClick={() => handleStartSprint(sprint.id)}>
                         Start Sprint
                       </button>
                     )}
-                    {!isViewer && sprint.status === "ACTIVE" && (
+                    {can(ACTIONS.START_COMPLETE_SPRINT) && sprint.status === "ACTIVE" && (
                       <button className="jira-btn-complete-sprint" onClick={() => setCompletingSprintId(sprint.id)}>
                         Complete Sprint
                       </button>
                     )}
-                    {!isViewer && (
-                      <button
-                        className="jira-btn-icon-plain"
-                        title="Edit sprint"
-                        onClick={() => {
-                          setEditingSprintId(sprint.id);
-                          setEditSprintName(sprint.name);
-                          setEditSprintGoal(sprint.goal || "");
-                          setEditSprintStart(sprint.start_date || "");
-                          setEditSprintEnd(sprint.end_date || "");
-                        }}
-                      >
+                    {can(ACTIONS.EDIT_PROJECT_SETTINGS) && (
+                      <button className="jira-btn-icon-plain" title="Edit sprint"
+                        onClick={() => { setEditingSprintId(sprint.id); setEditSprintName(sprint.name); setEditSprintGoal(sprint.goal || ""); setEditSprintStart(sprint.start_date || ""); setEditSprintEnd(sprint.end_date || ""); }}>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                         </svg>
                       </button>
                     )}
-                    {!isViewer && sprint.status === "PLANNED" && (
-                      <button
-                        className="jira-btn-icon-plain"
-                        title="Delete sprint"
-                        onClick={() => handleDeleteSprint(sprint.id)}
-                      >
+                    {can(ACTIONS.CREATE_SPRINT) && sprint.status === "PLANNED" && (
+                      <button className="jira-btn-icon-plain" title="Delete sprint" onClick={() => handleDeleteSprint(sprint.id)}>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#de350b" strokeWidth="2">
                           <polyline points="3 6 5 6 21 6"/>
                           <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -443,7 +434,7 @@ export default function BacklogView({ project, issues = [], members = [], onRefr
                   ))}
                 </div>
                 {/* Inline create — Member/Admin only */}
-                {!isViewer && (inlineSection === sprint.id ? (
+                {can(ACTIONS.CREATE_ISSUE) && (inlineSection === sprint.id ? (
                   <InlineCreate
                     title={inlineTitle}
                     setTitle={setInlineTitle}
@@ -509,7 +500,7 @@ export default function BacklogView({ project, issues = [], members = [], onRefr
                 />
               ))}
             </div>
-            {!isViewer && (inlineSection === "backlog" ? (
+            {can(ACTIONS.CREATE_ISSUE) && (inlineSection === "backlog" ? (
               <InlineCreate
                 title={inlineTitle}
                 setTitle={setInlineTitle}
