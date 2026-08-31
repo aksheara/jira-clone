@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import WorkflowEditor from "./WorkflowEditor";
 
 export default function SettingsModal({ isOpen, onClose }) {
   const { user } = useAuth();
@@ -13,6 +14,21 @@ export default function SettingsModal({ isOpen, onClose }) {
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  // Workflow section state
+  const [projects, setProjects] = useState([]);
+  const [selectedWorkflowProject, setSelectedWorkflowProject] = useState(null);
+  const [isAdminInAnyProject, setIsAdminInAnyProject] = useState(false);
+
+  useEffect(() => {
+    api.get("/projects/").then((res) => {
+      setProjects(res.data);
+      if (res.data.length > 0) setSelectedWorkflowProject(res.data[0]);
+      // Check if user is Admin in at least one project
+      const hasAdmin = res.data.some((p) => p.my_role === "ADMIN");
+      setIsAdminInAnyProject(hasAdmin);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -49,40 +65,30 @@ export default function SettingsModal({ isOpen, onClose }) {
       <div className="jira-modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 780 }}>
         <div className="jira-modal-header">
           <div className="jira-modal-title-group">
-            <h2 className="jira-modal-title">⚙️ Jira Workspace & Profile Settings</h2>
+            <h2 className="jira-modal-title">Jira Workspace & Profile Settings</h2>
             <span className="jira-sub-key">Configure your account, project preferences, and notifications</span>
           </div>
           <button className="jira-btn-icon-close" onClick={onClose}>
-            ✕
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
 
         <div className="jira-modal-body" style={{ display: "grid", gridTemplateColumns: "180px 1fr", gap: 20, minHeight: 320 }}>
           {/* Settings Sidebar */}
           <div className="jira-settings-sidebar">
-            <button
-              className={`jira-settings-nav-item ${activeSection === "general" ? "active" : ""}`}
-              onClick={() => setActiveSection("general")}
-            >
-              👤 Profile & Account
+            <button className={`jira-settings-nav-item ${activeSection === "general" ? "active" : ""}`} onClick={() => setActiveSection("general")}>
+              Profile & Account
             </button>
-            <button
-              className={`jira-settings-nav-item ${activeSection === "preferences" ? "active" : ""}`}
-              onClick={() => setActiveSection("preferences")}
-            >
-              🛠️ Preferences
+            <button className={`jira-settings-nav-item ${activeSection === "preferences" ? "active" : ""}`} onClick={() => setActiveSection("preferences")}>
+              Preferences
             </button>
-            <button
-              className={`jira-settings-nav-item ${activeSection === "workflows" ? "active" : ""}`}
-              onClick={() => setActiveSection("workflows")}
-            >
-              🔄 Workflows & Statuses
-            </button>
-            <button
-              className={`jira-settings-nav-item ${activeSection === "notifications" ? "active" : ""}`}
-              onClick={() => setActiveSection("notifications")}
-            >
-              🔔 Notifications
+            {isAdminInAnyProject && (
+              <button className={`jira-settings-nav-item ${activeSection === "workflows" ? "active" : ""}`} onClick={() => setActiveSection("workflows")}>
+                Workflows & Statuses
+              </button>
+            )}
+            <button className={`jira-settings-nav-item ${activeSection === "notifications" ? "active" : ""}`} onClick={() => setActiveSection("notifications")}>
+              Notifications
             </button>
           </div>
 
@@ -151,17 +157,36 @@ export default function SettingsModal({ isOpen, onClose }) {
               </div>
             )}
 
-            {activeSection === "workflows" && (
+            {activeSection === "workflows" && isAdminInAnyProject && (
               <div className="jira-settings-group">
                 <h3 className="jira-section-title">Project Workflow Columns</h3>
-                <p className="jira-setting-desc">Status transitions available for tickets in this workspace.</p>
-                <div className="jira-workflow-pill-list">
-                  <span className="jira-status-pill jira-status-todo">TO DO</span>
-                  <span className="jira-status-arrow">➔</span>
-                  <span className="jira-status-pill jira-status-inprogress">IN PROGRESS</span>
-                  <span className="jira-status-arrow">➔</span>
-                  <span className="jira-status-pill jira-status-done">DONE</span>
-                </div>
+                <p className="jira-setting-desc" style={{ marginBottom: 12 }}>
+                  Customize statuses and allowed transitions per project. Changes take effect immediately on the Kanban board.
+                </p>
+                {projects.length === 0 ? (
+                  <div className="jira-wf-empty">No projects yet. Create a project first.</div>
+                ) : (
+                  <>
+                    <div className="jira-form-field" style={{ marginBottom: 14 }}>
+                      <label className="jira-field-label">Select Project</label>
+                      <select
+                        className="jira-select"
+                        value={selectedWorkflowProject?.id || ""}
+                        onChange={(e) => {
+                          const p = projects.find((p) => p.id === parseInt(e.target.value));
+                          setSelectedWorkflowProject(p || null);
+                        }}
+                      >
+                        {projects.filter((p) => p.my_role === "ADMIN").map((p) => (
+                          <option key={p.id} value={p.id}>{p.name} ({p.key})</option>
+                        ))}
+                      </select>
+                    </div>
+                    {selectedWorkflowProject && (
+                      <WorkflowEditor project={selectedWorkflowProject} />
+                    )}
+                  </>
+                )}
               </div>
             )}
 
@@ -190,7 +215,7 @@ export default function SettingsModal({ isOpen, onClose }) {
             Cancel
           </button>
           <button className="jira-btn-primary" onClick={handleSaveSettings} disabled={saving}>
-            {savedSuccess ? "✓ Saved to Database!" : saving ? "Saving..." : "Save Settings"}
+            {savedSuccess ? "Saved!" : saving ? "Saving..." : "Save Settings"}
           </button>
         </div>
       </div>

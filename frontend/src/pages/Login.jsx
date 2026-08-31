@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import api from "../api/client";
 
 export default function Login() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -12,7 +12,7 @@ export default function Login() {
 
   // Forgot password modal state
   const [showForgotModal, setShowForgotModal] = useState(false);
-  const [forgotStep, setForgotStep] = useState(1); // 1: verify email & dispatch OTP, 2: enter OTP + new password, 3: success
+  const [forgotStep, setForgotStep] = useState(1);
   const [forgotEmail, setForgotEmail] = useState("");
   const [verifiedUser, setVerifiedUser] = useState(null);
   const [resetOtp, setResetOtp] = useState("");
@@ -28,23 +28,92 @@ export default function Login() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!username.trim() || !password) {
-      setError("Please enter both username and password");
+    if (!email.trim() || !password) {
+      setError("Please enter both email and password");
       return;
     }
     setError("");
     setLoading(true);
     try {
-      await login(username.trim(), password);
+      await login(email.trim().toLowerCase(), password);
       navigate("/projects");
     } catch (err) {
       const msg =
         err?.response?.data?.non_field_errors?.[0] ||
         err?.response?.data?.detail ||
-        "Invalid username or password. Please check your credentials.";
+        "Invalid email or password. Please check your credentials.";
       setError(msg);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!email.trim() || !password) {
+      setError("Please enter both email and password");
+      return;
+    }
+    setError("");
+    setLoading(true);
+    try {
+      await login(email.trim().toLowerCase(), password);
+      navigate("/projects");
+    } catch (err) {
+      // Account exists but email not verified yet
+      if (err?.response?.status === 403 && err?.response?.data?.unverified) {
+        setUnverifiedEmail(err.response.data.email || email.trim().toLowerCase());
+        setResendVerifyCooldown(30);
+        return;
+      }
+      const msg =
+        err?.response?.data?.non_field_errors?.[0] ||
+        err?.response?.data?.detail ||
+        "Invalid email or password. Please check your credentials.";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Verify the OTP code for unverified accounts
+  async function handleVerifyOtpSubmit(e) {
+    e.preventDefault();
+    const cleanCode = verifyOtp.trim();
+    if (cleanCode.length !== 6) {
+      setVerifyError("Please enter the complete 6-digit verification code.");
+      return;
+    }
+    setVerifyError("");
+    setVerifyLoading(true);
+    try {
+      await verifyCode(unverifiedEmail, cleanCode, "REGISTRATION");
+      navigate("/projects");
+    } catch (err) {
+      const msg = err?.response?.data?.detail || "Invalid or expired code. Please try again.";
+      setVerifyError(msg);
+    } finally {
+      setVerifyLoading(false);
+    }
+  }
+
+  // Resend verification OTP for unverified account
+  async function handleResendVerifyCode() {
+    if (resendVerifyCooldown > 0) return;
+    setVerifyError("");
+    setResendVerifySuccess("");
+    setVerifyLoading(true);
+    try {
+      await api.post("/auth/resend-code/", {
+        email: unverifiedEmail,
+        purpose: "REGISTRATION",
+      });
+      setResendVerifySuccess("A fresh verification code has been sent to your email.");
+      setResendVerifyCooldown(30);
+    } catch (err) {
+      setVerifyError(err?.response?.data?.detail || "Could not resend code. Please try again.");
+    } finally {
+      setVerifyLoading(false);
     }
   }
 
@@ -111,10 +180,6 @@ export default function Login() {
         code: cleanCode,
         new_password: newPassword,
       });
-      // Pre-fill login username
-      if (verifiedUser?.username) {
-        setUsername(verifiedUser.username);
-      }
       setForgotStep(3);
     } catch (err) {
       const msg = err?.response?.data?.detail || "Could not update password. Please check your OTP code.";
@@ -162,24 +227,12 @@ export default function Login() {
         <div className="jira-auth-card">
           <div className="jira-auth-card-inner">
             {/* Top Brand Logo */}
-            <div className="jira-auth-header-brand">
-              <div className="jira-auth-logo">
-                <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-                  <path
-                    d="M15.938 1.5C11.517 1.5 7.938 5.08 7.938 9.5V15.5H13.938C18.359 15.5 21.938 11.92 21.938 7.5V1.5H15.938Z"
-                    fill="#0052CC"
-                  />
-                  <path
-                    d="M23.938 9.5C19.517 9.5 15.938 13.08 15.938 17.5V23.5H21.938C26.359 23.5 29.938 19.92 29.938 15.5V9.5H23.938Z"
-                    fill="#2684FF"
-                  />
-                  <path
-                    d="M7.938 17.5C3.517 17.5 -0.062 21.08 -0.062 25.5V31.5H5.938C10.359 31.5 13.938 27.92 13.938 23.5V17.5H7.938Z"
-                    fill="#0052CC"
-                  />
-                </svg>
+            <div className="jira-auth-header-brand" style={{ flexDirection: "column", alignItems: "center", gap: 8, paddingBottom: 8 }}>
+              <img src="/dp-logo.png" alt="DataPattern Logo" style={{ height: 40, width: "auto", objectFit: "contain" }} />
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                <span className="jira-auth-brand-name" style={{ fontSize: 22, fontWeight: 800, letterSpacing: 2, color: "#172B4D" }}>NEXO</span>
+                <span style={{ fontSize: 11, color: "#6B778C", letterSpacing: 0.5 }}>Powered by DataPattern</span>
               </div>
-              <span className="jira-auth-brand-name">Jira Software</span>
             </div>
 
             {/* Header / Nav switcher */}
@@ -199,7 +252,7 @@ export default function Login() {
             <div className="jira-auth-title-area">
               <h2 className="jira-auth-main-title">Log in to your account</h2>
               <p className="jira-auth-main-subtitle">
-                Enter your credentials to access your Jira projects and team boards.
+                Enter your credentials to access your NEXO projects and team boards.
               </p>
             </div>
 
@@ -216,7 +269,7 @@ export default function Login() {
 
             <form onSubmit={handleSubmit} className="jira-auth-form">
               <div className="jira-form-group">
-                <label className="jira-form-label" htmlFor="login-username">
+                <label className="jira-form-label" htmlFor="login-email">
                   Email Address
                 </label>
                 <div className="jira-input-wrapper">
@@ -227,12 +280,12 @@ export default function Login() {
                     </svg>
                   </span>
                   <input
-                    id="login-username"
+                    id="login-email"
                     type="email"
                     className="jira-form-input"
-                    placeholder="alex@company.com"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Enter your email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
                     autoFocus
                     required
@@ -323,7 +376,7 @@ export default function Login() {
             </div>
 
             <div className="jira-auth-legal">
-              By logging in, you agree to the Atlassian Cloud Terms of Service and Privacy Policy.
+              By logging in, you agree to the NEXO Terms of Service and Privacy Policy.
             </div>
           </div>
         </div>
@@ -616,3 +669,4 @@ export default function Login() {
     </div>
   );
 }
+

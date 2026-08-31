@@ -1,7 +1,11 @@
 import axios from "axios";
 
+// Dynamically use the same host that served the frontend
+// Works for both localhost and LAN access (e.g. 10.169.235.240:5173)
+const API_BASE = `${window.location.protocol}//${window.location.hostname}:8000/api`;
+
 const api = axios.create({
-  baseURL: "http://localhost:8000/api",
+  baseURL: API_BASE,
 });
 
 // Attach the auth token to every request automatically.

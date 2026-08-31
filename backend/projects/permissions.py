@@ -34,7 +34,13 @@ class IsProjectMemberOrAbove(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
             return True
-        project = obj if hasattr(obj, "memberships") else obj.project
+        # Handle Comment objects which have obj.issue.project
+        if hasattr(obj, "issue"):
+            project = obj.issue.project
+        elif hasattr(obj, "memberships"):
+            project = obj
+        else:
+            project = obj.project
         return project.memberships.filter(
             user=request.user
         ).exclude(role=ProjectMembership.Role.VIEWER).exists()

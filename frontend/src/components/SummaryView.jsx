@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { IssueTypeIcon, PriorityIcon } from "./Icons";
 
 export default function SummaryView({
   project,
@@ -35,19 +36,19 @@ export default function SummaryView({
   // Copy Executive Report to clipboard
   function handleCopyReport() {
     const lines = [
-      `📊 EXECUTIVE PROJECT REPORT: ${project?.name || "Jira Project"} (${project?.key || "KAN"})`,
+      `EXECUTIVE PROJECT REPORT: ${project?.name || "NEXO Project"} (${project?.key || "KAN"})`,
       `==================================================`,
-      `📅 Generated: ${new Date().toLocaleDateString()} | Lead: ${project?.created_by?.username || "Admin"}`,
-      `📝 Description: ${project?.description || "Sprint project workspace"}`,
+      `Generated: ${new Date().toLocaleDateString()} | Lead: ${project?.created_by?.username || "Admin"}`,
+      `Description: ${project?.description || "Sprint project workspace"}`,
       ``,
-      `📈 SPRINT PROGRESS OVERVIEW:`,
+      `SPRINT PROGRESS OVERVIEW:`,
       `- Total Work Items: ${total}`,
       `- Completed: ${doneIssues.length} (${donePercent}%)`,
       `- In Progress: ${inProgressIssues.length} (${inProgressPercent}%)`,
       `- To Do: ${todoIssues.length} (${todoPercent}%)`,
       `- Critical Blockers: ${criticalIssues.length}`,
       ``,
-      `👥 TEAM MEMBERS WORKLOAD BREAKDOWN:`,
+      `TEAM MEMBERS WORKLOAD BREAKDOWN:`,
       ...members.map((m) => {
         const username = m.user?.username || m.username;
         const userIssues = issues.filter((i) => i.assignee?.id === (m.user?.id || m.id));
@@ -88,10 +89,10 @@ export default function SummaryView({
 
           <div style={{ display: "flex", gap: 8 }}>
             <button className="jira-btn-secondary" onClick={handleCopyReport} title="Copy formatted text report">
-              {copiedReport ? "✓ Copied Report!" : "📋 Copy Report"}
+              {copiedReport ? "Copied!" : "Copy Report"}
             </button>
             <button className="jira-btn-secondary" onClick={() => window.print()} title="Print or save as PDF">
-              🖨️ Print
+              Print
             </button>
             <button className="jira-btn-primary" onClick={onCreateIssueTrigger}>
               + Create Issue
@@ -101,7 +102,7 @@ export default function SummaryView({
 
         {/* Project Description Section */}
         <div className="jira-summary-desc-box">
-          <div className="jira-summary-desc-title">📝 Project Objective & Scope</div>
+          <div className="jira-summary-desc-title">Project Objective & Scope</div>
           <p className="jira-summary-desc-content">
             {project?.description ||
               "Core agile sprint workspace for cross-functional collaboration, tracking development milestones, managing backlog items, and streamlining sprint delivery across team members."}
@@ -143,7 +144,7 @@ export default function SummaryView({
       <div className="jira-summary-report-card" style={{ marginTop: 20 }}>
         <div className="jira-summary-box-header">
           <div>
-            <h3 style={{ fontSize: 16, fontWeight: 700 }}>👥 Team Members Work & Contributions Report</h3>
+            <h3 style={{ fontSize: 16, fontWeight: 700 }}>Team Members Work & Contributions Report</h3>
             <p style={{ fontSize: 12.5, color: "var(--jira-text-secondary)", marginTop: 2 }}>
               Detailed breakdown of assigned tasks, active workload, and delivery status per team member.
             </p>
@@ -200,7 +201,7 @@ export default function SummaryView({
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                           <span style={{ fontSize: 12 }}>
-                            {issue.issue_type === "BUG" ? "🐞" : issue.issue_type === "STORY" ? "📖" : "📋"}
+                            <IssueTypeIcon type={issue.issue_type} size={12} />
                           </span>
                           <span className="jira-task-key">{project?.key}-{issue.id}</span>
                           <span className="jira-task-title-trunc">{issue.title}</span>
@@ -245,7 +246,7 @@ export default function SummaryView({
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ fontSize: 12 }}>
-                        {issue.issue_type === "BUG" ? "🐞" : issue.issue_type === "STORY" ? "📖" : "📋"}
+                        <IssueTypeIcon type={issue.issue_type} size={12} />
                       </span>
                       <span className="jira-task-key">{project?.key}-{issue.id}</span>
                       <span className="jira-task-title-trunc">{issue.title}</span>
@@ -316,7 +317,7 @@ export default function SummaryView({
 
           <div className="jira-priority-list">
             <div className="jira-priority-bar-row">
-              <span className="jira-pri-tag critical">🔴 Critical</span>
+              <span className="jira-pri-tag critical"><PriorityIcon priority="CRITICAL" size={11} /> Critical</span>
               <div className="jira-pri-track">
                 <div className="jira-pri-fill critical" style={{ width: `${total ? (criticalIssues.length / total) * 100 : 0}%` }}></div>
               </div>
@@ -324,7 +325,7 @@ export default function SummaryView({
             </div>
 
             <div className="jira-priority-bar-row">
-              <span className="jira-pri-tag high">🟠 High</span>
+              <span className="jira-pri-tag high"><PriorityIcon priority="HIGH" size={11} /> High</span>
               <div className="jira-pri-track">
                 <div className="jira-pri-fill high" style={{ width: `${total ? (highIssues.length / total) * 100 : 0}%` }}></div>
               </div>
@@ -332,7 +333,7 @@ export default function SummaryView({
             </div>
 
             <div className="jira-priority-bar-row">
-              <span className="jira-pri-tag medium">🟡 Medium</span>
+              <span className="jira-pri-tag medium"><PriorityIcon priority="MEDIUM" size={11} /> Medium</span>
               <div className="jira-pri-track">
                 <div className="jira-pri-fill medium" style={{ width: `${total ? (mediumIssues.length / total) * 100 : 0}%` }}></div>
               </div>
@@ -340,7 +341,7 @@ export default function SummaryView({
             </div>
 
             <div className="jira-priority-bar-row">
-              <span className="jira-pri-tag low">🟢 Low</span>
+              <span className="jira-pri-tag low"><PriorityIcon priority="LOW" size={11} /> Low</span>
               <div className="jira-pri-track">
                 <div className="jira-pri-fill low" style={{ width: `${total ? (lowIssues.length / total) * 100 : 0}%` }}></div>
               </div>
@@ -352,3 +353,4 @@ export default function SummaryView({
     </div>
   );
 }
+

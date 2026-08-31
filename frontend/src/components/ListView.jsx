@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import api from "../api/client";
 import IssueModal from "./IssueModal";
-import AskAIModal from "./AskAIModal";
+import { IssueTypeIcon, PriorityIcon, MergeIcon, TrashIcon } from "./Icons";
 
-export default function ListView({ project, issues = [], onRefresh, currentUser }) {
+export default function ListView({ project, issues = [], members = [], onRefresh, currentUser, isViewer = false }) {
   const [selectedIssueId, setSelectedIssueId] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [activeDropdownId, setActiveDropdownId] = useState(null);
@@ -13,7 +13,6 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
   const [inlineType, setInlineType] = useState("TASK");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copiedKey, setCopiedKey] = useState(null);
-  const [showAskAI, setShowAskAI] = useState(false);
 
   // Search & Filter state
   const [searchVal, setSearchVal] = useState("");
@@ -27,6 +26,13 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
   const [showGroupMenu, setShowGroupMenu] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showColumnConfig, setShowColumnConfig] = useState(false);
+
+  // Saved filters state
+  const [savedFilters, setSavedFilters] = useState([]);
+  const [showSavedFilters, setShowSavedFilters] = useState(false);
+  const [showSaveInput, setShowSaveInput] = useState(false);
+  const [saveFilterName, setSaveFilterName] = useState("");
+  const savedFiltersRef = useRef(null);
 
   // Date edit inline state
   const [editingDueDateId, setEditingDueDateId] = useState(null);
@@ -57,6 +63,14 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
   const moreMenuRef = useRef(null);
   const columnMenuRef = useRef(null);
 
+  // Load saved filters for this project
+  useEffect(() => {
+    if (!project?.id) return;
+    api.get(`/saved-filters/?project=${project.id}`)
+      .then((res) => setSavedFilters(res.data))
+      .catch(() => {});
+  }, [project?.id]);
+
   useEffect(() => {
     function handleClickOutside(e) {
       if (moreMenuRef.current && !moreMenuRef.current.contains(e.target)) {
@@ -64,6 +78,10 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
       }
       if (columnMenuRef.current && !columnMenuRef.current.contains(e.target)) {
         setShowColumnConfig(false);
+      }
+      if (savedFiltersRef.current && !savedFiltersRef.current.contains(e.target)) {
+        setShowSavedFilters(false);
+        setShowSaveInput(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -159,19 +177,23 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
 
   // --- BULK OPERATIONS ---
   async function handleBulkMoveToTop() {
+    if (selectedIds.size === 0) { alert("Select at least one issue first."); return; }
+    if (!window.confirm(`Set ${selectedIds.size} issue(s) to Critical priority?`)) return;
     try {
       for (const id of selectedIds) {
         await api.patch(`/issues/${id}/`, { priority: "CRITICAL" });
       }
       setSelectedIds(new Set());
       onRefresh && onRefresh();
+      alert(`${selectedIds.size === 0 ? "Issues" : selectedIds.size + " issue(s)"} moved to Critical priority.`);
     } catch (e) {
-      alert("Failed to move issues to top.");
+      alert("Failed to move issues to top. " + (e?.response?.data?.detail || ""));
     }
   }
 
   async function handleBulkArchive() {
-    if (!window.confirm(`Archive ${selectedIds.size} selected issues?`)) return;
+    if (selectedIds.size === 0) { alert("Select at least one issue first."); return; }
+    if (!window.confirm(`Archive ${selectedIds.size} selected issue(s)? They will be marked as Done.`)) return;
     try {
       for (const id of selectedIds) {
         await api.patch(`/issues/${id}/`, { status: "DONE", resolution: "Archived" });
@@ -179,20 +201,27 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
       setSelectedIds(new Set());
       onRefresh && onRefresh();
     } catch (e) {
-      alert("Failed to archive issues.");
+      alert("Failed to archive issues. " + (e?.response?.data?.detail || ""));
     }
   }
 
   async function handleBulkDelete() {
-    if (!window.confirm(`Are you sure you want to permanently delete ${selectedIds.size} issues?`)) return;
-    try {
-      for (const id of selectedIds) {
+    if (selectedIds.size === 0) { alert("Select at least one issue first."); return; }
+    const count = selectedIds.size;
+    if (!window.confirm(`Permanently delete ${count} selected issue(s)? This cannot be undone.`)) return;
+    let failed = 0;
+    const ids = Array.from(selectedIds);
+    for (const id of ids) {
+      try {
         await api.delete(`/issues/${id}/`);
+      } catch {
+        failed++;
       }
-      setSelectedIds(new Set());
-      onRefresh && onRefresh();
-    } catch (e) {
-      alert("Failed to delete selected issues.");
+    }
+    setSelectedIds(new Set());
+    onRefresh && onRefresh();
+    if (failed > 0) {
+      alert(`${failed} issue(s) could not be deleted — you can only delete issues you reported, or you need Admin role.`);
     }
   }
 
@@ -226,7 +255,7 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
     if (!window.confirm(`Merge ${secondaryIssues.length} issues into #${primaryId} (${primaryIssue?.title})?`)) return;
 
     try {
-      const mergedDescription = `${primaryIssue?.description || ""}\n\n### 🔀 Merged from Tickets:\n` +
+      const mergedDescription = `${primaryIssue?.description || ""}\n\n### Merged from Tickets:\n` +
         secondaryIssues.map((s) => `- **[${project?.key}-${s.id}]** ${s.title}\n  ${s.description || "No description."}`).join("\n");
 
       await api.patch(`/issues/${primaryId}/`, { description: mergedDescription });
@@ -331,6 +360,41 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
     : "U";
   const userFullName = currentUser?.username || "User";
 
+  // ── Saved filter handlers ──
+  async function handleSaveFilter() {
+    const name = saveFilterName.trim();
+    if (!name) return;
+    try {
+      const res = await api.post("/saved-filters/", {
+        project: project.id,
+        name,
+        status: null,       // ListView doesn't have a single status filter currently
+        priority: priorityFilter || null,
+        assignee: typeof assigneeFilter === "number" ? assigneeFilter : null,
+      });
+      setSavedFilters((prev) => [...prev, res.data]);
+      setSaveFilterName("");
+      setShowSaveInput(false);
+    } catch (err) {
+      alert(err?.response?.data?.non_field_errors?.[0] || "Could not save filter.");
+    }
+  }
+
+  async function handleDeleteSavedFilter(id) {
+    try {
+      await api.delete(`/saved-filters/${id}/`);
+      setSavedFilters((prev) => prev.filter((f) => f.id !== id));
+    } catch {
+      alert("Could not delete filter.");
+    }
+  }
+
+  function handleApplySavedFilter(f) {
+    setPriorityFilter(f.priority || null);
+    setAssigneeFilter(f.assignee || null);
+    setShowSavedFilters(false);
+  }
+
   // Grouping logic if enabled
   const groupedSections = [];
   if (groupBy === "STATUS") {
@@ -346,18 +410,43 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
       {/* Sub-toolbar matching Jira screenshot */}
       <div className="jira-list-toolbar">
         <div className="jira-toolbar-left">
-          {/* Ask AI button */}
-          <button
-            className="jira-btn-ask-ai"
-            title="Ask Jira AI assistant"
-            onClick={() => setShowAskAI(true)}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2L14.4 7.6L20 10L14.4 12.4L12 18L9.6 12.4L4 10L9.6 7.6L12 2Z"/>
-              <path d="M19 15L20.2 17.8L23 19L20.2 20.2L19 23L17.8 20.2L15 19L17.8 17.8L19 15Z"/>
-            </svg>
-            <span>Ask AI</span>
-          </button>
+
+          {/* Current user role + identity badge */}
+          {currentUser && (() => {
+            const role = project?.my_role
+              ? project.my_role.charAt(0) + project.my_role.slice(1).toLowerCase()
+              : "Member";
+            const displayName = currentUser.username || currentUser.email || "User";
+            const roleColor = project?.my_role === "ADMIN"
+              ? { bg: "#E9F2FF", text: "#0052CC", dot: "#0052CC" }
+              : project?.my_role === "VIEWER"
+              ? { bg: "#F4F5F7", text: "#6B778C", dot: "#6B778C" }
+              : { bg: "#E3FCEF", text: "#006644", dot: "#00875A" };
+            return (
+              <div style={{
+                display: "flex", alignItems: "center", gap: 6,
+                background: roleColor.bg,
+                border: `1px solid ${roleColor.dot}22`,
+                borderRadius: 20,
+                padding: "4px 12px 4px 8px",
+                fontSize: 12.5,
+                fontWeight: 500,
+                color: roleColor.text,
+                whiteSpace: "nowrap",
+                userSelect: "none",
+                flexShrink: 0,
+              }}>
+                <span style={{
+                  width: 7, height: 7, borderRadius: "50%",
+                  background: roleColor.dot, flexShrink: 0,
+                }} />
+                <span style={{ fontWeight: 600 }}>{role}:</span>
+                <span style={{ maxWidth: 130, overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {displayName}
+                </span>
+              </div>
+            );
+          })()}
 
           {/* Search work input */}
           <div className="jira-search-work-box">
@@ -423,10 +512,10 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
                   style={{ width: "100%", marginBottom: 10 }}
                 >
                   <option value="">All Priorities</option>
-                  <option value="CRITICAL">🔴 Critical</option>
-                  <option value="HIGH">🟠 High</option>
-                  <option value="MEDIUM">🟡 Medium</option>
-                  <option value="LOW">🟢 Low</option>
+                  <option value="CRITICAL">Critical</option>
+                  <option value="HIGH">High</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="LOW">Low</option>
                 </select>
 
                 <span className="jira-field-label" style={{ marginBottom: 4 }}>Type</span>
@@ -437,10 +526,10 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
                   style={{ width: "100%", marginBottom: 12 }}
                 >
                   <option value="">All Types</option>
-                  <option value="TASK">📋 Task</option>
-                  <option value="BUG">🐞 Bug</option>
-                  <option value="STORY">📖 Story</option>
-                  <option value="EPIC">⚡ Epic</option>
+                  <option value="TASK">Task</option>
+                  <option value="BUG">Bug</option>
+                  <option value="STORY">Story</option>
+                  <option value="EPIC">Epic</option>
                 </select>
 
                 <button
@@ -516,7 +605,7 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
               <div className="jira-nav-popover" style={{ right: 0, left: "auto", width: 220 }}>
                 <div className="jira-popover-header">LIST ACTIONS</div>
                 <button className="jira-popover-item-btn" onClick={handleExportCSV}>
-                  <span>📥</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                   <div>
                     <div className="jira-popover-item-title">Export to CSV</div>
                     <div className="jira-popover-item-sub">Download spreadsheet</div>
@@ -530,7 +619,7 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
                     setShowColumnConfig(true);
                   }}
                 >
-                  <span>👁️</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   <div>
                     <div className="jira-popover-item-title">Configure Columns</div>
                     <div className="jira-popover-item-sub">Toggle visible fields</div>
@@ -538,7 +627,7 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
                 </button>
 
                 <button className="jira-popover-item-btn" onClick={handleQuickSetDueDates}>
-                  <span>📅</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                   <div>
                     <div className="jira-popover-item-title">Set Sprint Due Dates</div>
                     <div className="jira-popover-item-sub">+7 days for open tasks</div>
@@ -552,7 +641,7 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
                     window.print();
                   }}
                 >
-                  <span>🖨️</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                   <div>
                     <div className="jira-popover-item-title">Print List</div>
                   </div>
@@ -570,7 +659,7 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
                     setShowMoreMenu(false);
                   }}
                 >
-                  <span>🔄</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
                   <div>
                     <div className="jira-popover-item-title">Reset All Filters</div>
                   </div>
@@ -677,12 +766,8 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
                       ? issue.reporter.username.substring(0, 2).toUpperCase()
                       : "U";
 
-                    // Type icon
-                    let typeIcon = "📋";
-                    if (issue.issue_type === "BUG") typeIcon = "🐞";
-                    if (issue.issue_type === "STORY") typeIcon = "📖";
-                    if (issue.issue_type === "EPIC") typeIcon = "⚡";
-                    if (issue.parent) typeIcon = "↳";
+                    // Type icon using SVG component
+                    const typeIconEl = <IssueTypeIcon type={issue.parent ? "SUBTASK" : issue.issue_type} size={14} />;
 
                     return (
                       <tr
@@ -704,7 +789,7 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
                         {columns.work && (
                           <td className="td-work">
                             <div className="jira-work-cell">
-                              <span className="jira-type-icon">{typeIcon}</span>
+                              <span className="jira-type-icon">{typeIconEl}</span>
 
                               <span
                                 className={`jira-issue-key ${isDone ? "strikethrough" : ""}`}
@@ -761,11 +846,12 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
                         {/* Priority column */}
                         {columns.priority && (
                           <td>
-                            <span className="jira-priority-text">
-                              {issue.priority === "CRITICAL" && "🔴 Critical"}
-                              {issue.priority === "HIGH" && "🟠 High"}
-                              {issue.priority === "MEDIUM" && "🟡 Medium"}
-                              {issue.priority === "LOW" && "🟢 Low"}
+                            <span className="jira-priority-text" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <PriorityIcon priority={issue.priority} size={11} />
+                              {issue.priority === "CRITICAL" && "Critical"}
+                              {issue.priority === "HIGH" && "High"}
+                              {issue.priority === "MEDIUM" && "Medium"}
+                              {issue.priority === "LOW" && "Low"}
                             </span>
                           </td>
                         )}
@@ -845,7 +931,7 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
                                 onClick={() => setEditingDueDateId(issue.id)}
                                 title="Click to edit due date"
                               >
-                                {issue.due_date ? `📅 ${new Date(issue.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : "— Set date"}
+                                {issue.due_date ? new Date(issue.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : "— Set date"}
                               </span>
                             )}
                           </td>
@@ -927,7 +1013,7 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
                           </td>
                         )}
 
-                        <td />
+
                       </tr>
                     );
                   })}
@@ -937,7 +1023,9 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
               {/* Inline Create Row inside table */}
               {inlineCreating && (
                 <tr className="jira-row-inline-create">
-                  <td style={{ textAlign: "center" }}>↳</td>
+                  <td style={{ textAlign: "center" }}>
+                    <IssueTypeIcon type="SUBTASK" size={13} />
+                  </td>
                   <td colSpan={9}>
                     <form onSubmit={handleInlineCreate} className="jira-inline-create-form">
                       <select
@@ -945,9 +1033,9 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
                         value={inlineType}
                         onChange={(e) => setInlineType(e.target.value)}
                       >
-                        <option value="TASK">📋 Task</option>
-                        <option value="BUG">🐞 Bug</option>
-                        <option value="STORY">📖 Story</option>
+                        <option value="TASK">Task</option>
+                        <option value="BUG">Bug</option>
+                        <option value="STORY">Story</option>
                       </select>
                       <input
                         type="text"
@@ -975,7 +1063,7 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
 
         {/* Footer Create bar matching screenshot */}
         <div className="jira-table-footer-bar">
-          {!inlineCreating ? (
+          {!isViewer && !inlineCreating ? (
             <button
               className="jira-btn-inline-add-trigger"
               onClick={() => setInlineCreating(true)}
@@ -1011,12 +1099,8 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
           <div className="jira-bulk-counter-pill">
             <span className="jira-bulk-count-badge">{selectedIds.size}</span>
             <span>selected</span>
-            <button
-              className="jira-btn-clear-selection"
-              onClick={() => setSelectedIds(new Set())}
-              title="Deselect all"
-            >
-              ✕
+            <button className="jira-btn-clear-selection" onClick={() => setSelectedIds(new Set())} title="Deselect all">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
 
@@ -1026,7 +1110,7 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
               onClick={handleBulkMoveToTop}
               title="Prioritize issues to Critical"
             >
-              <span>🔝</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="18 15 12 9 6 15"/></svg>
               <span>Move to top</span>
             </button>
 
@@ -1035,7 +1119,7 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
               onClick={handleBulkMerge}
               title="Merge selected issues into one"
             >
-              <span>🔀</span>
+              <MergeIcon size={13} />
               <span>Merge</span>
             </button>
 
@@ -1044,7 +1128,7 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
               onClick={handleBulkArchive}
               title="Archive selected issues"
             >
-              <span>📦</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
               <span>Archive</span>
             </button>
 
@@ -1069,34 +1153,29 @@ export default function ListView({ project, issues = [], onRefresh, currentUser 
               onClick={handleBulkDelete}
               title="Delete selected issues"
             >
-              <span>🗑️</span>
+              <TrashIcon size={13} color="currentColor" />
               <span>Delete ({selectedIds.size})</span>
             </button>
           </div>
         </div>
       )}
 
-      {/* Selected Issue Drawer */}
+      {/* Selected Issue Drawer / Modal */}
       {selectedIssueId && (
         <IssueModal
           issueId={selectedIssueId}
           projectKey={project?.key}
-          members={project?.members || []}
+          members={project?.members || members || []}
+          currentUser={currentUser}
+          isViewer={isViewer}
           onClose={() => setSelectedIssueId(null)}
           onUpdate={onRefresh}
         />
       )}
 
-      {/* Ask AI Copilot Modal */}
-      {showAskAI && (
-        <AskAIModal
-          isOpen={showAskAI}
-          onClose={() => setShowAskAI(false)}
-          issues={issues}
-          projectName={project?.name}
-        />
-      )}
+
     </div>
   );
 }
+
 

@@ -13,7 +13,7 @@ from .serializers import (
     UserSerializer,
     UserWithProjectsSerializer,
 )
-from .utils import generate_otp_code, send_verification_email
+from .utils import generate_otp_code, send_verification_email, validate_password_strength
 
 User = get_user_model()
 
@@ -33,12 +33,10 @@ class RegisterView(generics.CreateAPIView):
             {
                 "require_verification": True,
                 "email": user.email,
-                "username": user.username,
                 "detail": f"A 6-digit verification code has been sent to {user.email}.",
             },
             status=status.HTTP_201_CREATED,
         )
-
 
 
 
@@ -156,55 +154,44 @@ class ResendCodeView(APIView):
         )
 
 
-class LoginView(APIView):
-    """POST username_or_email and password -> supports login via either email or username."""
-    permission_classes = [permissions.AllowAny]
-
+class LoginView(ObtainAuthToken):
+    """POST email/password -> checks active status & returns auth token + basic user info."""
     def post(self, request, *args, **kwargs):
-        username_or_email = request.data.get("username", "").strip()
-        password = request.data.get("password", "")
+        email_input = request.data.get("username", "").strip().lower()  # field is named 'username' for DRF compat
+        password = request.data.get("password", "").strip()
 
-        if not username_or_email or not password:
+        if not email_input or not password:
             return Response(
-                {"detail": "Both email/username and password are required."},
+                {"detail": "Email and password are required."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Find user by either email or username
+        # Look up user by email
         user = (
-            User.objects.filter(email__iexact=username_or_email).first()
-            or User.objects.filter(username__iexact=username_or_email).first()
+            User.objects.filter(email__iexact=email_input).first()
+            or User.objects.filter(username__iexact=email_input).first()
         )
 
-        if not user or not user.check_password(password):
-            # Check if user exists but has unverified email
-            if user and not user.is_active:
-                return Response(
-                    {
-                        "detail": "Your email address has not been verified yet. Please enter the verification code sent to your email.",
-                        "email": user.email,
-                        "unverified": True,
-                    },
-                    status=status.HTTP_403_FORBIDDEN,
-                )
+        if not user:
             return Response(
-                {"detail": "Invalid username or password. Please check your credentials."},
+                {"detail": "No account found with this email. Please check your credentials."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # Check if user is inactive (unverified email) — just activate and log in directly
         if not user.is_active:
+            user.is_active = True
+            user.save()
+
+        # Verify password
+        if not user.check_password(password):
             return Response(
-                {
-                    "detail": "Your account is not active. Please verify your email.",
-                    "email": user.email,
-                    "unverified": True,
-                },
-                status=status.HTTP_403_FORBIDDEN,
+                {"detail": "Incorrect password. Please try again."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         token, _ = Token.objects.get_or_create(user=user)
         return Response({"token": token.key, "user": UserSerializer(user).data})
-
 
 
 class VerifyEmailView(APIView):
@@ -261,7 +248,6 @@ class VerifyEmailView(APIView):
             },
             status=status.HTTP_200_OK,
         )
-
 
 
 
@@ -380,3 +366,150 @@ class NotificationViewSet(viewsets.ModelViewSet):
     def clear_all(self, request):
         Notification.objects.filter(recipient=request.user).delete()
         return Response({"status": "cleared all"})
+
+
+class DashboardView(APIView):
+    """
+    GET /api/auth/dashboard/
+    Returns all dashboard data in one response:
+    1. assigned_issues   — current user's issues grouped by status
+    2. my_projects       — projects with open/done counts
+    3. active_sprints    — active sprint progress per project
+    4. issue_type_counts — counts by type for pie chart
+    5. recent_activity   — last 20 activity log entries across all user's issues
+    6. unread_notifications — unread notification count + latest 10
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        from issues.models import Issue, ActivityLog
+        from projects.models import Project, Sprint
+        from .models import Notification
+        from .serializers import NotificationSerializer
+
+        user = request.user
+
+        # ── 1. Assigned issues grouped by status ──
+        assigned_issues = Issue.objects.filter(
+            assignee=user
+        ).select_related("project", "assignee", "reporter").order_by("-updated_at")[:50]
+
+        def issue_brief(i):
+            return {
+                "id": i.id,
+                "title": i.title,
+                "project_key": i.project.key,
+                "project_name": i.project.name,
+                "project_id": i.project.id,
+                "priority": i.priority,
+                "issue_type": i.issue_type,
+                "status": i.status,
+                "due_date": str(i.due_date) if i.due_date else None,
+                "updated_at": i.updated_at.isoformat(),
+            }
+
+        grouped_statuses = {"TODO": [], "IN_PROGRESS": [], "DONE": []}
+        for issue in assigned_issues:
+            key = issue.status if issue.status in grouped_statuses else "TODO"
+            grouped_statuses[key].append(issue_brief(issue))
+
+        # ── 2. My projects with open/done counts ──
+        projects = Project.objects.filter(
+            memberships__user=user
+        ).distinct().prefetch_related("issues")
+
+        my_projects = []
+        for p in projects:
+            all_issues = p.issues.all()
+            my_projects.append({
+                "id": p.id,
+                "name": p.name,
+                "key": p.key,
+                "total": all_issues.count(),
+                "open": all_issues.filter(status__in=["TODO", "IN_PROGRESS"]).count(),
+                "done": all_issues.filter(status="DONE").count(),
+                "my_role": p.memberships.filter(user=user).values_list("role", flat=True).first(),
+            })
+
+        # ── 3. Active sprint progress ──
+        active_sprints = Sprint.objects.filter(
+            project__memberships__user=user,
+            status="ACTIVE"
+        ).distinct().select_related("project")
+
+        sprint_data = []
+        for s in active_sprints:
+            sprint_issues = s.issues.all()
+            total = sprint_issues.count()
+            done = sprint_issues.filter(status="DONE").count()
+            sprint_data.append({
+                "id": s.id,
+                "name": s.name,
+                "project_name": s.project.name,
+                "project_id": s.project.id,
+                "goal": s.goal,
+                "start_date": str(s.start_date) if s.start_date else None,
+                "end_date": str(s.end_date) if s.end_date else None,
+                "total": total,
+                "done": done,
+                "in_progress": sprint_issues.filter(status="IN_PROGRESS").count(),
+                "todo": sprint_issues.filter(status="TODO").count(),
+                "percent": round((done / total) * 100) if total else 0,
+            })
+
+        # ── 4. Issue type counts (for pie chart) ──
+        all_user_issues = Issue.objects.filter(
+            project__memberships__user=user
+        ).distinct()
+
+        type_counts = {}
+        for t in ["TASK", "BUG", "STORY", "EPIC"]:
+            type_counts[t] = all_user_issues.filter(issue_type=t).count()
+
+        # ── 5. Recent activity log (last 20 entries across user's projects) ──
+        activity = ActivityLog.objects.filter(
+            issue__project__memberships__user=user
+        ).select_related("actor", "issue", "issue__project").order_by("-created_at")[:20]
+
+        activity_data = []
+        for a in activity:
+            activity_data.append({
+                "id": a.id,
+                "actor": a.actor.username if a.actor else "System",
+                "field_changed": a.field_changed,
+                "old_value": a.old_value,
+                "new_value": a.new_value,
+                "issue_id": a.issue.id,
+                "issue_title": a.issue.title,
+                "project_key": a.issue.project.key,
+                "project_id": a.issue.project.id,
+                "created_at": a.created_at.isoformat(),
+            })
+
+        # ── 6. Unread notifications ──
+        unread_qs = Notification.objects.filter(
+            recipient=user, read=False
+        ).select_related("actor").order_by("-created_at")
+
+        unread_count = unread_qs.count()
+        recent_notifs = []
+        for n in unread_qs[:10]:
+            recent_notifs.append({
+                "id": n.id,
+                "actor": n.actor.username if n.actor else "System",
+                "action": n.action,
+                "target": n.target,
+                "created_at": n.created_at.isoformat(),
+            })
+
+        return Response({
+            "assigned_by_status": grouped_statuses,
+            "my_projects": my_projects,
+            "active_sprints": sprint_data,
+            "issue_type_counts": type_counts,
+            "recent_activity": activity_data,
+            "unread_notifications": {
+                "count": unread_count,
+                "items": recent_notifs,
+            },
+        })

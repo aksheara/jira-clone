@@ -9,6 +9,9 @@ export default function ProjectList() {
   const [searchVal, setSearchVal] = useState("");
   const [showModal, setShowModal] = useState(false);
 
+  // Can create project if: no projects yet (first project) OR is Admin in at least one
+  const canCreateProject = projects.length === 0 || projects.some((p) => p.my_role === "ADMIN");
+
   function loadProjects() {
     api.get("/projects/").then((res) => setProjects(res.data)).catch(() => {});
   }
@@ -36,9 +39,11 @@ export default function ProjectList() {
               Manage your teams, view sprint boards, issues, and lists.
             </p>
           </div>
-          <button className="jira-btn-primary" onClick={() => setShowModal(true)}>
-            + Create project
-          </button>
+          {canCreateProject && (
+            <button className="jira-btn-primary" onClick={() => setShowModal(true)}>
+              + Create project
+            </button>
+          )}
         </div>
 
         {/* Projects Cards Grid */}
@@ -79,7 +84,7 @@ export default function ProjectList() {
               <div className="jira-project-icon-large">📂</div>
               <h3>No projects found</h3>
               <p>{searchVal ? "No project matching your search query." : "Get started by creating your first project workspace."}</p>
-              {!searchVal && (
+              {!searchVal && canCreateProject && (
                 <button className="jira-btn-primary" onClick={() => setShowModal(true)} style={{ marginTop: 16 }}>
                   + Create your first project
                 </button>

@@ -38,12 +38,25 @@ class UserWithProjectsSerializer(serializers.ModelSerializer):
 
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True, allow_blank=False)
-    username = serializers.CharField(required=False, allow_blank=True)
     password = serializers.CharField(write_only=True, min_length=8)
+    username = serializers.CharField(required=True, allow_blank=False, min_length=3, max_length=20)
 
     class Meta:
         model = User
         fields = ["id", "username", "email", "password", "first_name", "last_name"]
+
+    def validate_username(self, value):
+        import re
+        value = value.strip()
+        if not re.match(r'^[a-zA-Z0-9_]+$', value):
+            raise serializers.ValidationError(
+                "Username may only contain letters, numbers, and underscores."
+            )
+        if User.objects.filter(username__iexact=value).exists():
+            raise serializers.ValidationError(
+                "This username is already taken. Please choose a different one."
+            )
+        return value
 
     def validate_email(self, value):
         email = value.strip().lower()
@@ -62,14 +75,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             )
         return email
 
-    def validate_username(self, value):
-        username = (value or "").strip()
-        if username and User.objects.filter(username__iexact=username).exists():
-            raise serializers.ValidationError(
-                "This username is already taken. Please choose another username."
-            )
-        return username
-
     def validate_password(self, value):
         is_valid, err_msg = validate_password_strength(value)
         if not is_valid:
@@ -77,17 +82,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        email = validated_data["email"].strip().lower()
-        username = (validated_data.get("username") or "").strip()
-
-        # If username not provided, auto-generate from email prefix
-        if not username:
-            base_user = email.split("@")[0].replace(".", "_")
-            username = base_user
-            count = 1
-            while User.objects.filter(username__iexact=username).exists():
-                username = f"{base_user}_{count}"
-                count += 1
+        email = validated_data["email"]
+        username = validated_data["username"]
 
         # Create user in pending/inactive state until email is verified
         user = User.objects.create_user(
@@ -98,7 +94,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             last_name=validated_data.get("last_name", ""),
             is_active=False,
         )
-
 
         # Generate 6-digit OTP code & dispatch email
         code = generate_otp_code(6)

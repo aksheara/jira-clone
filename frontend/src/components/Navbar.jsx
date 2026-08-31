@@ -6,7 +6,6 @@ import CreateIssueModal from "./CreateIssueModal";
 import CreateProjectModal from "./CreateProjectModal";
 import NotificationsModal from "./NotificationsModal";
 import DashboardModal from "./DashboardModal";
-import MarketplaceModal from "./MarketplaceModal";
 import TeamsModal from "./TeamsModal";
 import SettingsModal from "./SettingsModal";
 
@@ -28,8 +27,8 @@ export default function Navbar({
   const [showCreateIssueModal, setShowCreateIssueModal] = useState(false);
   const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
   const [showDashboardModal, setShowDashboardModal] = useState(false);
-  const [showMarketplaceModal, setShowMarketplaceModal] = useState(false);
   const [showTeamsModal, setShowTeamsModal] = useState(false);
+  const [teamsProjectId, setTeamsProjectId] = useState(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
 
@@ -84,15 +83,23 @@ export default function Navbar({
     <>
       <header className="jira-global-topbar" ref={menuRef}>
         <div className="jira-topbar-left">
-          {/* Jira Agent Brand Logo */}
+          {/* NEXO Brand Logo */}
           <Link to="/projects" className="jira-topbar-brand">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <path d="M11.53 2.3A1.85 1.85 0 0 0 8.92 2.3L2.3 8.92A1.85 1.85 0 0 0 2.3 11.53L8.92 18.15C9.64 18.87 10.81 18.87 11.53 18.15L18.15 11.53A1.85 1.85 0 0 0 18.15 8.92L11.53 2.3Z" fill="#0052CC"/>
-              <path opacity="0.75" d="M17.53 8.3A1.85 1.85 0 0 0 14.92 8.3L8.3 14.92A1.85 1.85 0 0 0 8.3 17.53L14.92 24.15C15.64 24.87 16.81 24.87 17.53 24.15L24.15 17.53A1.85 1.85 0 0 0 24.15 14.92L17.53 8.3Z" fill="#2684FF"/>
-            </svg>
+            <img
+              src="/dp-logo.png"
+              alt="DataPattern Logo"
+              style={{
+                height: 32,
+                width: "auto",
+                objectFit: "contain",
+                background: "#FFFFFF",
+                borderRadius: 6,
+                padding: "2px 6px",
+              }}
+            />
             <div className="jira-brand-title-wrap">
-              <span className="jira-brand-title">Jira</span>
-              <span className="jira-brand-agent-badge">Agent</span>
+              <span className="jira-brand-title">NEXO</span>
+              <span className="jira-brand-agent-badge">Powered by DataPattern</span>
             </div>
           </Link>
 
@@ -143,15 +150,18 @@ export default function Navbar({
                     )}
                   </div>
                   <div className="jira-popover-footer">
-                    <button
-                      className="jira-popover-btn-action"
-                      onClick={() => {
-                        setActiveMenu(null);
-                        setShowCreateProjectModal(true);
-                      }}
-                    >
-                      + Create project
-                    </button>
+                    {/* Only show Create project if user is Admin in at least one project, or has no projects yet */}
+                    {(projects.length === 0 || projects.some((p) => p.my_role === "ADMIN")) && (
+                      <button
+                        className="jira-popover-btn-action"
+                        onClick={() => {
+                          setActiveMenu(null);
+                          setShowCreateProjectModal(true);
+                        }}
+                      >
+                        + Create project
+                      </button>
+                    )}
                     <Link
                       to="/projects"
                       className="jira-popover-btn-link"
@@ -164,79 +174,7 @@ export default function Navbar({
               )}
             </div>
 
-            {/* 2. FILTERS DROPDOWN */}
-            <div className="jira-nav-dropdown-wrap">
-              <button
-                className={`jira-nav-link ${activeMenu === "filters" ? "active" : ""}`}
-                onClick={() => toggleMenu("filters")}
-              >
-                <span>Filters</span>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </button>
-
-              {activeMenu === "filters" && (
-                <div className="jira-nav-popover" style={{ width: 280 }}>
-                  <div className="jira-popover-header">DEFAULT FILTERS</div>
-                  <div className="jira-popover-list">
-                    <button
-                      className="jira-popover-item-btn"
-                      onClick={() => handleSelectFilter("MY_OPEN_ISSUES")}
-                    >
-                      <span className="jira-filter-icon">📌</span>
-                      <div>
-                        <div className="jira-popover-item-title">My open issues</div>
-                        <div className="jira-popover-item-sub">Issues assigned to you</div>
-                      </div>
-                    </button>
-
-                    <button
-                      className="jira-popover-item-btn"
-                      onClick={() => handleSelectFilter("REPORTED_BY_ME")}
-                    >
-                      <span className="jira-filter-icon">📝</span>
-                      <div>
-                        <div className="jira-popover-item-title">Reported by me</div>
-                        <div className="jira-popover-item-sub">Issues created by you</div>
-                      </div>
-                    </button>
-
-                    <button
-                      className="jira-popover-item-btn"
-                      onClick={() => handleSelectFilter("DONE_ISSUES")}
-                    >
-                      <span className="jira-filter-icon">✅</span>
-                      <div>
-                        <div className="jira-popover-item-title">All completed issues</div>
-                        <div className="jira-popover-item-sub">Status is Done</div>
-                      </div>
-                    </button>
-
-                    <button
-                      className="jira-popover-item-btn"
-                      onClick={() => handleSelectFilter("CRITICAL_ISSUES")}
-                    >
-                      <span className="jira-filter-icon">🔥</span>
-                      <div>
-                        <div className="jira-popover-item-title">High & Critical blockers</div>
-                        <div className="jira-popover-item-sub">Urgent priority items</div>
-                      </div>
-                    </button>
-                  </div>
-                  <div className="jira-popover-footer">
-                    <button
-                      className="jira-popover-btn-action"
-                      onClick={() => handleSelectFilter("CLEAR")}
-                    >
-                      Reset / Clear active filter
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 3. DASHBOARDS DROPDOWN */}
+            {/* 3. DASHBOARD — dropdown listing all projects */}
             <div className="jira-nav-dropdown-wrap">
               <button
                 className={`jira-nav-link ${activeMenu === "dashboards" ? "active" : ""}`}
@@ -249,47 +187,35 @@ export default function Navbar({
               </button>
 
               {activeMenu === "dashboards" && (
-                <div className="jira-nav-popover" style={{ width: 300 }}>
-                  <div className="jira-popover-header">RECENT DASHBOARDS</div>
+                <div className="jira-nav-popover" style={{ width: 280 }}>
+                  <div className="jira-popover-header">PROJECT DASHBOARDS</div>
                   <div className="jira-popover-list">
-                    <button
-                      className="jira-popover-item-btn"
-                      onClick={() => {
-                        setActiveMenu(null);
-                        setShowDashboardModal(true);
-                      }}
-                    >
-                      <span className="jira-filter-icon">📊</span>
-                      <div>
-                        <div className="jira-popover-item-title">Team Sprint Velocity & Analytics</div>
-                        <div className="jira-popover-item-sub">Burndown, WIP limits, completion rate</div>
-                      </div>
-                    </button>
-
-                    <button
-                      className="jira-popover-item-btn"
-                      onClick={() => {
-                        setActiveMenu(null);
-                        setShowDashboardModal(true);
-                      }}
-                    >
-                      <span className="jira-filter-icon">🎯</span>
-                      <div>
-                        <div className="jira-popover-item-title">Engineering Quality & Health</div>
-                        <div className="jira-popover-item-sub">Bug resolution, cycle time</div>
-                      </div>
-                    </button>
+                    {filteredProjects.map((p) => (
+                      <Link
+                        key={p.id}
+                        to={`/dashboard?project=${p.id}`}
+                        className="jira-popover-item"
+                        onClick={() => setActiveMenu(null)}
+                      >
+                        <div className="jira-project-dot" style={{ background: "#0052CC" }}></div>
+                        <div>
+                          <div className="jira-popover-item-title">{p.name}</div>
+                          <div className="jira-popover-item-sub">{p.key} · Dashboard</div>
+                        </div>
+                      </Link>
+                    ))}
+                    {filteredProjects.length === 0 && (
+                      <div className="jira-empty-muted">No projects found.</div>
+                    )}
                   </div>
                   <div className="jira-popover-footer">
-                    <button
-                      className="jira-popover-btn-action"
-                      onClick={() => {
-                        setActiveMenu(null);
-                        setShowDashboardModal(true);
-                      }}
+                    <Link
+                      to="/dashboard"
+                      className="jira-popover-btn-link"
+                      onClick={() => setActiveMenu(null)}
                     >
-                      + Open Full Dashboard View
-                    </button>
+                      View all dashboards
+                    </Link>
                   </div>
                 </div>
               )}
@@ -309,123 +235,50 @@ export default function Navbar({
 
               {activeMenu === "teams" && (
                 <div className="jira-nav-popover" style={{ width: 280 }}>
-                  <div className="jira-popover-header">YOUR TEAMS</div>
+                  <div className="jira-popover-header">YOUR PROJECT TEAMS</div>
                   <div className="jira-popover-list">
-                    <button
-                      className="jira-popover-item-btn"
-                      onClick={() => {
-                        setActiveMenu(null);
-                        setShowTeamsModal(true);
-                      }}
-                    >
-                      <span className="jira-project-dot" style={{ background: "#6554c0" }} />
-                      <div>
-                        <div className="jira-popover-item-title">My Data Science Team</div>
-                        <div className="jira-popover-item-sub">Lead: {userFullName}</div>
-                      </div>
-                    </button>
-
-                    <button
-                      className="jira-popover-item-btn"
-                      onClick={() => {
-                        setActiveMenu(null);
-                        setShowTeamsModal(true);
-                      }}
-                    >
-                      <span className="jira-filter-icon">💻</span>
-                      <div>
-                        <div className="jira-popover-item-title">Frontend Core Engineers</div>
-                        <div className="jira-popover-item-sub">UI & Design System</div>
-                      </div>
-                    </button>
+                    {filteredProjects.map((p) => (
+                      <button
+                        key={p.id}
+                        className="jira-popover-item-btn"
+                        onClick={() => {
+                          setActiveMenu(null);
+                          setTeamsProjectId(p.id);
+                          setShowTeamsModal(true);
+                        }}
+                      >
+                        <div className="jira-avatar-circle" style={{ width: 24, height: 24, fontSize: 10, flexShrink: 0, background: "linear-gradient(135deg,#0052CC,#6554C0)" }}>
+                          {p.key.substring(0, 2)}
+                        </div>
+                        <div>
+                          <div className="jira-popover-item-title">{p.name}</div>
+                          <div className="jira-popover-item-sub">
+                            {p.members?.length || 0} member{p.members?.length !== 1 ? "s" : ""} · {p.my_role || "Member"}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                    {filteredProjects.length === 0 && (
+                      <div className="jira-empty-muted">No projects found.</div>
+                    )}
                   </div>
                   <div className="jira-popover-footer">
                     <button
                       className="jira-popover-btn-action"
                       onClick={() => {
                         setActiveMenu(null);
+                        setTeamsProjectId(null);
                         setShowTeamsModal(true);
                       }}
                     >
-                      + Create a team / View all
+                      View full team directory
                     </button>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* 5. APPS DROPDOWN */}
-            <div className="jira-nav-dropdown-wrap">
-              <button
-                className={`jira-nav-link ${activeMenu === "apps" ? "active" : ""}`}
-                onClick={() => toggleMenu("apps")}
-              >
-                <span>Apps</span>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </button>
 
-              {activeMenu === "apps" && (
-                <div className="jira-nav-popover" style={{ width: 280 }}>
-                  <div className="jira-popover-header">CONNECTED INTEGRATIONS</div>
-                  <div className="jira-popover-list">
-                    <button
-                      className="jira-popover-item-btn"
-                      onClick={() => {
-                        setActiveMenu(null);
-                        setShowMarketplaceModal(true);
-                      }}
-                    >
-                      <span className="jira-filter-icon">🐙</span>
-                      <div>
-                        <div className="jira-popover-item-title">GitHub for Jira</div>
-                        <div className="jira-popover-item-sub">Connected</div>
-                      </div>
-                    </button>
-
-                    <button
-                      className="jira-popover-item-btn"
-                      onClick={() => {
-                        setActiveMenu(null);
-                        setShowMarketplaceModal(true);
-                      }}
-                    >
-                      <span className="jira-filter-icon">💬</span>
-                      <div>
-                        <div className="jira-popover-item-title">Slack Integration</div>
-                        <div className="jira-popover-item-sub">Connected</div>
-                      </div>
-                    </button>
-
-                    <button
-                      className="jira-popover-item-btn"
-                      onClick={() => {
-                        setActiveMenu(null);
-                        setShowMarketplaceModal(true);
-                      }}
-                    >
-                      <span className="jira-filter-icon">🎨</span>
-                      <div>
-                        <div className="jira-popover-item-title">Figma for Jira</div>
-                        <div className="jira-popover-item-sub">Available</div>
-                      </div>
-                    </button>
-                  </div>
-                  <div className="jira-popover-footer">
-                    <button
-                      className="jira-popover-btn-action"
-                      onClick={() => {
-                        setActiveMenu(null);
-                        setShowMarketplaceModal(true);
-                      }}
-                    >
-                      Explore Atlassian Marketplace →
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
 
             {/* Blue solid + Create button */}
             <button
@@ -520,34 +373,26 @@ export default function Navbar({
                   </div>
                 </div>
                 <div className="jira-popover-divider"></div>
-                <button
-                  className="jira-user-popover-action"
-                  onClick={() => {
-                    setActiveMenu(null);
-                    setShowCreateProjectModal(true);
-                  }}
-                >
-                  ➕ Create new project
-                </button>
-                <Link
-                  to="/projects"
-                  className="jira-user-popover-action"
-                  onClick={() => setActiveMenu(null)}
-                >
-                  📁 All projects
+                {(projects.length === 0 || projects.some((p) => p.my_role === "ADMIN")) && (
+                  <button
+                    className="jira-user-popover-action"
+                    onClick={() => { setActiveMenu(null); setShowCreateProjectModal(true); }}
+                  >
+                    + Create new project
+                  </button>
+                )}
+                <Link to="/projects" className="jira-user-popover-action" onClick={() => setActiveMenu(null)}>
+                  All projects
                 </Link>
                 <button
                   className="jira-user-popover-action"
-                  onClick={() => {
-                    setActiveMenu(null);
-                    setShowSettingsModal(true);
-                  }}
+                  onClick={() => { setActiveMenu(null); setShowSettingsModal(true); }}
                 >
-                  ⚙️ Preferences & Settings
+                  Preferences & Settings
                 </button>
                 <div className="jira-popover-divider"></div>
                 <button className="jira-user-popover-action danger" onClick={handleLogout}>
-                  🚪 Log out
+                  Log out
                 </button>
               </div>
             )}
@@ -581,14 +426,12 @@ export default function Navbar({
         onClose={() => setShowDashboardModal(false)}
       />
 
-      <MarketplaceModal
-        isOpen={showMarketplaceModal}
-        onClose={() => setShowMarketplaceModal(false)}
-      />
+
 
       <TeamsModal
         isOpen={showTeamsModal}
-        onClose={() => setShowTeamsModal(false)}
+        onClose={() => { setShowTeamsModal(false); setTeamsProjectId(null); }}
+        projectId={teamsProjectId}
       />
 
       <SettingsModal
@@ -601,8 +444,10 @@ export default function Navbar({
         <div className="jira-modal-backdrop" onClick={() => setShowHelpModal(false)}>
           <div className="jira-modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 540 }}>
             <div className="jira-modal-header">
-              <h2 className="jira-modal-title">⌨️ Keyboard Shortcuts & Help</h2>
-              <button className="jira-btn-icon-close" onClick={() => setShowHelpModal(false)}>✕</button>
+              <h2 className="jira-modal-title">Keyboard Shortcuts & Help</h2>
+              <button className="jira-btn-icon-close" onClick={() => setShowHelpModal(false)}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
             </div>
             <div className="jira-modal-body">
               <div className="jira-shortcuts-grid">
@@ -621,3 +466,4 @@ export default function Navbar({
     </>
   );
 }
+

@@ -85,8 +85,12 @@ export default function CalendarView({ issues = [], onSelectIssue, onRefresh }) 
                       onClick={() => onSelectIssue && onSelectIssue(issue.id)}
                       title={`[${issue.status}] ${issue.title}`}
                     >
-                      <span style={{ fontWeight: 700, marginRight: 4 }}>
-                        {issue.issue_type === "BUG" ? "🐞" : "📋"}
+                      <span style={{ marginRight: 4 }}>
+                        {issue.issue_type === "BUG" ? (
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#DE350B" strokeWidth="2"><circle cx="12" cy="13" r="4"/><path d="M12 9v-2"/><path d="M8.5 9.5L6 7"/><path d="M15.5 9.5L18 7"/><path d="M8 13H4"/><path d="M20 13h-4"/></svg>
+                        ) : (
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#0052CC" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="3"/><polyline points="9 12 11 14 15 10"/></svg>
+                        )}
                       </span>
                       {issue.title}
                     </div>

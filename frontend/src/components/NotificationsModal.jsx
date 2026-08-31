@@ -95,7 +95,7 @@ export default function NotificationsModal({ isOpen, onClose }) {
         {!loading && notifications.map((n) => (
           <div key={n.id} className={`jira-notification-item ${!n.read ? "unread" : ""}`}>
             <div className="jira-notification-avatar">
-              {n.actor ? n.actor.username.substring(0, 2).toUpperCase() : "⚡"}
+              {n.actor ? n.actor.username.substring(0, 2).toUpperCase() : "SY"}
             </div>
             <div className="jira-notification-content">
               <p className="jira-notification-text">
@@ -110,21 +110,22 @@ export default function NotificationsModal({ isOpen, onClose }) {
               onClick={() => dismissNotification(n.id)}
               title="Dismiss"
             >
-              ✕
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
         ))}
 
         {!loading && notifications.length === 0 && (
           <div className="jira-empty-notifications">
-            <span>🎉 All caught up! No unread notifications.</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#36B37E" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>All caught up! No unread notifications.</span>
           </div>
         )}
       </div>
 
       <div className="jira-popover-footer-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span style={{ fontSize: 11, color: "var(--jira-text-muted)" }}>
-          ☁️ Persisted in SQLite DB
+          Persisted in SQLite DB
         </span>
         <button className="jira-btn-link-sm" onClick={onClose}>
           Close

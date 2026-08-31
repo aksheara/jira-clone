@@ -46,13 +46,15 @@ export default function ShareProjectModal({ isOpen, onClose, project, onMemberAd
       <div className="jira-modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 540 }}>
         <div className="jira-modal-header">
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 20 }}>🔗</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0052CC" strokeWidth="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
             <div>
               <h2 className="jira-modal-title">Share {project?.name}</h2>
               <span className="jira-sub-key">Collaborate with your team members</span>
             </div>
           </div>
-          <button className="jira-btn-icon-close" onClick={onClose}>✕</button>
+          <button className="jira-btn-icon-close" onClick={onClose}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
 
         <div className="jira-modal-body">
@@ -75,7 +77,7 @@ export default function ShareProjectModal({ isOpen, onClose, project, onMemberAd
                 className="jira-btn-primary"
                 onClick={handleCopyLink}
               >
-                {copiedLink ? "✓ Copied" : "Copy Link"}
+              {copiedLink ? "Copied!" : "Copy Link"}
               </button>
             </div>
           </div>
@@ -118,10 +120,10 @@ export default function ShareProjectModal({ isOpen, onClose, project, onMemberAd
           {/* Sharing Access Overview */}
           <div className="jira-share-roles-info">
             <div className="jira-share-role-item">
-              <strong>👥 Members:</strong> Can create, edit, assign, and transition work items.
+              <strong>Members:</strong> Can create, edit, assign, and transition work items.
             </div>
             <div className="jira-share-role-item">
-              <strong>👑 Admins:</strong> Full access including project settings and permissions.
+              <strong>Admins:</strong> Full access including project settings and permissions.
             </div>
           </div>
         </div>

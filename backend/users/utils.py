@@ -63,7 +63,7 @@ def validate_password_strength(password: str) -> tuple[bool, str]:
     - At least one uppercase letter [A-Z]
     - At least one lowercase letter [a-z]
     - At least one numeric digit [0-9]
-    - At least one special symbol [!@#$%^&*(),.?":{}|<>\-_=+[\]\\;/`~]
+    - At least one special symbol (e.g. @, #, $, %, !, *)
     """
     if not password or len(password) < 8:
         return False, "Password must be at least 8 characters long."
@@ -73,7 +73,7 @@ def validate_password_strength(password: str) -> tuple[bool, str]:
         return False, "Password must contain at least one lowercase letter (a-z)."
     if not re.search(r"[0-9]", password):
         return False, "Password must contain at least one number (0-9)."
-    if not re.search(r'[!@#$%^&*(),.?":{}|<>\-_=+[\]\\;/`~]', password):
+    if not re.search(r'[!@#$%^&*(),.?":{}|<>\-_=+\[\]\\;/`~]', password):
         return False, "Password must contain at least one special symbol (e.g. @, #, $, %, !, *)."
     return True, ""
 
@@ -88,15 +88,15 @@ def send_verification_email(email: str, code: str, purpose: str = "REGISTRATION"
     Dispatches a formatted verification email with the 6-digit OTP code.
     Uses Django's send_mail (console backend in dev, SMTP in prod).
     """
-    subject = "Jira Software - Your Verification Code"
+    subject = "NEXO - Your Verification Code"
     if purpose == "PASSWORD_RESET":
-        subject = "Jira Software - Password Reset Code"
+        subject = "NEXO - Password Reset Code"
 
     purpose_text = "verify your email address and activate your account" if purpose == "REGISTRATION" else "reset your account password"
 
     message = f"""Hello {username or 'there'},
 
-Your Jira Software verification code is:
+Your NEXO verification code is:
 
     ======================
            {code}
@@ -108,13 +108,13 @@ This code is valid for 15 minutes.
 If you did not request this code, please ignore this email.
 
 Best regards,
-The Jira Software Team
+The NEXO Team
 """
 
     html_message = f"""
     <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; border: 1px solid #DFE1E6; border-radius: 8px; background: #FFFFFF;">
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
-            <h2 style="color: #0052CC; margin: 0;">Jira Software</h2>
+            <h2 style="color: #0052CC; margin: 0;">NEXO</h2>
         </div>
         <h3 style="color: #172B4D; margin-top: 0;">{ 'Activate Your Account' if purpose == 'REGISTRATION' else 'Reset Your Password' }</h3>
         <p style="color: #42526E; font-size: 14px; line-height: 1.5;">
@@ -136,15 +136,358 @@ The Jira Software Team
     from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@jira-software.local")
 
     try:
-        send_mail(
-            subject=subject,
-            message=message,
-            from_email=from_email,
-            recipient_list=[email],
-            html_message=html_message,
-            fail_silently=False,
-        )
+        import ssl
+        import smtplib
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+
+        # Build the email message
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = from_email
+        msg["To"] = email
+        msg.attach(MIMEText(message, "plain"))
+        msg.attach(MIMEText(html_message, "html"))
+
+        # Connect with TLS but skip cert verification (fixes Windows SSL chain issue)
+        context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+
+        host = getattr(settings, "EMAIL_HOST", "smtp.gmail.com")
+        port = getattr(settings, "EMAIL_PORT", 587)
+        user = getattr(settings, "EMAIL_HOST_USER", "")
+        password = getattr(settings, "EMAIL_HOST_PASSWORD", "")
+
+        with smtplib.SMTP(host, port, timeout=10) as server:
+            server.ehlo()
+            server.starttls(context=context)
+            server.login(user, password)
+            server.sendmail(from_email, [email], msg.as_string())
+
         return True
     except Exception as e:
         print(f"[Email Dispatch Error]: {e}")
         return False
+
+
+def send_assignment_email(assignee_email: str, assignee_username: str, issue_title: str,
+                          issue_key: str, project_name: str, assigned_by: str,
+                          project_id: int = None, issue_id: int = None) -> bool:
+    """Kept for backward compatibility — delegates to send_notification_email."""
+    return send_notification_email(
+        recipient_email=assignee_email,
+        recipient_username=assignee_username,
+        actor=assigned_by,
+        action="assigned you to",
+        issue_key=issue_key,
+        issue_title=issue_title,
+        project_name=project_name,
+        project_id=project_id,
+        issue_id=issue_id,
+        why_reason="assignee",
+    )
+
+
+def send_mention_email(mentioned_email: str, mentioned_username: str, mentioned_by: str,
+                       issue_title: str, issue_key: str, project_name: str,
+                       comment_body: str) -> bool:
+    """Kept for backward compatibility — delegates to send_notification_email."""
+    return send_notification_email(
+        recipient_email=mentioned_email,
+        recipient_username=mentioned_username,
+        actor=mentioned_by,
+        action="mentioned you in a comment on",
+        issue_key=issue_key,
+        issue_title=issue_title,
+        project_name=project_name,
+        why_reason="mention",
+        comment_body=comment_body,
+    )
+
+
+def send_comment_email(recipient_email: str, recipient_username: str, commenter: str,
+                       issue_title: str, issue_key: str, project_name: str,
+                       comment_body: str, is_mention: bool = False,
+                       project_id: int = None, issue_id: int = None) -> bool:
+    """Kept for backward compatibility — delegates to send_notification_email."""
+    return send_notification_email(
+        recipient_email=recipient_email,
+        recipient_username=recipient_username,
+        actor=commenter,
+        action="mentioned you in a comment on" if is_mention else "commented on",
+        issue_key=issue_key,
+        issue_title=issue_title,
+        project_name=project_name,
+        project_id=project_id,
+        issue_id=issue_id,
+        why_reason="mention" if is_mention else "assignee",
+        comment_body=comment_body,
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SHARED NOTIFICATION EMAIL — single source of truth for all notification emails
+# ─────────────────────────────────────────────────────────────────────────────
+def send_notification_email(
+    recipient_email: str,
+    recipient_username: str,
+    actor: str,
+    action: str,
+    issue_key: str,
+    issue_title: str,
+    project_name: str,
+    project_id: int = None,
+    issue_id: int = None,
+    why_reason: str = "assignee",
+    comment_body: str = None,
+    issue_type: str = None,
+    issue_priority: str = None,
+    issue_status: str = None,
+    issue_reporter: str = None,
+    issue_assignee: str = None,
+) -> bool:
+    """
+    Unified NEXO notification email matching real Jira's structure:
+
+    Header  : NEXO logo + app name
+    Action  : "[Actor] [action] on [Issue Key]"
+    Issue   : Key, Title, Type, Priority, Status, Reporter, Assignee
+    Comment : (only for comment/mention) — commenter name + full comment text
+    Button  : View Issue →
+    Footer  : Why you're receiving this
+    """
+    frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
+    issue_url = (
+        f"{frontend_url}/projects/{project_id}/board?issue={issue_id}"
+        if project_id and issue_id
+        else f"{frontend_url}/projects"
+    )
+
+    # Subject line
+    subject_map = {
+        "assignee": f"[NEXO] {actor} assigned you to {issue_key}",
+        "reporter": f"[NEXO] New activity on your issue {issue_key}",
+        "mention":  f"[NEXO] {actor} mentioned you in {issue_key}",
+    }
+    subject = subject_map.get(why_reason, f"[NEXO] Update on {issue_key}")
+
+    # Footer reason
+    footer_map = {
+        "assignee": f"You're receiving this email because you are the <strong>assignee</strong> on this issue.",
+        "reporter": f"You're receiving this email because you are the <strong>reporter</strong> on this issue.",
+        "mention":  f"You're receiving this email because you were <strong>mentioned</strong> in this issue.",
+    }
+    footer_reason = footer_map.get(why_reason, "You're receiving this email because you are a member of this project.")
+
+    # Issue card rows
+    issue_rows = ""
+    if issue_type:
+        issue_rows += f"<tr><td style='color:#6B778C;padding:3px 0;font-size:13px;width:110px'>Type</td><td style='font-size:13px;color:#172B4D'>{issue_type}</td></tr>"
+    if issue_priority:
+        issue_rows += f"<tr><td style='color:#6B778C;padding:3px 0;font-size:13px'>Priority</td><td style='font-size:13px;color:#172B4D'>{issue_priority}</td></tr>"
+    if issue_status:
+        issue_rows += f"<tr><td style='color:#6B778C;padding:3px 0;font-size:13px'>Status</td><td style='font-size:13px;color:#172B4D'>{issue_status}</td></tr>"
+    if issue_reporter:
+        issue_rows += f"<tr><td style='color:#6B778C;padding:3px 0;font-size:13px'>Reporter</td><td style='font-size:13px;color:#172B4D'>{issue_reporter}</td></tr>"
+    if issue_assignee:
+        issue_rows += f"<tr><td style='color:#6B778C;padding:3px 0;font-size:13px'>Assignee</td><td style='font-size:13px;color:#172B4D'>{issue_assignee}</td></tr>"
+
+    # Comment block (only for comment/mention emails)
+    comment_block = ""
+    if comment_body:
+        preview = comment_body[:400] + ("..." if len(comment_body) > 400 else "")
+        comment_block = f"""
+        <div style="margin: 20px 0;">
+            <p style="font-size: 12px; font-weight: 700; color: #6B778C; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                Comment by {actor}
+            </p>
+            <div style="background: #F8F9FF; border-left: 4px solid #6554C0; border-radius: 0 6px 6px 0;
+                        padding: 14px 16px; font-size: 14px; color: #172B4D; line-height: 1.6;">
+                {preview}
+            </div>
+        </div>
+        """
+
+    html_message = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto;
+                border: 1px solid #DFE1E6; border-radius: 10px; overflow: hidden; background: #FFFFFF;">
+
+        <!-- HEADER -->
+        <div style="background: linear-gradient(135deg, #0052CC, #6554C0); padding: 18px 24px; display: flex; align-items: center; gap: 10px;">
+            <span style="color: #FFFFFF; font-size: 20px; font-weight: 800; letter-spacing: 1px;">NEXO</span>
+            <span style="color: rgba(255,255,255,0.6); font-size: 12px;">Powered by DataPattern</span>
+        </div>
+
+        <!-- BODY -->
+        <div style="padding: 24px;">
+
+            <!-- ACTION LINE -->
+            <p style="font-size: 15px; color: #172B4D; margin: 0 0 20px 0; line-height: 1.5;">
+                <strong>{actor}</strong> {action}
+                <strong>{issue_key}</strong> in <strong>{project_name}</strong>.
+            </p>
+
+            <!-- ISSUE CARD -->
+            <div style="background: #F4F5F7; border-radius: 8px; padding: 16px 18px; margin-bottom: 20px;">
+                <div style="font-size: 11px; color: #6B778C; font-weight: 700; text-transform: uppercase;
+                            letter-spacing: 0.6px; margin-bottom: 6px;">{project_name} &nbsp;·&nbsp; {issue_key}</div>
+                <div style="font-size: 17px; font-weight: 700; color: #172B4D; margin-bottom: 12px;">{issue_title}</div>
+                {f'<table style="border-collapse:collapse">{issue_rows}</table>' if issue_rows else ""}
+            </div>
+
+            <!-- COMMENT BLOCK (only for comment/mention emails) -->
+            {comment_block}
+
+            <!-- VIEW ISSUE BUTTON -->
+            <a href="{issue_url}"
+               style="display: inline-block; padding: 11px 24px;
+                      background: linear-gradient(135deg, #0065FF, #0052CC);
+                      color: #FFFFFF; font-weight: 700; font-size: 14px;
+                      border-radius: 8px; text-decoration: none;
+                      box-shadow: 0 2px 8px rgba(0,82,204,0.35); margin-bottom: 24px;">
+                View Issue →
+            </a>
+
+        </div>
+
+        <!-- FOOTER -->
+        <div style="background: #F4F5F7; border-top: 1px solid #EBECF0; padding: 14px 24px;">
+            <p style="color: #6B778C; font-size: 12px; margin: 0; line-height: 1.6;">
+                {footer_reason}
+            </p>
+        </div>
+    </div>
+    """
+
+    plain_message = (
+        f"Hello {recipient_username},\n\n"
+        f"{actor} {action} {issue_key} — {issue_title} in {project_name}.\n\n"
+        f"{('Comment: ' + comment_body[:300]) if comment_body else ''}\n\n"
+        f"View issue: {issue_url}\n\n"
+        f"The NEXO Team\n"
+    )
+
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@NEXO.local")
+
+    try:
+        import ssl, smtplib
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = from_email
+        msg["To"] = recipient_email
+        msg.attach(MIMEText(plain_message, "plain"))
+        msg.attach(MIMEText(html_message, "html"))
+
+        context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+
+        host = getattr(settings, "EMAIL_HOST", "smtp.gmail.com")
+        port = getattr(settings, "EMAIL_PORT", 587)
+        user = getattr(settings, "EMAIL_HOST_USER", "")
+        password = getattr(settings, "EMAIL_HOST_PASSWORD", "")
+
+        with smtplib.SMTP(host, port, timeout=10) as server:
+            server.ehlo()
+            server.starttls(context=context)
+            server.login(user, password)
+            server.sendmail(from_email, [recipient_email], msg.as_string())
+
+        return True
+    except Exception as e:
+        print(f"[NEXO Email Error]: {e}")
+        return False
+    """
+    Sends an email to the user who has been assigned to an issue.
+    """
+    subject = f"[NEXO] You've been assigned to {issue_key}"
+
+    # Build deep link if project_id and issue_id are available
+    frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
+    if project_id and issue_id:
+        issue_url = f"{frontend_url}/projects/{project_id}/board?issue={issue_id}"
+    else:
+        issue_url = f"{frontend_url}/projects"
+
+    message = f"""Hello {assignee_username},
+
+{assigned_by} has assigned you to the following issue:
+
+    Issue  : {issue_key} — {issue_title}
+    Project: {project_name}
+
+Open the issue directly: {issue_url}
+
+Best regards,
+The NEXO Team
+"""
+
+    html_message = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px;
+                border: 1px solid #DFE1E6; border-radius: 8px; background: #FFFFFF;">
+        <h2 style="color: #0052CC; margin: 0 0 16px 0;">NEXO</h2>
+        <h3 style="color: #172B4D; margin-top: 0;">You've been assigned to an issue</h3>
+        <p style="color: #42526E; font-size: 14px; line-height: 1.6;">
+            <strong>{assigned_by}</strong> assigned you to:
+        </p>
+        <div style="background: #F4F5F7; border-left: 4px solid #0052CC; border-radius: 4px;
+                    padding: 14px 18px; margin: 16px 0;">
+            <div style="font-size: 13px; color: #6B778C; margin-bottom: 4px;">{project_name}</div>
+            <div style="font-size: 16px; font-weight: 700; color: #172B4D;">
+                {issue_key} — {issue_title}
+            </div>
+        </div>
+        <a href="{issue_url}"
+           style="display: inline-block; margin: 8px 0 16px; padding: 10px 22px;
+                  background: linear-gradient(135deg, #0065FF, #0052CC);
+                  color: #FFFFFF; font-weight: 700; font-size: 14px;
+                  border-radius: 7px; text-decoration: none;
+                  box-shadow: 0 2px 8px rgba(0,82,204,0.35);">
+            Open Issue →
+        </a>
+        <hr style="border: none; border-top: 1px solid #EBECF0; margin: 20px 0;" />
+        <p style="color: #8993A4; font-size: 12px; margin: 0;">
+            You received this email because you are a member of <strong>{project_name}</strong>.
+        </p>
+    </div>
+    """
+
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@jira-software.local")
+
+    try:
+        import ssl
+        import smtplib
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = from_email
+        msg["To"] = assignee_email
+        msg.attach(MIMEText(message, "plain"))
+        msg.attach(MIMEText(html_message, "html"))
+
+        context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+
+        host = getattr(settings, "EMAIL_HOST", "smtp.gmail.com")
+        port = getattr(settings, "EMAIL_PORT", 587)
+        user = getattr(settings, "EMAIL_HOST_USER", "")
+        password = getattr(settings, "EMAIL_HOST_PASSWORD", "")
+
+        with smtplib.SMTP(host, port, timeout=10) as server:
+            server.ehlo()
+            server.starttls(context=context)
+            server.login(user, password)
+            server.sendmail(from_email, [assignee_email], msg.as_string())
+
+        return True
+    except Exception as e:
+        print(f"[Assignment Email Error]: {e}")
+        return False
+

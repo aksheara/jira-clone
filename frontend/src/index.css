@@ -175,8 +175,10 @@ a {
 
 .jira-brand-title-wrap {
   display: flex;
-  align-items: center;
-  gap: 5px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  line-height: 1;
 }
 
 .jira-brand-title {
@@ -4203,10 +4205,12 @@ input:checked + .jira-switch-slider:before {
 
 .jira-auth-header-brand {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 24px;
+  text-align: center;
 }
 
 .jira-auth-header-brand .jira-auth-logo {
@@ -5059,4 +5063,1774 @@ input:checked + .jira-switch-slider:before {
   .jira-auth-card {
     padding: 36px 28px;
   }
+}
+
+/* ========== FILE ATTACHMENTS ========== */
+.jira-attachment-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 2px dashed #C1C7D0;
+  border-radius: 8px;
+  padding: 24px 16px;
+  cursor: pointer;
+  color: #6B778C;
+  font-size: 13px;
+  transition: border-color 0.15s, background 0.15s;
+  margin-top: 8px;
+}
+.jira-attachment-dropzone:hover {
+  border-color: #0052CC;
+  background: #F4F5F7;
+  color: #0052CC;
+}
+
+.jira-attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.jira-attachment-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: #F4F5F7;
+  border: 1px solid #DFE1E6;
+  border-radius: 6px;
+  transition: background 0.12s;
+}
+.jira-attachment-row:hover {
+  background: #EBECF0;
+}
+
+.jira-attachment-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.jira-attachment-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.jira-attachment-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #0052CC;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.jira-attachment-name:hover {
+  text-decoration: underline;
+}
+
+.jira-attachment-meta {
+  font-size: 11px;
+  color: #6B778C;
+}
+
+/* ========== SPRINTS & BACKLOG ========== */
+.jira-backlog-container {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 1100px;
+}
+
+.jira-backlog-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.jira-backlog-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Sprint section card */
+.jira-sprint-section {
+  border: 1px solid #DFE1E6;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.jira-sprint-section.active-sprint {
+  border-color: #0052CC;
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.12);
+}
+
+.jira-sprint-section.drag-over {
+  border-color: #0052CC;
+  background: #F0F4FF;
+  box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.18);
+}
+
+.jira-sprint-section.backlog-section {
+  border-color: #DFE1E6;
+}
+
+.jira-sprint-section.completed-sprint {
+  opacity: 0.7;
+}
+
+/* Sprint header */
+.jira-sprint-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #F4F5F7;
+  border-bottom: 1px solid #DFE1E6;
+  min-height: 46px;
+}
+
+.jira-sprint-collapse-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  color: #6B778C;
+  display: flex;
+  align-items: center;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.jira-sprint-collapse-btn:hover { background: #EBECF0; }
+
+.jira-sprint-header-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.jira-sprint-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #172B4D;
+}
+
+.jira-sprint-active-badge {
+  font-size: 10px;
+  font-weight: 700;
+  background: #0052CC;
+  color: #fff;
+  padding: 2px 7px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+}
+
+.jira-sprint-completed-badge {
+  font-size: 10px;
+  font-weight: 700;
+  background: #00875A;
+  color: #fff;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.jira-sprint-dates {
+  font-size: 12px;
+  color: #6B778C;
+}
+
+.jira-sprint-goal {
+  font-size: 12px;
+  color: #42526E;
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.jira-sprint-count {
+  font-size: 12px;
+  color: #6B778C;
+  background: #EBECF0;
+  padding: 1px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.jira-sprint-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.jira-btn-complete-sprint {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 4px;
+  border: 1px solid #00875A;
+  background: #E3FCEF;
+  color: #00875A;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.jira-btn-complete-sprint:hover { background: #C3F0D8; }
+
+/* Issue rows */
+.jira-backlog-issue-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.jira-backlog-issue-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-bottom: 1px solid #F4F5F7;
+  cursor: pointer;
+  transition: background 0.1s;
+  user-select: none;
+}
+.jira-backlog-issue-row:hover { background: #F8F9FA; }
+.jira-backlog-issue-row:last-child { border-bottom: none; }
+.jira-backlog-issue-row.done { opacity: 0.6; }
+
+.jira-backlog-drag-handle {
+  cursor: grab;
+  color: #C1C7D0;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+.jira-backlog-drag-handle:active { cursor: grabbing; }
+
+.jira-backlog-type-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.jira-backlog-key {
+  font-size: 12px;
+  color: #6B778C;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 70px;
+}
+
+.jira-backlog-title {
+  font-size: 13.5px;
+  color: #172B4D;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.jira-backlog-row-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.jira-backlog-empty-drop {
+  padding: 18px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: #97A0AF;
+  font-style: italic;
+}
+
+/* Inline create */
+.jira-backlog-create-btn {
+  background: none;
+  border: none;
+  color: #0052CC;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 14px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background 0.1s;
+}
+.jira-backlog-create-btn:hover { background: #F4F5F7; }
+
+.jira-backlog-inline-create {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-top: 1px solid #F4F5F7;
+  background: #FAFBFC;
+}
+
+/* Sprint create card */
+.jira-sprint-create-card {
+  border: 1px solid #0052CC;
+  border-radius: 8px;
+  padding: 16px;
+  background: #F8FAFF;
+}
+
+.jira-sprint-create-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #172B4D;
+  margin: 0 0 12px 0;
+}
+
+.jira-sprint-create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.jira-sprint-form-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.jira-sprint-form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Sprint edit inline form */
+.jira-sprint-edit-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+/* Completed sprints toggle */
+.jira-completed-sprints-wrap {
+  margin-top: 4px;
+}
+
+.jira-completed-sprints-toggle {
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6B778C;
+  cursor: pointer;
+  padding: 6px 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.1s;
+}
+.jira-completed-sprints-toggle:hover { color: #172B4D; }
+
+/* Avatar unassigned */
+.jira-avatar-circle.unassigned {
+  background: #EBECF0;
+  color: #6B778C;
+}
+
+/* Status pill adjustments for backlog */
+.jira-status-pill-mini.in-progress {
+  background: #DEEBFF;
+  color: #0052CC;
+}
+
+/* ── Workflow Editor form layout fixes ── */
+.jira-wf-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.jira-wf-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.jira-wf-form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #42526E;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.jira-wf-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.jira-wf-color-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.jira-wf-color-custom {
+  width: 30px;
+  height: 24px;
+  border: 1px solid #DFE1E6;
+  border-radius: 4px;
+  padding: 1px 2px;
+  cursor: pointer;
+  background: none;
+}
+
+.jira-wf-color-preview {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  margin-left: 4px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.jira-wf-add-form {
+  background: #F8FAFF;
+  border: 1px solid #DEEBFF;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.jira-wf-edit-form {
+  width: 100%;
+  background: #FFFBE6;
+  border: 1px solid #FFE58F;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+/* ========== RICH TEXT COMMENTS + @MENTIONS ========== */
+
+/* Mention textarea wrapper */
+.jira-mention-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.jira-comment-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #DFE1E6;
+  border-radius: 6px;
+  font-size: 13.5px;
+  color: #172B4D;
+  background: #FAFBFC;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.jira-comment-textarea:focus {
+  outline: none;
+  border-color: #0052CC;
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.14);
+  background: #fff;
+}
+
+/* Markdown hints */
+.jira-comment-hint-bar {
+  display: flex;
+  gap: 10px;
+  padding: 4px 2px;
+  font-size: 11px;
+  color: #97A0AF;
+  flex-wrap: wrap;
+}
+.jira-comment-hint-bar span {
+  font-family: monospace;
+  cursor: default;
+}
+
+/* @mention dropdown */
+.jira-mention-dropdown {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 2px);
+  z-index: 9999;
+  background: #fff;
+  border: 1px solid #DFE1E6;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  min-width: 200px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.jira-mention-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #172B4D;
+  text-align: left;
+  transition: background 0.1s;
+}
+.jira-mention-item:hover,
+.jira-mention-item.active {
+  background: #DEEBFF;
+  color: #0052CC;
+}
+
+.jira-mention-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #0052CC;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* @mention chip in rendered comments */
+.jira-mention-chip {
+  display: inline-block;
+  background: #DEEBFF;
+  color: #0052CC;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: default;
+}
+
+/* Markdown rendered body */
+.jira-md-body {
+  font-size: 13.5px;
+  color: #172B4D;
+  line-height: 1.6;
+}
+.jira-md-p    { margin: 0 0 4px 0; }
+.jira-md-h3   { font-size: 15px; font-weight: 700; margin: 6px 0 4px; color: #172B4D; }
+.jira-md-h4   { font-size: 13.5px; font-weight: 700; margin: 4px 0 3px; color: #172B4D; }
+.jira-md-li   { display: flex; gap: 6px; margin: 2px 0; }
+.jira-md-bullet { color: #0052CC; font-weight: 700; flex-shrink: 0; }
+.jira-md-code {
+  background: #F4F5F7;
+  border: 1px solid #DFE1E6;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: monospace;
+  font-size: 12.5px;
+  color: #DE350B;
+}
+.jira-md-link { color: #0052CC; text-decoration: underline; }
+.jira-md-blockquote {
+  border-left: 3px solid #0052CC;
+  margin: 4px 0;
+  padding: 4px 10px;
+  color: #42526E;
+  background: #F4F5F7;
+  border-radius: 0 4px 4px 0;
+}
+.jira-md-hr      { border: none; border-top: 1px solid #EBECF0; margin: 8px 0; }
+.jira-md-spacer  { height: 6px; }
+
+/* Comment item */
+.jira-comment-item {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #F4F5F7;
+}
+.jira-comment-item:last-of-type { border-bottom: none; }
+
+.jira-comment-body { flex: 1; min-width: 0; }
+
+.jira-comment-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+.jira-comment-meta strong { font-size: 13px; color: #172B4D; }
+.jira-comment-time  { font-size: 11.5px; color: #97A0AF; }
+.jira-comment-edited { font-size: 11px; color: #97A0AF; font-style: italic; }
+
+.jira-comment-text { margin: 0; }
+
+.jira-comment-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+.jira-comment-action-btn {
+  background: none;
+  border: none;
+  font-size: 11.5px;
+  color: #6B778C;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  transition: color 0.1s;
+}
+.jira-comment-action-btn:hover { color: #0052CC; }
+.jira-comment-action-btn.danger:hover { color: #DE350B; }
+
+.jira-comment-edit-form { margin-top: 6px; }
+.jira-comment-edit-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+
+/* ==========================================================================
+   ✨ PROFESSIONAL UI UPGRADE — Overrides applied on top of base styles
+   Modern dark navbar · Elevated cards · Gradient accents · Refined spacing
+   ========================================================================== */
+
+/* ── Google Fonts import ── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ── Updated design tokens ── */
+:root {
+  --jira-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Page background — subtle cool grey */
+  --jira-page-bg: #F0F2F5;
+
+  /* Navbar — deep navy */
+  --navbar-bg: #0A1929;
+  --navbar-text: #B8C4CE;
+  --navbar-text-hover: #FFFFFF;
+  --navbar-border: rgba(255,255,255,0.06);
+  --navbar-item-hover: rgba(255,255,255,0.08);
+  --navbar-item-active: rgba(255,255,255,0.14);
+
+  /* Brand gradient */
+  --brand-gradient: linear-gradient(135deg, #0052CC 0%, #6554C0 100%);
+
+  /* Cards */
+  --card-bg: #FFFFFF;
+  --card-shadow: 0 1px 3px rgba(9,30,66,0.08), 0 0 0 1px rgba(9,30,66,0.04);
+  --card-shadow-hover: 0 4px 16px rgba(9,30,66,0.14), 0 0 0 1px rgba(9,30,66,0.06);
+  --card-radius: 10px;
+
+  /* Buttons */
+  --btn-primary-bg: linear-gradient(135deg, #0065FF 0%, #0052CC 100%);
+  --btn-primary-shadow: 0 2px 8px rgba(0,82,204,0.35);
+
+  /* Focus ring */
+  --focus-ring: 0 0 0 3px rgba(0,101,255,0.22);
+}
+
+/* ── Body ── */
+body {
+  background: var(--jira-page-bg);
+  font-size: 13.5px;
+}
+
+/* ── NAVBAR ── */
+.jira-global-topbar {
+  background: var(--navbar-bg) !important;
+  border-bottom: 1px solid var(--navbar-border) !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.18) !important;
+  height: 54px !important;
+}
+
+.jira-brand-title {
+  color: #FFFFFF !important;
+  font-weight: 800 !important;
+  letter-spacing: 1px;
+  font-size: 18px !important;
+  text-transform: uppercase !important;
+}
+
+.jira-brand-agent-badge {
+  font-size: 8px !important;
+  font-weight: 700 !important;
+  color: #FFFFFF !important;
+  background: var(--brand-gradient) !important;
+  padding: 2px 6px !important;
+  border-radius: 20px !important;
+  letter-spacing: 0.3px !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+}
+
+.jira-nav-link {
+  color: var(--navbar-text) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  border-radius: 6px !important;
+  padding: 5px 9px !important;
+  transition: all 0.15s ease !important;
+}
+.jira-nav-link:hover,
+.jira-nav-link.active {
+  background: var(--navbar-item-hover) !important;
+  color: var(--navbar-text-hover) !important;
+}
+
+.jira-btn-topbar-create {
+  background: var(--brand-gradient) !important;
+  box-shadow: var(--btn-primary-shadow) !important;
+  border-radius: 7px !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  height: 31px !important;
+  letter-spacing: 0.1px;
+  transition: opacity 0.15s, transform 0.1s !important;
+}
+.jira-btn-topbar-create:hover {
+  opacity: 0.9 !important;
+  transform: translateY(-1px) !important;
+}
+
+.jira-btn-top-icon {
+  color: var(--navbar-text) !important;
+  border-radius: 7px !important;
+}
+.jira-btn-top-icon:hover,
+.jira-btn-top-icon.active {
+  background: var(--navbar-item-hover) !important;
+  color: var(--navbar-text-hover) !important;
+}
+
+.jira-topbar-search-input {
+  background: rgba(255,255,255,0.08) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  color: #FFFFFF !important;
+  border-radius: 7px !important;
+  font-size: 13px !important;
+}
+.jira-topbar-search-input::placeholder { color: rgba(255,255,255,0.35) !important; }
+.jira-topbar-search-input:focus {
+  background: rgba(255,255,255,0.14) !important;
+  border-color: rgba(255,255,255,0.28) !important;
+  box-shadow: none !important;
+  width: 230px !important;
+}
+.jira-topbar-search svg { color: rgba(255,255,255,0.4) !important; }
+
+.jira-notif-indicator-dot {
+  background: #FF5630 !important;
+  width: 8px !important;
+  height: 8px !important;
+  box-shadow: 0 0 0 2px var(--navbar-bg) !important;
+}
+
+.jira-avatar-badge-ar.topbar {
+  background: var(--brand-gradient) !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 6px rgba(0,82,204,0.4) !important;
+}
+
+/* ── Popovers ── */
+.jira-nav-popover {
+  border-radius: 10px !important;
+  box-shadow: 0 8px 32px rgba(9,30,66,0.18), 0 0 0 1px rgba(9,30,66,0.07) !important;
+  border: none !important;
+  overflow: hidden;
+}
+.jira-popover-header {
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.8px !important;
+  color: #6B778C !important;
+  padding: 10px 14px 6px !important;
+}
+.jira-popover-item,
+.jira-popover-item-btn {
+  border-radius: 6px !important;
+  margin: 1px 6px !important;
+  transition: background 0.12s !important;
+}
+.jira-popover-item:hover,
+.jira-popover-item-btn:hover {
+  background: #F0F4FF !important;
+}
+
+/* ── Project header ── */
+.jira-project-header-container {
+  background: #FFFFFF !important;
+  border-bottom: 1px solid #EBECF0 !important;
+  box-shadow: 0 1px 4px rgba(9,30,66,0.06) !important;
+}
+
+.jira-project-name-title {
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.4px !important;
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Tabs bar ── */
+.jira-tabs-bar {
+  border-bottom: 2px solid #EBECF0 !important;
+  gap: 2px !important;
+}
+.jira-tab-btn {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #6B778C !important;
+  border-radius: 6px 6px 0 0 !important;
+  padding: 8px 14px !important;
+  transition: all 0.15s !important;
+  border-bottom: 2px solid transparent !important;
+  margin-bottom: -2px !important;
+}
+.jira-tab-btn:hover {
+  background: #F4F5F7 !important;
+  color: #172B4D !important;
+}
+.jira-tab-btn.active {
+  color: #0052CC !important;
+  font-weight: 600 !important;
+  border-bottom: 2px solid #0052CC !important;
+  background: transparent !important;
+}
+
+/* ── Kanban Board ── */
+.jira-board-view-container {
+  background: var(--jira-page-bg) !important;
+  padding: 20px !important;
+}
+
+.jira-kanban-board {
+  gap: 14px !important;
+}
+
+.jira-kanban-column {
+  background: #FFFFFF !important;
+  border-radius: var(--card-radius) !important;
+  box-shadow: var(--card-shadow) !important;
+  border: none !important;
+  min-width: 270px !important;
+  transition: box-shadow 0.2s !important;
+}
+.jira-kanban-column.dragging-over {
+  box-shadow: 0 0 0 2px #0052CC, 0 4px 16px rgba(0,82,204,0.15) !important;
+}
+
+.jira-column-header {
+  border-radius: var(--card-radius) var(--card-radius) 0 0 !important;
+  padding: 12px 14px 10px !important;
+  background: transparent !important;
+}
+.jira-column-title {
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.8px !important;
+  text-transform: uppercase !important;
+}
+.jira-column-count {
+  font-size: 11px !important;
+  background: #F4F5F7 !important;
+  color: #6B778C !important;
+  border-radius: 10px !important;
+  padding: 1px 8px !important;
+  font-weight: 600 !important;
+}
+
+/* Kanban card */
+.jira-kanban-card {
+  border-radius: 8px !important;
+  box-shadow: 0 1px 2px rgba(9,30,66,0.08) !important;
+  border: 1px solid #EBECF0 !important;
+  transition: box-shadow 0.15s, transform 0.1s !important;
+  background: #FFFFFF !important;
+  margin: 0 8px 8px !important;
+}
+.jira-kanban-card:hover {
+  box-shadow: 0 3px 10px rgba(9,30,66,0.14) !important;
+  transform: translateY(-1px) !important;
+  border-color: #C1C7D0 !important;
+}
+
+/* ── List view ── */
+.jira-list-container {
+  background: #FFFFFF !important;
+  border-radius: var(--card-radius) !important;
+  box-shadow: var(--card-shadow) !important;
+  margin: 16px !important;
+  border: none !important;
+}
+
+.jira-list-toolbar {
+  background: #FAFBFC !important;
+  border-bottom: 1px solid #EBECF0 !important;
+  border-radius: var(--card-radius) var(--card-radius) 0 0 !important;
+  padding: 10px 14px !important;
+}
+
+.jira-issue-table-row {
+  transition: background 0.1s !important;
+}
+.jira-issue-table-row:hover {
+  background: #F8F9FF !important;
+}
+
+/* ── Buttons ── */
+.jira-btn-primary {
+  background: var(--btn-primary-bg) !important;
+  box-shadow: var(--btn-primary-shadow) !important;
+  border-radius: 7px !important;
+  font-weight: 600 !important;
+  font-size: 13.5px !important;
+  letter-spacing: 0.1px;
+  transition: opacity 0.15s, transform 0.1s !important;
+}
+.jira-btn-primary:hover:not(:disabled) {
+  opacity: 0.9 !important;
+  transform: translateY(-0.5px) !important;
+}
+.jira-btn-primary:disabled { opacity: 0.55 !important; }
+
+.jira-btn-primary-sm {
+  background: var(--btn-primary-bg) !important;
+  box-shadow: 0 1px 4px rgba(0,82,204,0.28) !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  font-size: 12.5px !important;
+  transition: opacity 0.15s !important;
+}
+.jira-btn-primary-sm:hover:not(:disabled) { opacity: 0.88 !important; }
+
+.jira-btn-secondary,
+.jira-btn-secondary-sm {
+  border: 1.5px solid #DFE1E6 !important;
+  border-radius: 6px !important;
+  color: #42526E !important;
+  background: #FAFBFC !important;
+  font-weight: 500 !important;
+  transition: border-color 0.15s, background 0.15s !important;
+}
+.jira-btn-secondary:hover,
+.jira-btn-secondary-sm:hover {
+  border-color: #0052CC !important;
+  color: #0052CC !important;
+  background: #F0F4FF !important;
+}
+
+/* ── Form inputs ── */
+.jira-input,
+.jira-input-sm,
+.jira-select,
+.jira-select-sm,
+.jira-textarea {
+  border: 1.5px solid #DFE1E6 !important;
+  border-radius: 7px !important;
+  background: #FAFBFC !important;
+  color: #172B4D !important;
+  transition: border-color 0.15s, box-shadow 0.15s !important;
+  font-size: 13.5px !important;
+}
+.jira-input:focus,
+.jira-input-sm:focus,
+.jira-select:focus,
+.jira-textarea:focus {
+  border-color: #0052CC !important;
+  box-shadow: var(--focus-ring) !important;
+  background: #FFFFFF !important;
+}
+
+/* ── Modals ── */
+.jira-modal-container {
+  border-radius: 14px !important;
+  box-shadow: 0 20px 60px rgba(9,30,66,0.22), 0 0 0 1px rgba(9,30,66,0.06) !important;
+  border: none !important;
+}
+.jira-modal-header {
+  border-bottom: 1px solid #F4F5F7 !important;
+  padding: 18px 22px 14px !important;
+}
+.jira-modal-title {
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.3px !important;
+}
+.jira-modal-body { padding: 18px 22px !important; }
+.jira-modal-footer {
+  border-top: 1px solid #F4F5F7 !important;
+  padding: 14px 22px !important;
+}
+
+/* ── Issue drawer ── */
+.jira-issue-drawer {
+  border-left: none !important;
+  box-shadow: -4px 0 32px rgba(9,30,66,0.14) !important;
+}
+.jira-drawer-header {
+  background: #FAFBFC !important;
+  border-bottom: 1px solid #EBECF0 !important;
+  padding: 14px 20px !important;
+}
+.jira-issue-title-text {
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.3px !important;
+}
+
+/* ── Status pills ── */
+.jira-status-pill,
+.jira-status-pill-mini {
+  border-radius: 20px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.4px !important;
+  padding: 3px 10px !important;
+}
+
+/* ── Auth pages ── */
+.jira-auth-page {
+  background: linear-gradient(135deg, #0A1929 0%, #0D2137 40%, #112240 100%) !important;
+  min-height: 100vh;
+}
+.jira-auth-bg-blob-1 {
+  background: radial-gradient(circle, rgba(0,82,204,0.25) 0%, transparent 70%) !important;
+  width: 500px !important;
+  height: 500px !important;
+}
+.jira-auth-bg-blob-2 {
+  background: radial-gradient(circle, rgba(101,84,192,0.2) 0%, transparent 70%) !important;
+}
+
+.jira-auth-card {
+  border-radius: 18px !important;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.06) !important;
+  background: #FFFFFF !important;
+  overflow: hidden;
+}
+.jira-auth-card::before {
+  content: '';
+  display: block;
+  height: 4px;
+  background: var(--brand-gradient);
+}
+
+.jira-auth-main-title {
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.5px !important;
+  color: #172B4D !important;
+}
+
+.jira-auth-submit-btn {
+  background: var(--btn-primary-bg) !important;
+  box-shadow: var(--btn-primary-shadow) !important;
+  border-radius: 9px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.2px;
+  transition: opacity 0.15s, transform 0.1s !important;
+}
+.jira-auth-submit-btn:hover:not(:disabled) {
+  opacity: 0.9 !important;
+  transform: translateY(-1px) !important;
+}
+
+.jira-form-input {
+  border: 1.5px solid #DFE1E6 !important;
+  border-radius: 8px !important;
+  background: #F8FAFC !important;
+  font-size: 13.5px !important;
+  transition: border-color 0.15s, box-shadow 0.15s !important;
+}
+.jira-form-input:focus {
+  border-color: #0052CC !important;
+  box-shadow: var(--focus-ring) !important;
+  background: #FFFFFF !important;
+}
+
+.jira-auth-tabs {
+  border-bottom: 2px solid #EBECF0 !important;
+  margin-bottom: 20px !important;
+}
+.jira-auth-tab {
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  padding: 10px 16px !important;
+  color: #6B778C !important;
+  border-bottom: 2px solid transparent !important;
+  margin-bottom: -2px !important;
+  border-radius: 0 !important;
+  transition: color 0.15s !important;
+}
+.jira-auth-tab.active {
+  color: #0052CC !important;
+  border-bottom-color: #0052CC !important;
+}
+
+/* ── Backlog & Sprints ── */
+.jira-sprint-section {
+  border-radius: 10px !important;
+  box-shadow: var(--card-shadow) !important;
+  border: 1px solid #EBECF0 !important;
+}
+.jira-sprint-section.active-sprint {
+  border-color: #0052CC !important;
+  box-shadow: 0 0 0 2px rgba(0,82,204,0.14), var(--card-shadow) !important;
+}
+.jira-sprint-header {
+  background: linear-gradient(to right, #FAFBFC, #F4F5F7) !important;
+  border-radius: 10px 10px 0 0 !important;
+}
+.jira-sprint-name {
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+}
+.jira-sprint-active-badge {
+  background: var(--brand-gradient) !important;
+  border-radius: 20px !important;
+  font-size: 9.5px !important;
+  letter-spacing: 0.8px !important;
+  padding: 2px 9px !important;
+}
+
+/* ── Project list cards ── */
+.jira-project-card {
+  border-radius: var(--card-radius) !important;
+  box-shadow: var(--card-shadow) !important;
+  border: none !important;
+  transition: box-shadow 0.2s, transform 0.15s !important;
+}
+.jira-project-card:hover {
+  box-shadow: var(--card-shadow-hover) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* ── Notifications modal ── */
+.jira-notif-panel {
+  border-radius: 12px !important;
+  box-shadow: 0 12px 40px rgba(9,30,66,0.18) !important;
+  border: none !important;
+}
+
+/* ── Scrollbar refinement ── */
+::-webkit-scrollbar-thumb {
+  background: #C1C7D0 !important;
+  border-radius: 8px !important;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #97A0AF !important;
+}
+
+/* ── Workflow editor ── */
+.jira-wf-section {
+  border-radius: 10px !important;
+  border: 1px solid #EBECF0 !important;
+  overflow: hidden;
+}
+.jira-wf-section-header {
+  background: linear-gradient(to right, #FAFBFC, #F4F5F7) !important;
+  border-bottom: 1px solid #EBECF0 !important;
+  padding: 12px 16px !important;
+}
+.jira-wf-state-row {
+  transition: background 0.12s !important;
+}
+.jira-wf-state-row:hover { background: #F8F9FF !important; }
+
+/* ── Attachment rows ── */
+.jira-attachment-row {
+  border-radius: 8px !important;
+  transition: box-shadow 0.15s !important;
+}
+.jira-attachment-row:hover {
+  box-shadow: 0 2px 8px rgba(9,30,66,0.1) !important;
+}
+
+/* ── Comment items ── */
+.jira-comment-item {
+  padding: 12px 0 !important;
+}
+.jira-comment-textarea {
+  border-radius: 8px !important;
+  background: #FAFBFC !important;
+  font-size: 13.5px !important;
+}
+.jira-comment-textarea:focus {
+  border-color: #0052CC !important;
+  box-shadow: var(--focus-ring) !important;
+}
+
+/* ── Mention chip ── */
+.jira-mention-chip {
+  background: linear-gradient(135deg, #DEEBFF, #EAE6FF) !important;
+  color: #0052CC !important;
+  border-radius: 5px !important;
+  font-weight: 700 !important;
+  padding: 1px 7px !important;
+}
+
+/* ── Empty states ── */
+.jira-empty-muted {
+  color: #97A0AF !important;
+  font-style: italic;
+  font-size: 13px !important;
+}
+
+/* ── Avatar circles ── */
+.jira-avatar-circle {
+  background: var(--brand-gradient) !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.4px;
+  box-shadow: 0 1px 4px rgba(0,82,204,0.3) !important;
+}
+
+/* ── Section headers ── */
+.jira-section-title {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #172B4D !important;
+  letter-spacing: -0.2px !important;
+}
+
+/* ── Kbd shortcuts ── */
+kbd {
+  background: #F4F5F7;
+  border: 1px solid #DFE1E6;
+  border-radius: 5px;
+  padding: 2px 8px;
+  font-family: var(--jira-font-mono);
+  font-size: 12px;
+  color: #172B4D;
+  box-shadow: 0 1px 0 #DFE1E6;
+}
+
+/* ── Page titles ── */
+.jira-workspace-main {
+  background: var(--jira-page-bg) !important;
+}
+
+/* ── User dropdown ── */
+.jira-user-dropdown-popover {
+  border-radius: 12px !important;
+  box-shadow: 0 12px 40px rgba(9,30,66,0.2) !important;
+  border: none !important;
+  overflow: hidden;
+}
+.jira-user-popover-info {
+  background: linear-gradient(135deg, #0A1929, #0D2137) !important;
+  padding: 16px !important;
+}
+.jira-user-popover-name {
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+}
+.jira-user-popover-email {
+  color: rgba(255,255,255,0.55) !important;
+  font-size: 12px !important;
+}
+.jira-user-popover-action {
+  font-size: 13.5px !important;
+  padding: 9px 16px !important;
+  border-radius: 0 !important;
+  transition: background 0.12s !important;
+}
+.jira-user-popover-action:hover {
+  background: #F0F4FF !important;
+}
+.jira-user-popover-action.danger:hover {
+  background: #FFEBE6 !important;
+  color: #DE350B !important;
+}
+
+/* ── Summary view cards ── */
+.jira-summary-stat-card {
+  border-radius: 10px !important;
+  box-shadow: var(--card-shadow) !important;
+  border: none !important;
+  transition: box-shadow 0.2s !important;
+}
+.jira-summary-stat-card:hover {
+  box-shadow: var(--card-shadow-hover) !important;
+}
+
+/* ========== DASHBOARD PAGE ========== */
+
+.db-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 36px 20px;
+  background: #FFFFFF;
+  border-bottom: 1px solid #EBECF0;
+  box-shadow: 0 1px 4px rgba(9,30,66,0.06);
+}
+.db-page-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #172B4D;
+  letter-spacing: -0.6px;
+  margin: 0 0 5px 0;
+}
+.db-page-subtitle {
+  font-size: 15px;
+  color: #6B778C;
+  margin: 0;
+}
+
+.db-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 100px;
+  color: #6B778C;
+  font-size: 15px;
+}
+.db-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #DEEBFF;
+  border-top-color: #0052CC;
+  border-radius: 50%;
+  animation: db-spin 0.7s linear infinite;
+}
+@keyframes db-spin { to { transform: rotate(360deg); } }
+
+/* ── Grid layout ── */
+.db-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  padding: 28px 36px 48px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+@media (max-width: 1200px) {
+  .db-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 720px) {
+  .db-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Card ── */
+.db-card {
+  background: #FFFFFF;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(9,30,66,0.09), 0 0 0 1px rgba(9,30,66,0.05);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.15s;
+}
+.db-card:hover {
+  box-shadow: 0 6px 24px rgba(9,30,66,0.14), 0 0 0 1px rgba(9,30,66,0.07);
+  transform: translateY(-1px);
+}
+
+.db-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid #F4F5F7;
+  background: linear-gradient(to right, #FAFBFC, #F4F7FF);
+}
+.db-card-icon {
+  display: flex;
+  align-items: center;
+  color: #0052CC;
+  flex-shrink: 0;
+}
+.db-card-icon svg { width: 18px; height: 18px; }
+.db-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #172B4D;
+  flex: 1;
+  margin: 0;
+}
+.db-card-badge {
+  font-size: 12px;
+  font-weight: 700;
+  background: #DEEBFF;
+  color: #0052CC;
+  border-radius: 12px;
+  padding: 3px 11px;
+}
+.db-card-body {
+  padding: 18px 22px;
+  flex: 1;
+  overflow-y: auto;
+  max-height: 380px;
+}
+
+.db-empty {
+  color: #97A0AF;
+  font-size: 14px;
+  font-style: italic;
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* ── 1. Assigned issues — 3 col kanban ── */
+.db-status-cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.db-status-col {
+  border-radius: 10px;
+  background: #FAFBFC;
+  border: 1px solid #EBECF0;
+  overflow: hidden;
+}
+.db-status-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-top: 3px solid;
+  font-size: 12px;
+  font-weight: 700;
+  background: #F4F5F7;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.db-status-col-issues {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  max-height: 270px;
+  overflow-y: auto;
+}
+.db-issue-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #FFFFFF;
+  border: 1px solid #EBECF0;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: box-shadow 0.12s, border-color 0.12s;
+  font-size: 13px;
+}
+.db-issue-row:hover {
+  border-color: #0052CC;
+  box-shadow: 0 2px 8px rgba(0,82,204,0.14);
+}
+.db-issue-key {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6B778C;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.db-issue-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #172B4D;
+  font-size: 13px;
+}
+.db-due {
+  font-size: 11.5px;
+  color: #6B778C;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.db-due.overdue { color: #DE350B; font-weight: 600; }
+
+/* ── 2. Projects ── */
+.db-project-list { display: flex; flex-direction: column; gap: 12px; }
+.db-project-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+  border: 1px solid #EBECF0;
+}
+.db-project-row:hover { background: #F0F4FF; border-color: #0052CC; }
+.db-project-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #0065FF, #0052CC);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+.db-project-info { flex: 1; min-width: 0; }
+.db-project-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #172B4D;
+  display: block;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.db-project-bar-wrap { display: flex; align-items: center; gap: 8px; }
+.db-project-bar {
+  flex: 1;
+  height: 6px;
+  background: #EBECF0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.db-project-bar-fill {
+  height: 100%;
+  background: linear-gradient(to right, #0065FF, #00875A);
+  border-radius: 4px;
+  transition: width 0.5s;
+}
+.db-project-bar-label { font-size: 12px; color: #6B778C; white-space: nowrap; font-weight: 600; }
+.db-project-counts { display: flex; flex-direction: column; gap: 3px; align-items: flex-end; flex-shrink: 0; }
+.db-count-open { font-size: 12px; color: #0052CC; font-weight: 700; }
+.db-count-done { font-size: 12px; color: #00875A; font-weight: 700; }
+
+/* ── 3. Active Sprints ── */
+.db-sprint-list { display: flex; flex-direction: column; gap: 14px; }
+.db-sprint-row {
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid #EBECF0;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.db-sprint-row:hover { border-color: #0052CC; background: #F8FAFF; }
+.db-sprint-header-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.db-sprint-name { font-size: 14px; font-weight: 700; color: #172B4D; flex: 1; }
+.db-sprint-project { font-size: 12px; color: #6B778C; }
+.db-sprint-pct { font-size: 14px; font-weight: 800; color: #0052CC; }
+.db-sprint-goal { font-size: 13px; color: #42526E; margin: 0 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.db-sprint-bar { height: 7px; background: #EBECF0; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+.db-sprint-bar-fill { height: 100%; background: linear-gradient(to right, #0065FF, #00875A); border-radius: 4px; transition: width 0.5s; }
+.db-sprint-counts { display: flex; gap: 12px; flex-wrap: wrap; }
+.db-sc { font-size: 12px; font-weight: 600; }
+.db-sc.todo { color: #42526E; }
+.db-sc.inprogress { color: #0052CC; }
+.db-sc.done { color: #00875A; }
+.db-sc.total { color: #97A0AF; }
+.db-sprint-end { font-size: 12px; color: #97A0AF; display: block; margin-top: 6px; }
+
+/* ── 4. Pie chart ── */
+.db-pie-wrap { display: flex; align-items: center; gap: 28px; padding: 8px 0; }
+.db-pie-svg { width: 170px; height: 170px; flex-shrink: 0; }
+.db-pie-empty { color: #97A0AF; font-size: 14px; font-style: italic; }
+.db-pie-legend { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+.db-pie-legend-row { display: flex; align-items: center; gap: 9px; font-size: 13.5px; }
+.db-pie-dot { width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0; }
+.db-pie-legend-label { flex: 1; color: #42526E; font-weight: 500; }
+.db-pie-legend-count { font-weight: 800; color: #172B4D; font-size: 15px; }
+.db-pie-legend-pct { color: #97A0AF; font-size: 12px; }
+
+/* ── 5. Activity ── */
+.db-activity-list { display: flex; flex-direction: column; }
+.db-activity-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 11px 4px;
+  border-bottom: 1px solid #F4F5F7;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.1s;
+}
+.db-activity-row:last-child { border-bottom: none; }
+.db-activity-row:hover { background: #F8F9FF; }
+.db-activity-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0052CC, #6554C0);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.db-activity-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.db-activity-text { font-size: 13px; color: #172B4D; line-height: 1.5; }
+.db-activity-issue { font-size: 12px; font-weight: 700; color: #0052CC; }
+.db-activity-title { font-size: 12.5px; color: #6B778C; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.db-activity-time { font-size: 12px; color: #97A0AF; white-space: nowrap; flex-shrink: 0; margin-top: 3px; }
+.db-code { background: #F4F5F7; border-radius: 3px; padding: 1px 5px; font-family: monospace; font-size: 12px; color: #DE350B; }
+
+/* ── 6. Notifications ── */
+.db-notif-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 30px 0;
+  color: #36B37E;
+  font-size: 14px;
+}
+.db-notif-list { display: flex; flex-direction: column; }
+.db-notif-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid #F4F5F7;
+  position: relative;
+}
+.db-notif-row:last-child { border-bottom: none; }
+.db-notif-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6554C0, #0052CC);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.db-notif-content { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.db-notif-text { font-size: 13px; color: #172B4D; line-height: 1.5; }
+.db-notif-target { font-size: 12.5px; color: #6B778C; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.db-notif-time { font-size: 12px; color: #97A0AF; }
+.db-notif-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #0052CC;
+  flex-shrink: 0;
+  margin-top: 7px;
+  box-shadow: 0 0 0 3px rgba(0,82,204,0.15);
+}
+
+/* ── Admin-only assignee field ── */
+.jira-drawer-field-readonly {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 7px 10px;
+  background: #F4F5F7;
+  border: 1px solid #EBECF0;
+  border-radius: 6px;
+  font-size: 13.5px;
+  color: #172B4D;
+}
+.jira-admin-only-hint {
+  font-size: 11px;
+  color: #97A0AF;
+  font-style: italic;
+}
+
+/* ========== SAVED FILTERS ========== */
+.jira-sf-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #F4F5F7;
+  transition: background 0.1s;
+}
+.jira-sf-row:last-child { border-bottom: none; }
+.jira-sf-row:hover { background: #F8F9FF; }
+
+.jira-sf-apply-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  padding: 9px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.jira-sf-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.jira-sf-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #172B4D;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.jira-sf-meta {
+  font-size: 11px;
+  color: #6B778C;
+}
+
+.jira-sf-delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 10px;
+  opacity: 0.5;
+  transition: opacity 0.1s;
+  flex-shrink: 0;
+}
+.jira-sf-delete-btn:hover { opacity: 1; }
+
+/* ── Member role read-only tag (non-Admin view) ── */
+.jira-member-role-tag {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 10px;
+  background: #F4F5F7;
+  color: #42526E;
+  border: 1px solid #DFE1E6;
 }

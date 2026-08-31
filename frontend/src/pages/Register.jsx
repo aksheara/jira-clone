@@ -6,6 +6,7 @@ import api from "../api/client";
 export default function Register() {
   const [step, setStep] = useState(1); // 1: form, 2: verify OTP code
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [otpCode, setOtpCode] = useState("");
@@ -33,11 +34,23 @@ export default function Register() {
   const hasSpecial = /[!@#$%^&*(),.?":{}|<>\-_=+[\]\\;/`~]/.test(password);
   const isPasswordValid = hasMinLength && hasUpper && hasLower && hasNumber && hasSpecial;
 
-  // Step 1: Submit Registration (Email + Password only)
+  // Username validation
+  const isUsernameFormatValid = /^[a-zA-Z0-9_]{3,20}$/.test(username);
+  const usernameHint = username.length === 0
+    ? ""
+    : !isUsernameFormatValid
+    ? "3–20 chars: letters, numbers, underscores only."
+    : "✓ Looks good!";
+
+  // Step 1: Submit Registration
   async function handleRegisterSubmit(e) {
     e.preventDefault();
-    if (!email.trim() || !password) {
+    if (!email.trim() || !password || !username.trim()) {
       setError("Please fill out all required fields.");
+      return;
+    }
+    if (!isUsernameFormatValid) {
+      setError("Username must be 3–20 characters and contain only letters, numbers, or underscores.");
       return;
     }
     if (!isPasswordValid) {
@@ -48,7 +61,7 @@ export default function Register() {
     setResendSuccess("");
     setLoading(true);
     try {
-      const res = await register(email.trim().toLowerCase(), password);
+      const res = await register(password, email.trim().toLowerCase(), username.trim());
       if (res?.require_verification) {
         setStep(2);
         setResendCooldown(30);
@@ -76,7 +89,7 @@ export default function Register() {
     e.preventDefault();
     const cleanCode = otpCode.trim();
     if (cleanCode.length !== 6) {
-      setError("Please enter the complete 6-digit verification code sent to your email.");
+      setError("Please enter the complete 6-digit verification code.");
       return;
     }
     setError("");
@@ -86,7 +99,7 @@ export default function Register() {
       await verifyCode(email.trim().toLowerCase(), cleanCode, "REGISTRATION");
       navigate("/projects");
     } catch (err) {
-      const msg = err?.response?.data?.detail || "Invalid or expired verification code. Please check your email.";
+      const msg = err?.response?.data?.detail || "Invalid or expired verification code. Please try again.";
       setError(msg);
     } finally {
       setLoading(false);
@@ -104,7 +117,7 @@ export default function Register() {
         email: email.trim().toLowerCase(),
         purpose: "REGISTRATION",
       });
-      setResendSuccess(res.data?.detail || "A fresh verification code has been dispatched to your email!");
+      setResendSuccess(res.data?.detail || "A fresh verification code has been sent!");
       setResendCooldown(30);
     } catch (err) {
       const msg = err?.response?.data?.detail || "Could not resend code. Please try again.";
@@ -126,24 +139,12 @@ export default function Register() {
         <div className="jira-auth-card">
           <div className="jira-auth-card-inner">
             {/* Top Brand Logo */}
-            <div className="jira-auth-header-brand">
-              <div className="jira-auth-logo">
-                <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-                  <path
-                    d="M15.938 1.5C11.517 1.5 7.938 5.08 7.938 9.5V15.5H13.938C18.359 15.5 21.938 11.92 21.938 7.5V1.5H15.938Z"
-                    fill="#0052CC"
-                  />
-                  <path
-                    d="M23.938 9.5C19.517 9.5 15.938 13.08 15.938 17.5V23.5H21.938C26.359 23.5 29.938 19.92 29.938 15.5V9.5H23.938Z"
-                    fill="#2684FF"
-                  />
-                  <path
-                    d="M7.938 17.5C3.517 17.5 -0.062 21.08 -0.062 25.5V31.5H5.938C10.359 31.5 13.938 27.92 13.938 23.5V17.5H7.938Z"
-                    fill="#0052CC"
-                  />
-                </svg>
+            <div className="jira-auth-header-brand" style={{ flexDirection: "column", alignItems: "center", gap: 8, paddingBottom: 8 }}>
+              <img src="/dp-logo.png" alt="DataPattern Logo" style={{ height: 40, width: "auto", objectFit: "contain" }} />
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                <span className="jira-auth-brand-name" style={{ fontSize: 22, fontWeight: 800, letterSpacing: 2, color: "#172B4D" }}>NEXO</span>
+                <span style={{ fontSize: 11, color: "#6B778C", letterSpacing: 0.5 }}>Powered by DataPattern</span>
               </div>
-              <span className="jira-auth-brand-name">Jira Software</span>
             </div>
 
             {/* Header / Nav switcher */}
@@ -191,9 +192,49 @@ export default function Register() {
               </div>
             )}
 
-            {/* STEP 1: Registration Form (Email + Password only) */}
+            {/* STEP 1: Registration Form */}
             {step === 1 && (
               <form onSubmit={handleRegisterSubmit} className="jira-auth-form">
+                {/* Username Field */}
+                <div className="jira-form-group">
+                  <label className="jira-form-label" htmlFor="register-username">
+                    Username <span style={{ color: "#DE350B" }}>*</span>
+                  </label>
+                  <div className="jira-input-wrapper">
+                    <span className="jira-input-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                      </svg>
+                    </span>
+                    <input
+                      id="register-username"
+                      type="text"
+                      className="jira-form-input"
+                      placeholder="e.g. john_doe (shown to teammates)"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value.replace(/\s/g, ""))}
+                      autoComplete="username"
+                      maxLength={20}
+                      required
+                    />
+                    <span style={{
+                      position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
+                      fontSize: 11, color: "#6B778C", pointerEvents: "none"
+                    }}>{username.length}/20</span>
+                  </div>
+                  {usernameHint && (
+                    <span style={{
+                      fontSize: 11.5,
+                      marginTop: 3,
+                      color: isUsernameFormatValid ? "#006644" : "#DE350B",
+                    }}>
+                      {usernameHint}
+                    </span>
+                  )}
+                </div>
+
+                {/* Email Field */}
                 <div className="jira-form-group">
                   <label className="jira-form-label" htmlFor="register-email">
                     Email Address <span style={{ color: "#DE350B" }}>*</span>
@@ -213,12 +254,11 @@ export default function Register() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       autoComplete="email"
-                      autoFocus
                       required
                     />
                   </div>
                   <span style={{ fontSize: 11.5, color: "#6B778C", marginTop: 2 }}>
-                    We will send a 6-digit verification code to this email.
+                    Must be a permanent, reachable email address (no disposable domains).
                   </span>
                 </div>
 
@@ -339,7 +379,7 @@ export default function Register() {
                     required
                   />
                   <span style={{ fontSize: 12, color: "#6B778C", textAlign: "center", display: "block", marginTop: 4 }}>
-                    Please check your email inbox for the 6-digit code (valid for 15 minutes).
+                    Code expires in 15 minutes.
                   </span>
                 </div>
 
@@ -393,7 +433,7 @@ export default function Register() {
             </div>
 
             <div className="jira-auth-legal">
-              By creating an account, you agree to the Atlassian Cloud Terms of Service and Privacy Policy.
+              By creating an account, you agree to the NEXO Terms of Service and Privacy Policy.
             </div>
           </div>
         </div>
@@ -401,3 +441,4 @@ export default function Register() {
     </div>
   );
 }
+

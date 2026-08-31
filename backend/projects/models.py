@@ -66,6 +66,97 @@ class ProjectDoc(models.Model):
         return f"[{self.project.key}] {self.title}"
 
 
+class WorkflowState(models.Model):
+    """
+    A custom status column for a project's workflow.
+    Category maps to the legacy TODO/IN_PROGRESS/DONE for board colouring.
+    """
+    class Category(models.TextChoices):
+        TODO = "TODO", "To Do"
+        IN_PROGRESS = "IN_PROGRESS", "In Progress"
+        DONE = "DONE", "Done"
+
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="workflow_states")
+    name = models.CharField(max_length=100)
+    color = models.CharField(max_length=7, default="#42526E", help_text="Hex color for the column header")
+    category = models.CharField(max_length=15, choices=Category.choices, default=Category.TODO)
+    position = models.PositiveIntegerField(default=0, help_text="Left-to-right order on the board")
+    is_default = models.BooleanField(default=False, help_text="Pre-selected status when creating a new issue")
+
+    class Meta:
+        ordering = ["position"]
+        unique_together = ("project", "name")
+
+    def __str__(self):
+        return f"{self.project.key} — {self.name}"
+
+
+class WorkflowTransition(models.Model):
+    """
+    Allowed status move: from_state → to_state within a project.
+    If no transitions are defined for a state, all moves are permitted.
+    """
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="workflow_transitions")
+    from_state = models.ForeignKey(
+        WorkflowState, on_delete=models.CASCADE, related_name="transitions_from"
+    )
+    to_state = models.ForeignKey(
+        WorkflowState, on_delete=models.CASCADE, related_name="transitions_to"
+    )
+
+    class Meta:
+        unique_together = ("project", "from_state", "to_state")
+
+    def __str__(self):
+        return f"{self.project.key}: {self.from_state.name} → {self.to_state.name}"
+
+
+def create_default_workflow(project):
+    """Creates the standard 3-column workflow for a newly created project."""
+    defaults = [
+        {"name": "To Do",       "color": "#42526E", "category": WorkflowState.Category.TODO,        "position": 0, "is_default": True},
+        {"name": "In Progress", "color": "#0052CC", "category": WorkflowState.Category.IN_PROGRESS, "position": 1},
+        {"name": "Done",        "color": "#00875A", "category": WorkflowState.Category.DONE,        "position": 2},
+    ]
+    states = []
+    for d in defaults:
+        s, _ = WorkflowState.objects.get_or_create(project=project, name=d["name"], defaults=d)
+        states.append(s)
+    # Allow all transitions between the 3 default states
+    for frm in states:
+        for to in states:
+            if frm != to:
+                WorkflowTransition.objects.get_or_create(project=project, from_state=frm, to_state=to)
+    return states
+
+
+class Sprint(models.Model):
+    """
+    A time-boxed iteration. Belongs to one Project.
+    Status flow: PLANNED → ACTIVE → COMPLETED.
+    Only one sprint per project can be ACTIVE at a time.
+    """
+    class Status(models.TextChoices):
+        PLANNED = "PLANNED", "Planned"
+        ACTIVE = "ACTIVE", "Active"
+        COMPLETED = "COMPLETED", "Completed"
+
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="sprints")
+    name = models.CharField(max_length=200)
+    goal = models.TextField(blank=True, help_text="Sprint goal / objective")
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.PLANNED)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.project.key} — {self.name} [{self.status}]"
+
+
 class AutomationRule(models.Model):
     """
     Automated workflow rules for projects.
@@ -83,3 +174,31 @@ class AutomationRule(models.Model):
 
     def __str__(self):
         return f"{self.name} ({'Enabled' if self.enabled else 'Disabled'})"
+
+
+class SavedFilter(models.Model):
+    """
+    A named filter preset saved by a user, scoped to a project.
+    Stores optional status / priority / assignee values.
+    """
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="saved_filters"
+    )
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="saved_filters"
+    )
+    name = models.CharField(max_length=100)
+    status = models.CharField(max_length=15, blank=True, null=True)
+    priority = models.CharField(max_length=10, blank=True, null=True)
+    assignee = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="saved_filter_assignees"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+        unique_together = ("owner", "project", "name")
+
+    def __str__(self):
+        return f"{self.owner} — {self.name} [{self.project.key}]"
