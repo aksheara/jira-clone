@@ -2,11 +2,11 @@ import { useState } from "react";
 
 export default function MarketplaceModal({ isOpen, onClose }) {
   const [apps, setApps] = useState([
-    { id: "github", name: "GitHub for NEXA", category: "Developer Tools", desc: "Connect branches, commits, pull requests, and deployment statuses directly to NEXA tickets.", icon: "GH", connected: true, downloads: "1.2M" },
+    { id: "github", name: "GitHub for NEXO", category: "Developer Tools", desc: "Connect branches, commits, pull requests, and deployment statuses directly to NEXO tickets.", icon: "GH", connected: true, downloads: "1.2M" },
     { id: "slack", name: "Slack Integration", category: "Chat & Notifications", desc: "Receive instant updates when issues are created, assigned, or updated in dedicated team channels.", icon: "SL", connected: true, downloads: "2.4M" },
-    { id: "figma", name: "Figma for NEXA", category: "Design", desc: "Embed live Figma files, design specs, and prototypes directly inside NEXA issue cards.", icon: "FG", connected: false, downloads: "850K" },
-    { id: "ai_copilot", name: "NEXA Intelligence AI", category: "AI & Productivity", desc: "Generate issue summaries, write acceptance criteria, and translate customer requests into user stories.", icon: "AI", connected: true, downloads: "500K" },
-    { id: "sentry", name: "Sentry Error Tracking", category: "Monitoring", desc: "Automatically create NEXA bugs from unhandled frontend and backend exceptions.", icon: "SN", connected: false, downloads: "420K" },
+    { id: "figma", name: "Figma for NEXO", category: "Design", desc: "Embed live Figma files, design specs, and prototypes directly inside NEXO issue cards.", icon: "FG", connected: false, downloads: "850K" },
+    { id: "ai_copilot", name: "NEXO Intelligence AI", category: "AI & Productivity", desc: "Generate issue summaries, write acceptance criteria, and translate customer requests into user stories.", icon: "AI", connected: true, downloads: "500K" },
+    { id: "sentry", name: "Sentry Error Tracking", category: "Monitoring", desc: "Automatically create NEXO bugs from unhandled frontend and backend exceptions.", icon: "SN", connected: false, downloads: "420K" },
   ]);
 
   if (!isOpen) return null;
@@ -22,7 +22,7 @@ export default function MarketplaceModal({ isOpen, onClose }) {
       <div className="jira-modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 760 }}>
         <div className="jira-modal-header">
           <div className="jira-modal-title-group">
-            <h2 className="jira-modal-title">NEXA Marketplace & Integrations</h2>
+            <h2 className="jira-modal-title">NEXO Marketplace & Integrations</h2>
             <span className="jira-sub-key">Extend your project workspace with external tools and bots</span>
           </div>
           <button className="jira-btn-icon-close" onClick={onClose}>
@@ -69,3 +69,4 @@ export default function MarketplaceModal({ isOpen, onClose }) {
     </div>
   );
 }
+

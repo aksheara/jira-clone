@@ -88,15 +88,15 @@ def send_verification_email(email: str, code: str, purpose: str = "REGISTRATION"
     Dispatches a formatted verification email with the 6-digit OTP code.
     Uses Django's send_mail (console backend in dev, SMTP in prod).
     """
-    subject = "NEXA - Your Verification Code"
+    subject = "NEXO - Your Verification Code"
     if purpose == "PASSWORD_RESET":
-        subject = "NEXA - Password Reset Code"
+        subject = "NEXO - Password Reset Code"
 
     purpose_text = "verify your email address and activate your account" if purpose == "REGISTRATION" else "reset your account password"
 
     message = f"""Hello {username or 'there'},
 
-Your NEXA verification code is:
+Your NEXO verification code is:
 
     ======================
            {code}
@@ -108,13 +108,13 @@ This code is valid for 15 minutes.
 If you did not request this code, please ignore this email.
 
 Best regards,
-The NEXA Team
+The NEXO Team
 """
 
     html_message = f"""
     <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; border: 1px solid #DFE1E6; border-radius: 8px; background: #FFFFFF;">
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
-            <h2 style="color: #0052CC; margin: 0;">NEXA</h2>
+            <h2 style="color: #0052CC; margin: 0;">NEXO</h2>
         </div>
         <h3 style="color: #172B4D; margin-top: 0;">{ 'Activate Your Account' if purpose == 'REGISTRATION' else 'Reset Your Password' }</h3>
         <p style="color: #42526E; font-size: 14px; line-height: 1.5;">
@@ -248,9 +248,9 @@ def send_notification_email(
     issue_assignee: str = None,
 ) -> bool:
     """
-    Unified NEXA notification email matching real Jira's structure:
+    Unified NEXO notification email matching real Jira's structure:
 
-    Header  : NEXA logo + app name
+    Header  : NEXO logo + app name
     Action  : "[Actor] [action] on [Issue Key]"
     Issue   : Key, Title, Type, Priority, Status, Reporter, Assignee
     Comment : (only for comment/mention) — commenter name + full comment text
@@ -266,11 +266,11 @@ def send_notification_email(
 
     # Subject line
     subject_map = {
-        "assignee": f"[NEXA] {actor} assigned you to {issue_key}",
-        "reporter": f"[NEXA] New activity on your issue {issue_key}",
-        "mention":  f"[NEXA] {actor} mentioned you in {issue_key}",
+        "assignee": f"[NEXO] {actor} assigned you to {issue_key}",
+        "reporter": f"[NEXO] New activity on your issue {issue_key}",
+        "mention":  f"[NEXO] {actor} mentioned you in {issue_key}",
     }
-    subject = subject_map.get(why_reason, f"[NEXA] Update on {issue_key}")
+    subject = subject_map.get(why_reason, f"[NEXO] Update on {issue_key}")
 
     # Footer reason
     footer_map = {
@@ -315,7 +315,7 @@ def send_notification_email(
 
         <!-- HEADER -->
         <div style="background: linear-gradient(135deg, #0052CC, #6554C0); padding: 18px 24px; display: flex; align-items: center; gap: 10px;">
-            <span style="color: #FFFFFF; font-size: 20px; font-weight: 800; letter-spacing: 1px;">NEXA</span>
+            <span style="color: #FFFFFF; font-size: 20px; font-weight: 800; letter-spacing: 1px;">NEXO</span>
             <span style="color: rgba(255,255,255,0.6); font-size: 12px;">Powered by DataPattern</span>
         </div>
 
@@ -365,10 +365,10 @@ def send_notification_email(
         f"{actor} {action} {issue_key} — {issue_title} in {project_name}.\n\n"
         f"{('Comment: ' + comment_body[:300]) if comment_body else ''}\n\n"
         f"View issue: {issue_url}\n\n"
-        f"The NEXA Team\n"
+        f"The NEXO Team\n"
     )
 
-    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@nexa.local")
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@NEXO.local")
 
     try:
         import ssl, smtplib
@@ -399,12 +399,12 @@ def send_notification_email(
 
         return True
     except Exception as e:
-        print(f"[NEXA Email Error]: {e}")
+        print(f"[NEXO Email Error]: {e}")
         return False
     """
     Sends an email to the user who has been assigned to an issue.
     """
-    subject = f"[NEXA] You've been assigned to {issue_key}"
+    subject = f"[NEXO] You've been assigned to {issue_key}"
 
     # Build deep link if project_id and issue_id are available
     frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
@@ -423,13 +423,13 @@ def send_notification_email(
 Open the issue directly: {issue_url}
 
 Best regards,
-The NEXA Team
+The NEXO Team
 """
 
     html_message = f"""
     <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px;
                 border: 1px solid #DFE1E6; border-radius: 8px; background: #FFFFFF;">
-        <h2 style="color: #0052CC; margin: 0 0 16px 0;">NEXA</h2>
+        <h2 style="color: #0052CC; margin: 0 0 16px 0;">NEXO</h2>
         <h3 style="color: #172B4D; margin-top: 0;">You've been assigned to an issue</h3>
         <p style="color: #42526E; font-size: 14px; line-height: 1.6;">
             <strong>{assigned_by}</strong> assigned you to:
@@ -490,3 +490,4 @@ The NEXA Team
     except Exception as e:
         print(f"[Assignment Email Error]: {e}")
         return False
+

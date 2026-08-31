@@ -415,7 +415,7 @@ export default function ListView({ project, issues = [], members = [], onRefresh
           {/* Ask AI button */}
           <button
             className="jira-btn-ask-ai"
-            title="Ask NEXA AI assistant"
+            title="Ask NEXO AI assistant"
             onClick={() => setShowAskAI(true)}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
@@ -1181,4 +1181,5 @@ export default function ListView({ project, issues = [], members = [], onRefresh
     </div>
   );
 }
+
 

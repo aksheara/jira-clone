@@ -230,7 +230,7 @@ export default function Login() {
             <div className="jira-auth-header-brand" style={{ flexDirection: "column", alignItems: "center", gap: 8, paddingBottom: 8 }}>
               <img src="/dp-logo.png" alt="DataPattern Logo" style={{ height: 40, width: "auto", objectFit: "contain" }} />
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                <span className="jira-auth-brand-name" style={{ fontSize: 22, fontWeight: 800, letterSpacing: 2, color: "#172B4D" }}>NEXA</span>
+                <span className="jira-auth-brand-name" style={{ fontSize: 22, fontWeight: 800, letterSpacing: 2, color: "#172B4D" }}>NEXO</span>
                 <span style={{ fontSize: 11, color: "#6B778C", letterSpacing: 0.5 }}>Powered by DataPattern</span>
               </div>
             </div>
@@ -252,7 +252,7 @@ export default function Login() {
             <div className="jira-auth-title-area">
               <h2 className="jira-auth-main-title">Log in to your account</h2>
               <p className="jira-auth-main-subtitle">
-                Enter your credentials to access your NEXA projects and team boards.
+                Enter your credentials to access your NEXO projects and team boards.
               </p>
             </div>
 
@@ -376,7 +376,7 @@ export default function Login() {
             </div>
 
             <div className="jira-auth-legal">
-              By logging in, you agree to the NEXA Terms of Service and Privacy Policy.
+              By logging in, you agree to the NEXO Terms of Service and Privacy Policy.
             </div>
           </div>
         </div>
@@ -669,3 +669,4 @@ export default function Login() {
     </div>
   );
 }
+

@@ -1,5 +1,5 @@
 /**
- * NEXA — Role-Based Permission System
+ * NEXO — Role-Based Permission System
  * Single source of truth for all access control decisions.
  *
  * Roles:   ADMIN | MEMBER | VIEWER
@@ -147,7 +147,7 @@ export function can(role, action, context = {}) {
 
   const perm = PERMISSIONS[action];
   if (!perm) {
-    console.warn(`[NEXA Permissions] Unknown action: "${action}"`);
+    console.warn(`[NEXO Permissions] Unknown action: "${action}"`);
     return false;
   }
 
@@ -188,3 +188,4 @@ export function getPermissions(role) {
     ])
   );
 }
+

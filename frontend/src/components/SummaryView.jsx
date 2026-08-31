@@ -36,7 +36,7 @@ export default function SummaryView({
   // Copy Executive Report to clipboard
   function handleCopyReport() {
     const lines = [
-      `EXECUTIVE PROJECT REPORT: ${project?.name || "NEXA Project"} (${project?.key || "KAN"})`,
+      `EXECUTIVE PROJECT REPORT: ${project?.name || "NEXO Project"} (${project?.key || "KAN"})`,
       `==================================================`,
       `Generated: ${new Date().toLocaleDateString()} | Lead: ${project?.created_by?.username || "Admin"}`,
       `Description: ${project?.description || "Sprint project workspace"}`,
@@ -353,3 +353,4 @@ export default function SummaryView({
     </div>
   );
 }
+

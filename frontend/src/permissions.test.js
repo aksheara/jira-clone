@@ -1,5 +1,5 @@
 /**
- * NEXA — Permission System Unit Tests
+ * NEXO — Permission System Unit Tests
  * Run with: npx vitest --run  (or jest if configured)
  *
  * Coverage:
@@ -159,3 +159,4 @@ describe("getPermissions()", () => {
     expect(perms[ACTIONS.DELETE_ISSUE]).toBe("conditional");
   });
 });
+

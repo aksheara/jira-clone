@@ -85,7 +85,7 @@ export default function Navbar({
     <>
       <header className="jira-global-topbar" ref={menuRef}>
         <div className="jira-topbar-left">
-          {/* NEXA Brand Logo */}
+          {/* NEXO Brand Logo */}
           <Link to="/projects" className="jira-topbar-brand">
             <img
               src="/dp-logo.png"
@@ -100,7 +100,7 @@ export default function Navbar({
               }}
             />
             <div className="jira-brand-title-wrap">
-              <span className="jira-brand-title">NEXA</span>
+              <span className="jira-brand-title">NEXO</span>
               <span className="jira-brand-agent-badge">Powered by DataPattern</span>
             </div>
           </Link>
@@ -337,7 +337,7 @@ export default function Navbar({
                         setShowMarketplaceModal(true);
                       }}
                     >
-                      Explore NEXA Marketplace →
+                      Explore NEXO Marketplace →
                     </button>
                   </div>
                 </div>
@@ -533,3 +533,4 @@ export default function Navbar({
     </>
   );
 }
+
