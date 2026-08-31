@@ -296,7 +296,6 @@ def _notify_on_comment(comment, commenter):
                 recipient_email=recipient.email,
                 recipient_username=recipient.username,
                 actor=commenter.username,
-                actor_email=commenter.email,
                 action=action_label,
                 why_reason=reason,
                 **issue_card,
