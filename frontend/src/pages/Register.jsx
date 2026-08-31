@@ -6,6 +6,7 @@ import api from "../api/client";
 export default function Register() {
   const [step, setStep] = useState(1); // 1: form, 2: verify OTP code
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [otpCode, setOtpCode] = useState("");
@@ -33,11 +34,23 @@ export default function Register() {
   const hasSpecial = /[!@#$%^&*(),.?":{}|<>\-_=+[\]\\;/`~]/.test(password);
   const isPasswordValid = hasMinLength && hasUpper && hasLower && hasNumber && hasSpecial;
 
+  // Username validation
+  const isUsernameFormatValid = /^[a-zA-Z0-9_]{3,20}$/.test(username);
+  const usernameHint = username.length === 0
+    ? ""
+    : !isUsernameFormatValid
+    ? "3–20 chars: letters, numbers, underscores only."
+    : "✓ Looks good!";
+
   // Step 1: Submit Registration
   async function handleRegisterSubmit(e) {
     e.preventDefault();
-    if (!email.trim() || !password) {
+    if (!email.trim() || !password || !username.trim()) {
       setError("Please fill out all required fields.");
+      return;
+    }
+    if (!isUsernameFormatValid) {
+      setError("Username must be 3–20 characters and contain only letters, numbers, or underscores.");
       return;
     }
     if (!isPasswordValid) {
@@ -48,7 +61,7 @@ export default function Register() {
     setResendSuccess("");
     setLoading(true);
     try {
-      const res = await register(password, email.trim().toLowerCase());
+      const res = await register(password, email.trim().toLowerCase(), username.trim());
       if (res?.require_verification) {
         setStep(2);
         setResendCooldown(30);
@@ -182,6 +195,46 @@ export default function Register() {
             {/* STEP 1: Registration Form */}
             {step === 1 && (
               <form onSubmit={handleRegisterSubmit} className="jira-auth-form">
+                {/* Username Field */}
+                <div className="jira-form-group">
+                  <label className="jira-form-label" htmlFor="register-username">
+                    Username <span style={{ color: "#DE350B" }}>*</span>
+                  </label>
+                  <div className="jira-input-wrapper">
+                    <span className="jira-input-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                      </svg>
+                    </span>
+                    <input
+                      id="register-username"
+                      type="text"
+                      className="jira-form-input"
+                      placeholder="e.g. john_doe (shown to teammates)"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value.replace(/\s/g, ""))}
+                      autoComplete="username"
+                      maxLength={20}
+                      required
+                    />
+                    <span style={{
+                      position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
+                      fontSize: 11, color: "#6B778C", pointerEvents: "none"
+                    }}>{username.length}/20</span>
+                  </div>
+                  {usernameHint && (
+                    <span style={{
+                      fontSize: 11.5,
+                      marginTop: 3,
+                      color: isUsernameFormatValid ? "#006644" : "#DE350B",
+                    }}>
+                      {usernameHint}
+                    </span>
+                  )}
+                </div>
+
+                {/* Email Field */}
                 <div className="jira-form-group">
                   <label className="jira-form-label" htmlFor="register-email">
                     Email Address <span style={{ color: "#DE350B" }}>*</span>
@@ -201,7 +254,6 @@ export default function Register() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       autoComplete="email"
-                      autoFocus
                       required
                     />
                   </div>

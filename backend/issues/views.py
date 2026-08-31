@@ -78,6 +78,7 @@ class IssueViewSet(viewsets.ModelViewSet):
         ).exists()
         if not (is_reporter or is_admin):
             raise PermissionDenied("Only the issue reporter or a project Admin can delete this issue.")
+        instance.delete()
 
     def get_queryset(self):
         # Visibility: only issues in projects the user is a member of.

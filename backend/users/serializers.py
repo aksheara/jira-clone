@@ -39,10 +39,24 @@ class UserWithProjectsSerializer(serializers.ModelSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True, allow_blank=False)
     password = serializers.CharField(write_only=True, min_length=8)
+    username = serializers.CharField(required=True, allow_blank=False, min_length=3, max_length=20)
 
     class Meta:
         model = User
-        fields = ["id", "email", "password", "first_name", "last_name"]
+        fields = ["id", "username", "email", "password", "first_name", "last_name"]
+
+    def validate_username(self, value):
+        import re
+        value = value.strip()
+        if not re.match(r'^[a-zA-Z0-9_]+$', value):
+            raise serializers.ValidationError(
+                "Username may only contain letters, numbers, and underscores."
+            )
+        if User.objects.filter(username__iexact=value).exists():
+            raise serializers.ValidationError(
+                "This username is already taken. Please choose a different one."
+            )
+        return value
 
     def validate_email(self, value):
         email = value.strip().lower()
@@ -67,20 +81,9 @@ class RegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(err_msg)
         return value
 
-    def _generate_unique_username(self, email: str) -> str:
-        """Derives a unique username from the email local part."""
-        import re
-        base = re.sub(r"[^a-z0-9_]", "_", email.split("@")[0].lower())
-        username = base
-        counter = 1
-        while User.objects.filter(username__iexact=username).exists():
-            username = f"{base}_{counter}"
-            counter += 1
-        return username
-
     def create(self, validated_data):
         email = validated_data["email"]
-        username = self._generate_unique_username(email)
+        username = validated_data["username"]
 
         # Create user in pending/inactive state until email is verified
         user = User.objects.create_user(

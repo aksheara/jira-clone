@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import api from "../api/client";
 import IssueModal from "./IssueModal";
-import AskAIModal from "./AskAIModal";
 import { IssueTypeIcon, PriorityIcon, MergeIcon, TrashIcon } from "./Icons";
 
 export default function ListView({ project, issues = [], members = [], onRefresh, currentUser, isViewer = false }) {
@@ -14,7 +13,6 @@ export default function ListView({ project, issues = [], members = [], onRefresh
   const [inlineType, setInlineType] = useState("TASK");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copiedKey, setCopiedKey] = useState(null);
-  const [showAskAI, setShowAskAI] = useState(false);
 
   // Search & Filter state
   const [searchVal, setSearchVal] = useState("");
@@ -412,18 +410,43 @@ export default function ListView({ project, issues = [], members = [], onRefresh
       {/* Sub-toolbar matching Jira screenshot */}
       <div className="jira-list-toolbar">
         <div className="jira-toolbar-left">
-          {/* Ask AI button */}
-          <button
-            className="jira-btn-ask-ai"
-            title="Ask NEXO AI assistant"
-            onClick={() => setShowAskAI(true)}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2L14.4 7.6L20 10L14.4 12.4L12 18L9.6 12.4L4 10L9.6 7.6L12 2Z"/>
-              <path d="M19 15L20.2 17.8L23 19L20.2 20.2L19 23L17.8 20.2L15 19L17.8 17.8L19 15Z"/>
-            </svg>
-            <span>Ask AI</span>
-          </button>
+
+          {/* Current user role + identity badge */}
+          {currentUser && (() => {
+            const role = project?.my_role
+              ? project.my_role.charAt(0) + project.my_role.slice(1).toLowerCase()
+              : "Member";
+            const displayName = currentUser.username || currentUser.email || "User";
+            const roleColor = project?.my_role === "ADMIN"
+              ? { bg: "#E9F2FF", text: "#0052CC", dot: "#0052CC" }
+              : project?.my_role === "VIEWER"
+              ? { bg: "#F4F5F7", text: "#6B778C", dot: "#6B778C" }
+              : { bg: "#E3FCEF", text: "#006644", dot: "#00875A" };
+            return (
+              <div style={{
+                display: "flex", alignItems: "center", gap: 6,
+                background: roleColor.bg,
+                border: `1px solid ${roleColor.dot}22`,
+                borderRadius: 20,
+                padding: "4px 12px 4px 8px",
+                fontSize: 12.5,
+                fontWeight: 500,
+                color: roleColor.text,
+                whiteSpace: "nowrap",
+                userSelect: "none",
+                flexShrink: 0,
+              }}>
+                <span style={{
+                  width: 7, height: 7, borderRadius: "50%",
+                  background: roleColor.dot, flexShrink: 0,
+                }} />
+                <span style={{ fontWeight: 600 }}>{role}:</span>
+                <span style={{ maxWidth: 130, overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {displayName}
+                </span>
+              </div>
+            );
+          })()}
 
           {/* Search work input */}
           <div className="jira-search-work-box">
@@ -990,26 +1013,7 @@ export default function ListView({ project, issues = [], members = [], onRefresh
                           </td>
                         )}
 
-                        {/* Row delete action */}
-                        <td onClick={(e) => e.stopPropagation()} style={{ textAlign: "center", width: 36 }}>
-                          {!isViewer && (
-                            <button
-                              className="jira-btn-icon-plain"
-                              title="Delete issue"
-                              onClick={async () => {
-                                if (!window.confirm(`Delete "${issue.title}"? This cannot be undone.`)) return;
-                                try {
-                                  await api.delete(`/issues/${issue.id}/`);
-                                  onRefresh && onRefresh();
-                                } catch (err) {
-                                  alert(err?.response?.data?.detail || "Could not delete issue.");
-                                }
-                              }}
-                            >
-                              <TrashIcon size={13} color="#DE350B" />
-                            </button>
-                          )}
-                        </td>
+
                       </tr>
                     );
                   })}
@@ -1169,15 +1173,7 @@ export default function ListView({ project, issues = [], members = [], onRefresh
         />
       )}
 
-      {/* Ask AI Copilot Modal */}
-      {showAskAI && (
-        <AskAIModal
-          isOpen={showAskAI}
-          onClose={() => setShowAskAI(false)}
-          issues={issues}
-          projectName={project?.name}
-        />
-      )}
+
     </div>
   );
 }

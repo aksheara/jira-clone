@@ -6,7 +6,6 @@ import CreateIssueModal from "./CreateIssueModal";
 import CreateProjectModal from "./CreateProjectModal";
 import NotificationsModal from "./NotificationsModal";
 import DashboardModal from "./DashboardModal";
-import MarketplaceModal from "./MarketplaceModal";
 import TeamsModal from "./TeamsModal";
 import SettingsModal from "./SettingsModal";
 
@@ -28,7 +27,6 @@ export default function Navbar({
   const [showCreateIssueModal, setShowCreateIssueModal] = useState(false);
   const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
   const [showDashboardModal, setShowDashboardModal] = useState(false);
-  const [showMarketplaceModal, setShowMarketplaceModal] = useState(false);
   const [showTeamsModal, setShowTeamsModal] = useState(false);
   const [teamsProjectId, setTeamsProjectId] = useState(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -280,69 +278,7 @@ export default function Navbar({
               )}
             </div>
 
-            {/* 5. APPS DROPDOWN */}
-            <div className="jira-nav-dropdown-wrap">
-              <button
-                className={`jira-nav-link ${activeMenu === "apps" ? "active" : ""}`}
-                onClick={() => toggleMenu("apps")}
-              >
-                <span>Apps</span>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </button>
 
-              {activeMenu === "apps" && (
-                <div className="jira-nav-popover" style={{ width: 280 }}>
-                  <div className="jira-popover-header">CONNECTED INTEGRATIONS</div>
-                  <div className="jira-popover-list">
-                    <button
-                      className="jira-popover-item-btn"
-                      onClick={() => { setActiveMenu(null); setShowMarketplaceModal(true); }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>
-                      <div>
-                        <div className="jira-popover-item-title">GitHub for Jira</div>
-                        <div className="jira-popover-item-sub">Connected</div>
-                      </div>
-                    </button>
-
-                    <button
-                      className="jira-popover-item-btn"
-                      onClick={() => { setActiveMenu(null); setShowMarketplaceModal(true); }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                      <div>
-                        <div className="jira-popover-item-title">Slack Integration</div>
-                        <div className="jira-popover-item-sub">Connected</div>
-                      </div>
-                    </button>
-
-                    <button
-                      className="jira-popover-item-btn"
-                      onClick={() => { setActiveMenu(null); setShowMarketplaceModal(true); }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3l14 9-14 9V3z"/></svg>
-                      <div>
-                        <div className="jira-popover-item-title">Figma for Jira</div>
-                        <div className="jira-popover-item-sub">Available</div>
-                      </div>
-                    </button>
-                  </div>
-                  <div className="jira-popover-footer">
-                    <button
-                      className="jira-popover-btn-action"
-                      onClick={() => {
-                        setActiveMenu(null);
-                        setShowMarketplaceModal(true);
-                      }}
-                    >
-                      Explore NEXO Marketplace →
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
 
             {/* Blue solid + Create button */}
             <button
@@ -490,10 +426,7 @@ export default function Navbar({
         onClose={() => setShowDashboardModal(false)}
       />
 
-      <MarketplaceModal
-        isOpen={showMarketplaceModal}
-        onClose={() => setShowMarketplaceModal(false)}
-      />
+
 
       <TeamsModal
         isOpen={showTeamsModal}

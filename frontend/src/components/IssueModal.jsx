@@ -56,8 +56,8 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
 
   async function updateField(field, value) {
     try {
-      await api.patch(`/issues/${issueId}/`, { [field]: value });
-      setIssue((prev) => (prev ? { ...prev, [field]: value } : null));
+      const res = await api.patch(`/issues/${issueId}/`, { [field]: value });
+      setIssue(res.data);
       onUpdate && onUpdate();
     } catch (err) {
       console.error(`Failed to update ${field}`, err);
@@ -68,8 +68,8 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
     e?.preventDefault();
     if (!titleVal.trim()) return;
     try {
-      await api.patch(`/issues/${issueId}/`, { title: titleVal.trim() });
-      setIssue((prev) => (prev ? { ...prev, title: titleVal.trim() } : null));
+      const res = await api.patch(`/issues/${issueId}/`, { title: titleVal.trim() });
+      setIssue(res.data);
       setIsEditingTitle(false);
       onUpdate && onUpdate();
     } catch (err) {
@@ -80,8 +80,8 @@ export default function IssueModal({ issueId, projectKey, members = [], currentU
   async function handleSaveDesc(e) {
     e?.preventDefault();
     try {
-      await api.patch(`/issues/${issueId}/`, { description: descVal });
-      setIssue((prev) => (prev ? { ...prev, description: descVal } : null));
+      const res = await api.patch(`/issues/${issueId}/`, { description: descVal });
+      setIssue(res.data);
       setIsEditingDesc(false);
       onUpdate && onUpdate();
     } catch (err) {
